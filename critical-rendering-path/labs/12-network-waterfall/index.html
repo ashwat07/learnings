@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 12 — Network waterfall</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    ul { max-width: 820px; padding-left: 18px; }
+    li { margin-bottom: 10px; }
+    a { color: var(--accent); }
+    pre { background: #101017; border: 1px solid var(--line); border-radius: 8px; padding: 10px;
+          overflow-x: auto; font-size: 12px; max-width: 820px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 12 — Network waterfall</h1>
+    <p>Same code, four delivery strategies. The interesting comparison isn't 50-vs-1 — it's
+      50-vs-1 <em>on HTTP/1.1 versus HTTP/2</em>, and both against the import chain.</p>
+  </div>
+
+  <h2>setup</h2>
+  <pre>node make-modules.mjs      # then serve over HTTP
+cd ../.. &amp;&amp; ./serve.sh     # python3 http.server — HTTP/1.1, 6 connections per origin</pre>
+
+  <ul>
+    <li><a href="01-fifty-scripts.html">01 · 50 separate scripts</a>
+      — watch the 6-wide staircase in the Network waterfall.</li>
+    <li><a href="02-bundled.html">02 · one bundle</a>
+      — same code, one request.</li>
+    <li><a href="03-import-chain.html">03 · a 10-deep import chain</a>
+      — only 10 requests, and possibly the slowest page here. Predict before you measure.</li>
+    <li><a href="04-your-fix.html">04 · your fix</a>
+      — chunked sensibly, chain flattened, with the caching trade-off measured.</li>
+  </ul>
+
+  <h2>then do the comparison that matters</h2>
+  <pre>openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 30 -subj "/CN=localhost"
+npx http-server -S -C cert.pem -K key.pem -p 8443      # HTTP/2 over TLS</pre>
+  <p class="hint">Enable the <strong>Protocol</strong> and <strong>Connection ID</strong> columns in
+    the Network panel (right-click the header row). Then re-run pages 01–03 on both servers and fill
+    in the table in README.md. The h1-vs-h2 delta for page 01 is the headline result of this lab.</p>
+</body>
+</html>

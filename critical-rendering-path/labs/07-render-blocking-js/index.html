@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 07 — Render-blocking JS</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    ul { max-width: 820px; padding-left: 18px; }
+    li { margin-bottom: 10px; }
+    a { color: var(--accent); }
+    .warn { color: #ffd166; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 07 — JavaScript blocking rendering</h1>
+    <p>Five pages, identical content and identical total work. Open each in a fresh incognito tab
+      with <strong>Network: Fast 3G</strong> and <strong>CPU: 4×</strong>, and reload-and-record.</p>
+    <p class="warn">Must be served over HTTP — use <code>./serve.sh</code> from the course root.
+      Opening these with <code>file://</code> gives you misleading resource timings.</p>
+  </div>
+
+  <ul>
+    <li><a href="01-sync-head.html">01 · synchronous script in &lt;head&gt;</a>
+      — 800ms of blocking work before any DOM exists. Count the white-screen seconds.</li>
+    <li><a href="02-sync-body-end.html">02 · same script, before &lt;/body&gt;</a>
+      — content paints first, then the freeze. Better FCP; is it a better experience?</li>
+    <li><a href="03-defer.html">03 · defer</a>
+      — parses without pausing, executes in order before DOMContentLoaded.</li>
+    <li><a href="04-async.html">04 · async, with a dependency</a>
+      — reload it several times. Sometimes it works, sometimes it throws. Find out why.</li>
+    <li><a href="05-your-fix.html">05 · your fix</a>
+      — <strong>you build this one.</strong> Same work, FCP &lt; 1s, no long tasks, page
+      interactive during load.</li>
+  </ul>
+
+  <h2>Also try</h2>
+  <ul>
+    <li>In any page, comment out <code>scripts/heavy.js</code> and uncomment
+      <code>scripts/slow-download.js</code> — that swaps slow-to-<em>execute</em> for
+      slow-to-<em>download</em>. Throttle the network and compare. Predict which case the preload
+      scanner can hide before you measure.</li>
+    <li>In <a href="01-sync-head.html">01</a>, uncomment the <code>slow.css</code> link that sits
+      before the script, and watch script <em>execution</em> wait for a stylesheet.</li>
+  </ul>
+
+  <p class="readout">Each page prints its own FP/FCP/LCP/DCL and an execution-order log, on the
+page and in the console. Write the numbers into README.md as you go.</p>
+</body>
+</html>

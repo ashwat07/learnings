@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Layout thrashing</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    #stage { display: flex; flex-wrap: wrap; gap: 2px; }
+    .box {
+      height: 14px;
+      width: 40px;
+      background: linear-gradient(90deg, #7c9cff, #b57cff);
+      border-radius: 3px;
+      flex: 0 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Layout thrashing</h1>
+    <p>Each button resizes every box and reads back its width. Same visual result, wildly
+      different traces. Record a Performance profile for each and count the <code>Layout</code>
+      entries inside the task.</p>
+  </div>
+
+  <div class="controls">
+    <label>boxes <input id="count" type="number" value="500" min="10" max="20000" step="10"></label>
+    <button id="rebuild">rebuild</button>
+    <div class="sep"></div>
+    <button id="thrash" data-variant="bad">1. thrash (broken)</button>
+    <button id="batched" data-variant="good">2. batched</button>
+    <button id="batchedRaf" data-variant="good">3. batched + rAF</button>
+    <button id="cached" data-variant="good">4. cached read</button>
+    <div class="sep"></div>
+    <button id="reset">reset HUD</button>
+  </div>
+
+  <p class="readout" id="out">Pick a strategy. Reads counted by the HUD are candidate forced layouts — run PerfHUD.breakdown() in the console for the split.</p>
+
+  <div id="stage" class="stage"></div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

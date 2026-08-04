@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 17 — Style recalculation</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style id="base">
+    #tree { border: 1px solid var(--line); border-radius: 10px; background: #101017;
+            padding: 8px; max-height: 40vh; overflow: auto; }
+    .branch { padding-left: 8px; border-left: 1px solid #1e1e2a; }
+    .leaf {
+      display: inline-block; width: 34px; height: 12px; margin: 1px;
+      border-radius: 3px;
+      /* Thousands of elements read this inherited custom property. Changing it on :root
+         invalidates every one of them; changing it on the element does not. */
+      background: var(--leaf-bg, #7c9cff44);
+      color: var(--leaf-fg, #9a9ab0);
+    }
+    .leaf.active { background: #b57cff66; }
+
+    /* CHANGE 3 — the theme-toggle pattern: one class on <html>, everything restyles. */
+    html.theme-warm .leaf { background: var(--leaf-bg, #ffb37744); }
+    html.theme-warm .branch { border-left-color: #5c4a2b; }
+
+    /* CHANGE 6 — :has(). Invalidation travels UP: toggling .selected on a leaf invalidates
+       its ancestors, because this rule's subject is the ancestor. */
+    .branch:has(.leaf.selected) { background: #7c9cff14; outline: 1px solid #7c9cff44; }
+    .branch:has(.leaf.selected) > .row > .leaf { color: #fff; }
+
+    /* CHANGE 7 — sibling combinators. Toggling .marker on one leaf restyles every
+       following sibling. The real-world version of this is :nth-child striping in a list
+       you append to. */
+    .leaf.marker ~ .leaf { opacity: .55; }
+    .row > .leaf:nth-child(odd) { border: 1px solid #ffffff10; }
+
+    .row { display: block; }
+    table { border-collapse: collapse; font-size: 12px; width: 100%; max-width: 980px; margin-top: 10px; }
+    td, th { border: 1px solid var(--line); padding: 5px 8px; text-align: left; }
+    th { color: var(--muted); font-weight: 500; }
+    td.num { font: 12px ui-monospace, Menlo, monospace; text-align: right; }
+  </style>
+  <!-- The generated bulk stylesheet goes here, so you can vary rule count independently
+       of element count. -->
+  <style id="bulk"></style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 17 — Style recalculation</h1>
+    <p>The pipeline's first stage. Before recording, enable <strong>Performance panel → gear →
+      "Enable CSS selector stats"</strong>, and remember it adds overhead — use it for attribution,
+      not for absolute timings.</p>
+    <p class="hint">The number to read is not the millisecond figure. It's
+      <strong>Elements Affected</strong>, in the tooltip on the <code>Recalculate Style</code> entry.</p>
+  </div>
+
+  <div class="controls">
+    <label>leaves <input id="leaves" type="number" value="5000" min="100" max="40000" step="500"></label>
+    <label>depth <input id="depth" type="number" value="6" min="1" max="12"></label>
+    <button id="rebuild">rebuild tree</button>
+    <div class="sep"></div>
+    <label>bulk rules
+      <select id="rules">
+        <option value="500">500</option>
+        <option value="5000" selected>5,000</option>
+        <option value="20000">20,000</option>
+        <option value="40000">40,000</option>
+      </select>
+    </label>
+    <label>repeats <input id="repeats" type="number" value="20" min="1" max="500"></label>
+  </div>
+
+  <div class="controls">
+    <button data-change="inlineLeaf" data-variant="good">1 · inline style on a leaf</button>
+    <button data-change="classLeaf" data-variant="good">2 · class on a leaf</button>
+    <button data-change="classRoot" data-variant="bad">3 · class on &lt;html&gt;</button>
+    <button data-change="varRoot" data-variant="bad">4 · custom prop on :root</button>
+    <button data-change="varLeaf" data-variant="good">5 · custom prop on the leaf</button>
+    <button data-change="hasSelector" data-variant="bad">6 · :has() observed</button>
+    <button data-change="siblingCombinator" data-variant="bad">7 · ~ observed</button>
+    <div class="sep"></div>
+    <button id="runAll">run all</button>
+    <button id="appendTest">append 1,000 items</button>
+    <button id="reset">reset</button>
+  </div>
+
+  <p class="readout" id="out"></p>
+
+  <table id="results">
+    <thead>
+      <tr><th>change</th><th>what it touches</th><th class="num">ms total</th>
+        <th class="num">ms / change</th><th class="num">× baseline</th><th>elements affected</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>tree</h2>
+  <div id="tree"></div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

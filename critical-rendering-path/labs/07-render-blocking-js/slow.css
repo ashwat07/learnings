@@ -1,0 +1,13 @@
+/* A render-blocking stylesheet, used by 01-sync-head.html's optional experiment.
+   Throttle the network to Slow 3G so its download time is visible, then note that the
+   SCRIPT below it cannot execute until this file has arrived — because the script might
+   call getComputedStyle, and the browser has no way to know that it won't.
+
+   Make it genuinely large if you want a bigger effect:
+     node -e "const s=require('fs');for(let i=0;i<4000;i++)s.appendFileSync('slow.css',\`.pad-\${i}{--x:\${i};color:#fff}\n\`)"
+   (then revert it — this file is meant to stay small in the repo). */
+
+.slow-css-loaded::after {
+  content: ' [slow.css applied]';
+  color: #ffd166;
+}

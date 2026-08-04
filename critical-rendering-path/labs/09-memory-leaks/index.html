@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 09 — Memory leaks</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    #sink { max-height: 180px; overflow: auto; border: 1px solid var(--line); border-radius: 8px;
+            padding: 6px; background: #101017; }
+    #sink div { height: 6px; margin-bottom: 2px; background: #7c9cff44; border-radius: 3px; }
+    table { border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+    td, th { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
+    th { color: var(--muted); font-weight: 500; }
+    .on { color: #ff6b6b; }
+    .off { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 09 — Memory leaks</h1>
+    <p>Six independent leaks. Turn one on, run the three-snapshot drill, find the retainer chain,
+      then fix it in <code>app.js</code>. Open the <strong>Performance monitor</strong> and watch
+      the shape of the heap line: sawtooth is healthy, staircase is a leak.</p>
+  </div>
+
+  <div class="controls">
+    <button data-leak="nodeFlood">1 · node flood</button>
+    <button data-leak="detachedTree">2 · detached tree</button>
+    <button data-leak="intervalClosure">3 · interval closure</button>
+    <button data-leak="windowListener">4 · window listener</button>
+    <button data-leak="unboundedCache">5 · unbounded cache</button>
+    <button data-leak="observerLeak">6 · observer leak</button>
+    <div class="sep"></div>
+    <button id="stopAll" data-variant="good">stop all</button>
+    <button id="churn">churn: mount+unmount ×100</button>
+    <button id="stats">read stats</button>
+  </div>
+
+  <p class="hint">
+    <code>performance.memory</code> is coarse and Chromium-only. For real numbers use the Memory
+    tab. Launch Chrome with <code>--js-flags="--expose-gc"</code> to get a <code>gc()</code>
+    function, or press the 🗑 button in the Memory tab to force collection.
+  </p>
+
+  <p class="readout" id="out"></p>
+
+  <table id="status">
+    <thead><tr><th>leak</th><th>state</th><th>what it retains</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>node sink</h2>
+  <div id="sink"></div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

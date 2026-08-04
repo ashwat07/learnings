@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>13/03 — your fix</title>
+
+  <!-- ========================= YOUR WORK STARTS HERE =========================
+       Budget (Fast 3G + CPU 4×):
+         · FCP < 1000ms
+         · at most 1 render-blocking request (0 if you inline everything critical)
+         · critical CSS under 14KB
+         · text visible before the web font arrives
+         · CLS < 0.05 — do NOT trade the FCP win for a font-swap layout shift
+         · no @import anywhere in the critical path
+         · the page must still be fully styled with JavaScript disabled
+
+       Same visible content as page 01: the hero, the prose, and the readout, all using
+       Newsreader with a fallback.
+
+       Checklist:
+         [ ] inline the critical CSS (measure its size — `wc -c`)
+         [ ] async-load css/part-00 … part-19 with your chosen technique
+         [ ] replace css/imported-00.css's @import chain with parallel links
+         [ ] font: preconnect + display=swap + preload the woff2 you actually use
+         [ ] eliminate the swap shift: @font-face fallback with size-adjust /
+             ascent-override / descent-override matched to Newsreader's metrics
+         [ ] <noscript> fallback
+         [ ] verify with JS disabled
+         [ ] verify by throttling the async CSS to 5s: does the above-the-fold render look
+             correct while it's pending? Screenshot it. That's the FOUC test.
+
+       Then answer in a comment at the bottom:
+         · what did the media-swap vs preload choice change, measurably?
+         · what's in your critical CSS that you were surprised to need?
+         · at what FCP would you delete all of this machinery and ship one stylesheet?
+       ======================================================================== -->
+
+  <script src="report.js"></script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>03 — your fix</h1>
+    <p class="hero">Replace this with the same hero as page 01, styled from inlined critical CSS.</p>
+    <p class="prose">Same prose, same font, none of the blocking.</p>
+    <p><a href="index.html" style="color:var(--accent)">← back to the lab</a></p>
+  </div>
+
+  <pre class="readout" id="out">waiting…</pre>
+</body>
+</html>

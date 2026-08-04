@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — DOM monster</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    #viewport {
+      height: 70vh;
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #101017;
+      position: relative;
+    }
+    #rows { position: relative; }
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      height: 28px;
+      padding: 0 10px;
+      border-bottom: 1px solid #1e1e2a;
+      font: 12px/1 ui-monospace, Menlo, monospace;
+      white-space: nowrap;
+    }
+    .row .id { color: var(--muted); width: 70px; }
+    .row .name { width: 220px; overflow: hidden; text-overflow: ellipsis; }
+    .row .val { color: var(--accent); width: 90px; text-align: right; }
+    .row .bar { height: 8px; border-radius: 4px; background: #7c9cff44; }
+
+    /* TODO (contentVisibility strategy): add a class here and apply it in app.js.
+       .row.cv { content-visibility: auto; contain-intrinsic-size: auto 28px; } */
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — DOM monster</h1>
+    <p>Watch the two timings the page prints: <strong>JS ms</strong> and <strong>to-paint ms</strong>.
+      The gap between them is the whole lesson. Open the Performance monitor to watch node count
+      and heap.</p>
+  </div>
+
+  <div class="controls">
+    <label>rows <input id="count" type="number" value="100000" min="1000" max="1000000" step="1000"></label>
+    <label>strategy
+      <select id="strategy">
+        <option value="innerHTML">0 · innerHTML += (worst)</option>
+        <option value="naive" selected>1 · appendChild per row (broken)</option>
+        <option value="fragment">2 · DocumentFragment</option>
+        <option value="cv">3 · content-visibility</option>
+        <option value="paginated">4 · paginated</option>
+        <option value="virtualized">5 · virtualized</option>
+      </select>
+    </label>
+    <button id="render" data-variant="bad">render</button>
+    <button id="clear">clear</button>
+    <div class="sep"></div>
+    <button id="nodes">count nodes</button>
+    <button id="reset">reset HUD</button>
+  </div>
+
+  <p class="readout" id="out">Render 10k first, then 100k. Record both timings each time.</p>
+
+  <div id="viewport"><div id="rows"></div></div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

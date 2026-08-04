@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>13/02 — async CSS techniques</title>
+
+  <!-- CRITICAL CSS, inlined. Everything needed to paint the top of the page, and nothing else.
+       Keep it under ~14KB so it fits in the first congestion window. -->
+  <style>
+    :root { --bg:#0d0d12; --text:#e9e9f2; --muted:#9a9ab0; --accent:#7c9cff; --line:#2a2a38; }
+    *{box-sizing:border-box} html,body{margin:0}
+    body{background:var(--bg);color:var(--text);padding:20px;
+         font:14px/1.55 -apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+    h1{font-size:18px;margin:0 0 4px}
+    .hero{font-size:30px;line-height:1.25;max-width:700px;margin:0 0 12px}
+    .prose{max-width:640px;color:var(--muted)}
+    .readout{font:12px/1.6 ui-monospace,Menlo,monospace;color:var(--muted);white-space:pre-wrap}
+    .hint{color:var(--muted);font-size:12px;max-width:820px}
+    a{color:var(--accent)}
+  </style>
+
+  <!-- TECHNIQUE 1 — the media swap.
+       A stylesheet whose media doesn't match isn't render-blocking. It still downloads (at a
+       lower priority), and onload flips it to `all`, at which point it applies. -->
+  <link rel="stylesheet" href="css/part-00.css" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="css/part-01.css" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="css/part-02.css" media="print" onload="this.media='all'">
+
+  <!-- TECHNIQUE 2 — preload, then promote.
+       Fetches at high priority as a style, then becomes a stylesheet on load. Higher priority
+       than technique 1, which is sometimes what you want and sometimes exactly what you don't
+       (it competes with your LCP image for bandwidth). -->
+  <link rel="preload" href="css/part-03.css" as="style" onload="this.rel='stylesheet'">
+  <link rel="preload" href="css/part-04.css" as="style" onload="this.rel='stylesheet'">
+
+  <!-- Both techniques need a no-JS fallback, because both rely on an onload handler. -->
+  <noscript>
+    <link rel="stylesheet" href="css/part-00.css">
+    <link rel="stylesheet" href="css/part-01.css">
+    <link rel="stylesheet" href="css/part-02.css">
+    <link rel="stylesheet" href="css/part-03.css">
+    <link rel="stylesheet" href="css/part-04.css">
+  </noscript>
+
+  <!-- The font, done properly: swap so text is visible immediately, and preconnect so the
+       font host's connection is warm before the CSS asks for it. -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" media="print" onload="this.media='all'"
+        href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400&display=swap">
+
+  <script src="report.js"></script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>02 — the async-CSS techniques, demonstrated</h1>
+    <p class="hero">This heading painted in the first round trip.</p>
+    <p class="prose">Five stylesheets are still loading right now, and none of them held up this
+      paint. Watch the Network panel: note their <strong>priority</strong> — the media-swap ones are
+      lower than the preload ones. That difference matters when they're competing with your LCP
+      image.</p>
+    <p><a href="index.html" style="color:var(--accent)">← back to the lab</a></p>
+  </div>
+
+  <pre class="readout" id="out">waiting…</pre>
+
+  <p class="hint">Now find the cost: throttle to Slow 3G and watch for a flash as the async
+    stylesheets land and change the page. That flash is what happens when your critical CSS is
+    incomplete — and it's why the build challenge's self-verification step exists.</p>
+
+  <p class="hint">Compare this page's FCP against 01. Then go build 03 with the whole set of
+    stylesheets, the <code>@import</code> chain removed, and the font shift eliminated.</p>
+</body>
+</html>

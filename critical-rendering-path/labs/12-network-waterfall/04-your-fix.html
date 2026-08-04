@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>12/04 — your fix</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <script src="report.js"></script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>04 — your fix</h1>
+    <p>Not "put it all in one bundle". The brief is to load the same total code with a strategy you
+      can defend on both first visit and repeat visit.</p>
+    <p><a href="index.html" style="color:var(--accent)">← back to the lab</a></p>
+  </div>
+
+  <pre class="readout" id="out">waiting…</pre>
+
+  <!-- ========================= YOUR WORK STARTS HERE =========================
+       Requirements:
+
+       1. THREE OR FOUR CHUNKS, not one and not fifty:
+            · critical  — needed for first paint
+            · vendor    — rarely changes, cache-friendly
+            · deferred  — loaded via import() on interaction
+          Build them with a script (extend make-modules.mjs) or by hand.
+
+       2. NO DISCOVERY CHAINS. Every chunk needed for first paint must be discoverable in
+          this HTML file. Use <link rel="modulepreload"> where the graph is nested.
+
+       3. MEASURE bytes-before-first-paint, not total bytes. Those are different metrics and
+          only one of them is what the user waits for.
+
+       4. THE REPEAT-VISIT TABLE. Simulate a deploy in which exactly one module changed
+          (edit one file, rename it with a new hash). Then fill this in:
+
+             strategy            first visit bytes    repeat visit bytes after 1 change
+             ------------------  -------------------  ---------------------------------
+             50 files            ______               ______
+             1 bundle            ______               ______
+             your chunks         ______               ______
+
+          This table is the actual argument for a bundling strategy. Everything else is taste.
+
+       5. Add ONE <link rel="preload"> and one <link rel="prefetch"> correctly, then
+          deliberately add a wrong one and find the console warning Chrome emits about
+          unused preloads.
+
+       6. Note the protocol the report prints. Run the whole comparison on HTTP/1.1 AND
+          HTTP/2 — several of the conclusions flip.
+
+       Write your findings into README.md. Then answer: which of the four costs from the
+       README (per-request overhead, bandwidth, latency chains, execution) did each of your
+       changes address?
+       ======================================================================== -->
+
+  <button id="load-deferred">load the deferred chunk</button>
+
+  <script>
+    document.getElementById('load-deferred').addEventListener('click', async () => {
+      // TODO: dynamic import of your deferred chunk. Time it, and note that this request
+      // was invisible to the preload scanner — which is the point of prefetching it.
+      alert('TODO: import() your deferred chunk here, and measure the interaction latency.');
+    });
+  </script>
+</body>
+</html>

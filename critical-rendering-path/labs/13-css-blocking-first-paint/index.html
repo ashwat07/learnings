@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 13 — CSS blocking first paint</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    ul { max-width: 820px; padding-left: 18px; }
+    li { margin-bottom: 10px; }
+    a { color: var(--accent); }
+    pre { background: #101017; border: 1px solid var(--line); border-radius: 8px; padding: 10px;
+          overflow-x: auto; font-size: 12px; max-width: 820px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 13 — CSS blocking first paint</h1>
+    <p>CSS doesn't stop the parser — it stops the <em>paint</em>. Which is worse, because a blank
+      screen is what the user sees.</p>
+  </div>
+
+  <h2>setup</h2>
+  <pre>node make-css.mjs
+cd ../.. &amp;&amp; ./serve.sh</pre>
+
+  <ul>
+    <li><a href="01-twenty-stylesheets.html">01 · 20 render-blocking stylesheets</a>
+      — plus a 4-deep <code>@import</code> chain and a blocking web font. Record with
+      <strong>Screenshots</strong> enabled and count the blank frames.</li>
+    <li><a href="02-async-css.html">02 · the async-CSS techniques, demonstrated</a>
+      — the <code>media</code> swap and the <code>preload</code> variant, side by side, so you can
+      see them work before you build with them.</li>
+    <li><a href="03-your-fix.html">03 · your fix</a>
+      — critical CSS inlined under 14KB, everything else async, no <code>@import</code>, font
+      handled without trading FCP for CLS.</li>
+  </ul>
+
+  <h2>the measurement that motivates all of this</h2>
+  <p class="hint">Open page 01, then ⌘⇧P → <strong>Show Coverage</strong> → reload. Read the unused
+    percentage for each stylesheet. Everything in that red bar is bytes the user waited for and
+    never benefited from. That number is the argument for critical CSS — and the reason your
+    extraction has to be automated, because nobody maintains it by hand.</p>
+</body>
+</html>

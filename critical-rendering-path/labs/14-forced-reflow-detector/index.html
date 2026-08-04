@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 14 — Forced reflow detector</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    #subjects { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .subject { width: 80px; height: 40px; background: #7c9cff44; border-radius: 6px; }
+    .subject.red { background: #ff6b6b44; }
+    .subject.contained { contain: layout; }
+    /* A large, expensive document body, so a document-wide layout is measurably worse than a
+       subtree layout. Fill it from app.js. */
+    #ballast { columns: 6; font-size: 11px; color: #ffffff10; max-height: 220px; overflow: hidden; }
+    table { border-collapse: collapse; font-size: 12px; margin-top: 10px; width: 100%; max-width: 900px; }
+    td, th { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-weight: 500; }
+    td.num { font: 12px ui-monospace, Menlo, monospace; text-align: right; }
+    .pattern-code { font: 11px/1.5 ui-monospace, Menlo, monospace; color: var(--muted);
+                    white-space: pre; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 14 — Forced reflow detector</h1>
+    <p><strong>Write your predictions in README.md before you click anything.</strong> The value of
+      this lab is entirely in the gap between what you predicted and what happened.</p>
+  </div>
+
+  <div class="controls">
+    <label>iterations <input id="iterations" type="number" value="2000" min="1" max="200000" step="100"></label>
+    <label><input type="checkbox" id="contain"> contain: layout on subjects</label>
+    <label><input type="checkbox" id="ballast" checked> heavy document ballast</label>
+    <div class="sep"></div>
+    <button id="runAll" data-variant="bad">run all patterns</button>
+    <button id="reset">reset</button>
+  </div>
+
+  <p class="hint">Record a Performance trace over "run all patterns", then count the actual
+    <code>Layout</code> entries per pattern in Bottom-Up. The page's timing-based estimate is a
+    hint, not the truth — the trace is the truth.</p>
+
+  <div id="subjects"></div>
+
+  <table id="results">
+    <thead>
+      <tr><th>pattern</th><th>code</th><th class="num">ms</th><th class="num">geometry reads</th>
+        <th class="num">ms / iteration</th><th>verdict</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <p class="readout" id="out"></p>
+
+  <h2>document ballast (makes document-wide layout expensive)</h2>
+  <div id="ballast-content"></div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

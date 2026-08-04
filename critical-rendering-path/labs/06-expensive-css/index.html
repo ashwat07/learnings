@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 06 — Expensive CSS</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    body { background: #0d0d12; }
+    /* A busy backdrop, so backdrop-filter has something expensive to read back. */
+    #backdrop {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(circle at 20% 30%, #4b2a7a 0%, transparent 45%),
+        radial-gradient(circle at 80% 60%, #1e5a6b 0%, transparent 45%),
+        conic-gradient(from 0.2turn at 50% 50%, #221 0%, #123 25%, #312 50%, #133 75%, #221 100%);
+    }
+    #cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+    .card {
+      height: 110px; padding: 12px;
+      background: #1a1a24cc;
+      color: var(--muted); font-size: 12px;
+      border: 1px solid #ffffff14;
+      /* Every expensive property below is opt-in via a class on <html>. */
+    }
+
+    /* --- the effects, each toggleable ------------------------------------- */
+    .fx-radius   .card { border-radius: 18px; overflow: hidden; }
+    .fx-shadow-s .card { box-shadow: 0 1px 2px #0008; }
+    .fx-shadow-l .card { box-shadow: 0 24px 70px 10px #000c, 0 2px 6px #0009; }
+    .fx-blur     .card::before {
+      content: ''; position: absolute; inset: -20px; z-index: -1;
+      background: radial-gradient(circle, #7c9cff, transparent 70%);
+      filter: blur(24px);
+    }
+    .fx-backdrop .card { backdrop-filter: blur(14px) saturate(160%); background: #1a1a2455; }
+    .fx-clip     .card { clip-path: polygon(0 8%, 92% 0, 100% 92%, 6% 100%); }
+    .fx-gradient .card {
+      background-image: conic-gradient(from .1turn, #7c9cff44, #b57cff44, #6ee7a844, #7c9cff44);
+    }
+    .fx-blend    .card { mix-blend-mode: overlay; }
+    .fx-textshadow .card { text-shadow: 0 2px 8px #000, 0 0 18px #7c9cff; }
+
+    .card { position: relative; }
+    /* TODO (fix step): promotion experiment.
+       .promoted .card { will-change: transform; }  ← then check the Layers panel */
+  </style>
+</head>
+<body>
+  <div id="backdrop"></div>
+
+  <div class="lab-header">
+    <h1>Lab 06 — Expensive CSS</h1>
+    <p>An ablation study. Turn on <em>one</em> effect, scroll for three seconds, record Paint total.
+      Turn it off. Repeat. Build your own cost table.</p>
+  </div>
+
+  <div class="controls" id="fx">
+    <label>cards <input id="count" type="number" value="500" min="20" max="5000" step="20"></label>
+    <button id="rebuild">rebuild</button>
+    <div class="sep"></div>
+    <button data-fx="fx-radius" aria-pressed="false">border-radius</button>
+    <button data-fx="fx-shadow-s" aria-pressed="false">shadow sm</button>
+    <button data-fx="fx-shadow-l" aria-pressed="false">shadow lg</button>
+    <button data-fx="fx-blur" aria-pressed="false">filter: blur</button>
+    <button data-fx="fx-backdrop" aria-pressed="false">backdrop-filter</button>
+    <button data-fx="fx-clip" aria-pressed="false">clip-path</button>
+    <button data-fx="fx-gradient" aria-pressed="false">conic gradient</button>
+    <button data-fx="fx-blend" aria-pressed="false">mix-blend-mode</button>
+    <button data-fx="fx-textshadow" aria-pressed="false">text-shadow</button>
+    <div class="sep"></div>
+    <button id="all" data-variant="bad">all on</button>
+    <button id="none" data-variant="good">all off</button>
+  </div>
+
+  <div class="controls">
+    <button id="autoscroll">auto-scroll 3s</button>
+    <button id="animate" aria-pressed="false">animate cards (transform)</button>
+    <button id="reset">reset HUD</button>
+  </div>
+
+  <p class="readout" id="out"></p>
+
+  <div id="cards"></div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

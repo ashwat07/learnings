@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 08 — React re-render storm</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    #cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+    .card {
+      border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+      background: #14141d; font-size: 12px;
+    }
+    .card h3 { margin: 0 0 4px; font-size: 12px; color: var(--text); }
+    .card .meta { color: var(--muted); font: 11px/1.4 ui-monospace, Menlo, monospace; }
+    .card .bar { height: 6px; border-radius: 3px; background: #7c9cff55; margin-top: 6px; }
+    .card.hit { border-color: var(--accent); }
+    #render-count { font: 12px ui-monospace, Menlo, monospace; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 08 — Re-render 10,000 components</h1>
+    <p>Type in the search box and watch the lag. Then open React DevTools → Profiler with
+      <em>"Record why each component rendered"</em> enabled, and record five keystrokes.</p>
+    <p class="hint">No JSX and no Babel — components use <code>React.createElement</code> (aliased
+      <code>h</code>) so nothing sits between you and the trace.</p>
+  </div>
+
+  <div id="root"></div>
+
+  <p class="readout" id="out">React is loading from the CDN…</p>
+
+  <!-- React 18 UMD, development build (the Profiler needs it). Production builds are faster;
+       note that difference when you measure, and never draw conclusions about absolute
+       numbers from a dev build. -->
+  <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

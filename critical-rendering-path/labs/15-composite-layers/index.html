@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 15 — Composite layers</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    #cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;
+             position: relative; }
+    .card {
+      height: 90px; padding: 8px 10px; border-radius: 10px;
+      background: linear-gradient(140deg, #22223a, #171727);
+      border: 1px solid #ffffff14; color: var(--muted); font-size: 12px;
+      position: relative;
+    }
+    .card .title { color: var(--text); font-size: 13px; margin-bottom: 4px; }
+
+    /* --- promotion strategies (toggled by class on <html>) ------------------ */
+    .promote-all       .card { will-change: transform; }
+    .promote-translatez .card { transform: translateZ(0); }
+    .promote-one       .card.animating { will-change: transform; }
+
+    /* --- animations -------------------------------------------------------- */
+    @keyframes drift-transform { from { transform: translateX(0); } to { transform: translateX(40px); } }
+    @keyframes drift-left      { from { left: 0; }                 to { left: 40px; } }
+    @keyframes zoom-text       { from { transform: scale(1); }     to { transform: scale(2.2); } }
+
+    .anim-transform .card { animation: drift-transform 1.4s ease-in-out infinite alternate; }
+    .anim-left      .card { animation: drift-left 1.4s ease-in-out infinite alternate; }
+    .anim-scale     .card { animation: zoom-text 1.4s ease-in-out infinite alternate;
+                            transform-origin: top left; }
+
+    /* --- layer explosion --------------------------------------------------- */
+    /* This element overlaps the card grid and paints above it. When the cards are
+       composited, the compositor must promote this too — or it couldn't preserve paint
+       order. Check the Layers panel for the reason string. */
+    #overlap {
+      position: absolute; inset: 40px 20px auto 20px; height: 300px; z-index: 5;
+      background: #7c9cff10; border: 1px dashed #7c9cff55; border-radius: 12px;
+      pointer-events: none; display: none;
+    }
+    .explode #overlap { display: block; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 15 — Composite layers</h1>
+    <p>Open <strong>Rendering → Layer borders</strong> and the <strong>Layers panel</strong> before
+      you touch anything. The Layers panel's "compositing reasons" text is the whole lesson.</p>
+  </div>
+
+  <div class="controls">
+    <label>cards <input id="count" type="number" value="100" min="1" max="4000" step="10"></label>
+    <button id="rebuild">rebuild</button>
+    <div class="sep"></div>
+    <label>promotion
+      <select id="promotion">
+        <option value="">none</option>
+        <option value="promote-all">will-change on ALL</option>
+        <option value="promote-translatez">translateZ(0) on ALL</option>
+        <option value="promote-one">will-change on the animated one only</option>
+      </select>
+    </label>
+    <label>animation
+      <select id="animation">
+        <option value="">none</option>
+        <option value="anim-transform">transform (composited)</option>
+        <option value="anim-left">left (not composited)</option>
+        <option value="anim-scale">scale — watch the text quality</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="explode"> overlap element (layer explosion)</label>
+  </div>
+
+  <div class="controls">
+    <button id="block" data-variant="bad">block main thread (2s)</button>
+    <button id="readLoop" aria-pressed="false">rAF + getBoundingClientRect loop</button>
+    <button id="estimate">estimate layer memory</button>
+    <button id="reset">reset HUD</button>
+  </div>
+
+  <p class="readout" id="out"></p>
+
+  <div id="cards"><div id="overlap"></div></div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

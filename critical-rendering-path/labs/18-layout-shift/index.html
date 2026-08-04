@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 18 — Layout shift (CLS)</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+
+  <!-- Source 4: a web font whose metrics differ from the fallback. `swap` shows fallback text
+       immediately (good for FCP — Lab 13) and then reflows every line when the font lands
+       (bad for CLS). That trade is the point.
+       Needs internet; if you're offline, comment it out and note which sources still work. -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400&display=swap">
+
+  <style>
+    /* Deliberately NO metric-matched fallback. That's fix step 4. */
+    .prose { font-family: Georgia, serif; max-width: 620px; font-size: 17px; line-height: 1.6;
+             color: var(--muted); }
+    .prose.webfont { font-family: Newsreader, Georgia, serif; }
+
+    #banner {
+      background: #b57cff22; border: 1px solid #b57cff55; border-radius: 8px;
+      padding: 10px 12px; font-size: 13px; margin-bottom: 14px;
+    }
+    .placeholder { background: #ffffff08; border: 1px dashed var(--line); border-radius: 8px;
+                   padding: 10px; color: var(--muted); font-size: 12px; }
+    /* Source 2: the placeholder is 60px and the real content is 240px. A skeleton that lies
+       is worse than no skeleton, because you shipped the machinery and still got the shift. */
+    #async-slot .placeholder { height: 60px; }
+    #async-slot .real { min-height: 240px; background: #14141d; border: 1px solid var(--line);
+                        border-radius: 8px; padding: 12px; }
+
+    /* Source 3: no width/height, no aspect-ratio. */
+    #late-image img { width: 100%; max-width: 520px; display: block; border-radius: 10px; }
+
+    /* Source 5: an iframe with no reserved height. */
+    #embed iframe { width: 100%; max-width: 520px; border: 1px solid var(--line);
+                    border-radius: 10px; background: #14141d; }
+
+    #feed { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; max-width: 620px; }
+    #feed li { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+
+    /* Source 7: animates `height`, so everything below moves for 400ms.
+       It scores ~0.00 because it follows a click. It is still bad. */
+    #accordion .panel { overflow: hidden; height: 0; transition: height 400ms ease; }
+    #accordion .panel.open { height: 220px; }
+    #accordion .panel-inner { padding: 10px; color: var(--muted); font-size: 13px; }
+
+    /* Source 8: grows the document past the viewport so the scrollbar appears. */
+    #grow { height: 0; transition: none; }
+
+    #shifts { max-height: 240px; overflow: auto; border: 1px solid var(--line); border-radius: 8px;
+              background: #101017; padding: 8px; font: 11px/1.6 ui-monospace, Menlo, monospace;
+              color: var(--muted); }
+    #shifts b { color: var(--text); }
+    #shifts .excluded { color: #6ee7a8; }
+    #windows { font: 12px/1.6 ui-monospace, Menlo, monospace; color: var(--muted); }
+    .cls-big { color: #ff6b6b; }
+    .cls-ok { color: #6ee7a8; }
+    section { margin-bottom: 22px; }
+  </style>
+</head>
+<body>
+  <!-- Source 1 inserts a banner here, above everything, after 1s. -->
+  <div id="banner-slot"></div>
+
+  <div class="lab-header">
+    <h1>Lab 18 — Layout shift (CLS)</h1>
+    <p>Turn on <strong>Rendering → Layout Shift Regions</strong> first — it flashes what actually
+      moved, which is usually more than you expected.</p>
+    <p class="hint">The CLS below is computed with the real session-window algorithm (1s gap, 5s max
+      window), not a naive sum. Watch the windows form as you trigger sources.</p>
+  </div>
+
+  <div class="controls">
+    <button data-source="injectBanner" data-variant="bad">1 · inject banner</button>
+    <button data-source="asyncContent" data-variant="bad">2 · async content</button>
+    <button data-source="lateImage" data-variant="bad">3 · late image</button>
+    <button data-source="fontSwap" data-variant="bad">4 · font swap</button>
+    <button data-source="embedIframe" data-variant="bad">5 · iframe</button>
+    <button data-source="prependItems" data-variant="bad">6 · prepend items</button>
+    <button data-source="accordion" data-variant="bad">7 · accordion (scores 0!)</button>
+    <button data-source="scrollbar" data-variant="bad">8 · scrollbar</button>
+    <div class="sep"></div>
+    <button id="all" data-variant="bad">fire all (staggered)</button>
+    <button id="reset">reset page + measurements</button>
+  </div>
+
+  <div class="controls">
+    <span class="tag">mode</span>
+    <button id="mode-broken" aria-pressed="true" data-variant="bad">broken</button>
+    <button id="mode-fixed" aria-pressed="false" data-variant="good">fixed (yours)</button>
+    <span class="hint">Each source runs its broken or fixed implementation. Reset between
+      measurements — CLS only accumulates.</span>
+  </div>
+
+  <p id="windows"></p>
+  <div id="shifts">no shifts recorded yet</div>
+
+  <section>
+    <h2>async content <span class="hint">source 2</span></h2>
+    <div id="async-slot"><div class="placeholder">loading… (this placeholder is 60px; the real
+      content is 240px)</div></div>
+  </section>
+
+  <section>
+    <h2>late image <span class="hint">source 3</span></h2>
+    <div id="late-image"></div>
+  </section>
+
+  <section>
+    <h2>embed <span class="hint">source 5</span></h2>
+    <div id="embed"></div>
+  </section>
+
+  <section>
+    <h2>feed <span class="hint">source 6 — read the first item, then prepend</span></h2>
+    <ul id="feed"></ul>
+  </section>
+
+  <section id="accordion">
+    <h2>accordion <span class="hint">source 7 — animates height, scores ~0.00</span></h2>
+    <button id="accordion-toggle">toggle details</button>
+    <div class="panel"><div class="panel-inner">Everything below this panel moves for 400ms.
+      Because it followed a click, <code>hadRecentInput</code> is true and CLS ignores it entirely.
+      Decide whether you care.</div></div>
+  </section>
+
+  <section>
+    <h2>prose <span class="hint">source 4 — the font swap reflows every line</span></h2>
+    <p class="prose" id="prose">Typography carries most of the layout shift risk on a text-heavy
+      page, and it is the source people forget because nothing is "loading" in a visible sense. When
+      the web font arrives and its metrics differ from the fallback's, every line box is remeasured:
+      line heights change, wraps move, and everything below this paragraph slides. The fix is not to
+      avoid web fonts — it is to make the fallback occupy the same space, which you can do exactly
+      with metric overrides.</p>
+  </section>
+
+  <div id="grow"></div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>12/03 — a 10-deep import chain</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <script src="report.js"></script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>03 — a 10-deep import chain</h1>
+    <p>Ten requests instead of fifty, and it may well be the slowest page in this lab. Each
+      module's dependency cannot even be <em>discovered</em> until the module itself has arrived and
+      been parsed — so you pay one full round trip per level, serially.</p>
+    <p>Throttle to Fast 3G (≈150ms RTT) and predict the floor before you measure:
+      10 levels × RTT = the minimum, before a single byte of useful work.</p>
+    <p class="hint">Then try the fix without touching the module structure: add
+      <code>&lt;link rel="modulepreload"&gt;</code> for every step in the chain (commented out
+      below) and measure again. The preload scanner cannot see inside modules — but it can see
+      those link tags.</p>
+    <p><a href="index.html" style="color:var(--accent)">← back to the lab</a></p>
+  </div>
+
+  <pre class="readout" id="out">waiting…</pre>
+
+  <!-- Uncomment these to flatten the chain without restructuring a single import.
+  <link rel="modulepreload" href="chain/step-00.js">
+  <link rel="modulepreload" href="chain/step-01.js">
+  <link rel="modulepreload" href="chain/step-02.js">
+  <link rel="modulepreload" href="chain/step-03.js">
+  <link rel="modulepreload" href="chain/step-04.js">
+  <link rel="modulepreload" href="chain/step-05.js">
+  <link rel="modulepreload" href="chain/step-06.js">
+  <link rel="modulepreload" href="chain/step-07.js">
+  <link rel="modulepreload" href="chain/step-08.js">
+  <link rel="modulepreload" href="chain/step-09.js">
+  -->
+
+  <script type="module" src="chain/step-00.js"></script>
+</body>
+</html>

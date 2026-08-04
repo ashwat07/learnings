@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 11 — Image disaster</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    /* Note what is NOT here: no aspect-ratio, no reserved space. That's deliberate. */
+    #hero img { width: 100%; max-width: 900px; display: block; border-radius: 12px; }
+    #gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    #gallery figure { margin: 0; }
+    #gallery img { width: 100%; display: block; border-radius: 8px; background: #1a1a24; }
+    figcaption { color: var(--muted); font: 11px/1.5 ui-monospace, Menlo, monospace; }
+    .prose { max-width: 640px; color: var(--muted); }
+    .prose p { margin: 10px 0; }
+    .missing { border: 1px dashed #5c2b2b; color: #ffb3b3; padding: 12px; border-radius: 8px;
+               max-width: 820px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 11 — Image disaster</h1>
+    <p>Everything is wrong here on purpose: eager loading, no dimensions, no
+      <code>srcset</code>, 1600px files in 200px slots, and a lazy-loaded hero.</p>
+  </div>
+
+  <div class="missing" id="setup" hidden>
+    <strong>No images found.</strong> Generate them first:
+    <pre>node make-images.mjs</pre>
+    then serve over HTTP with <code>./serve.sh</code> from the course root.
+  </div>
+
+  <p class="readout" id="out">measuring…</p>
+
+  <!-- MISTAKE: the LCP element is lazy-loaded. This single attribute can add seconds to LCP. -->
+  <div id="hero">
+    <img src="images/photo-01.bmp" alt="hero" loading="lazy">
+  </div>
+
+  <!-- Text below the hero, so layout shifts are obvious as images pop in. -->
+  <div class="prose">
+    <p>Watch this paragraph jump down the page as each image loads. Every jump is a layout
+      shift, and every shift is a real user losing their place or tapping the wrong thing.</p>
+    <p>Open the Experience track in a Performance recording and click each shift marker to see
+      exactly which element moved.</p>
+  </div>
+
+  <h2>gallery — 20 images, all eager, all full size</h2>
+  <div id="gallery"></div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

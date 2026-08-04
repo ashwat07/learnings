@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>12/02 — one bundle</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <script src="report.js"></script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>02 — one bundle</h1>
+    <p>Byte-for-byte (nearly) the same code as page 01, in a single request. Any difference you
+      measure is per-request overhead and connection contention — not payload.</p>
+    <p>Compare the <code>uncompressed / transferred</code> ratio against page 01's. Compression
+      works better across one large input than fifty small ones; that's a real part of bundling's
+      benefit, and it's easy to forget.</p>
+    <p><a href="index.html" style="color:var(--accent)">← back to the lab</a></p>
+  </div>
+
+  <pre class="readout" id="out">waiting…</pre>
+
+  <script src="bundle.js"></script>
+</body>
+</html>

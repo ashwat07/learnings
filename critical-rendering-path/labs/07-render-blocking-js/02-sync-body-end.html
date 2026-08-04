@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>07/02 — sync script before &lt;/body&gt;</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <script src="scripts/instrument.js"></script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>02 — same script, moved to the end of &lt;body&gt;</h1>
+    <p>Content parses and paints first, <em>then</em> the main thread freezes for 800ms. FCP
+      improved a lot. Ask yourself which metric did <strong>not</strong> improve.</p>
+    <p><a href="index.html" style="color:var(--accent)">← back to the lab</a></p>
+  </div>
+
+  <div class="controls">
+    <button id="counter">click me — count: 0</button>
+    <span class="hint">Reload, and click the moment you see the button. Does it respond?</span>
+  </div>
+
+  <p class="readout" id="dependent-output">dependent.js has not reported yet</p>
+  <ul id="late-list"><li>from HTML</li></ul>
+  <pre class="readout" id="lab-metrics">waiting…</pre>
+
+  <script>
+    (function () {
+      let n = 0;
+      const btn = document.getElementById('counter');
+      btn.addEventListener('click', () => { btn.textContent = `click me — count: ${++n}`; });
+      window.LabLog?.note('inline counter script executed');
+    })();
+  </script>
+
+  <!-- Still fully blocking — but the DOM already exists, so the user has something to look at
+       while being unable to interact with it. Note the FCP vs TBT trade. -->
+  <script src="scripts/heavy.js"></script>
+  <script src="scripts/dependent.js"></script>
+</body>
+</html>

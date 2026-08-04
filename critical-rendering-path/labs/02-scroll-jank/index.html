@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Scroll jank</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    .controls { position: sticky; top: 0; z-index: 10; }
+    #list { margin-top: 12px; }
+    .row {
+      height: 20px;
+      margin-bottom: 2px;
+      width: 60px;
+      background: linear-gradient(90deg, #7c9cff, #b57cff);
+      border-radius: 3px;
+      /* Strategy 6 asks you to add: content-visibility / contain. Do it here. */
+    }
+    /* Strategy 5 (cssOnly): define a scroll-driven animation here and add the class in app.js.
+       Progressive enhancement:
+       @supports (animation-timeline: scroll()) { ... }  */
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Scroll jank</h1>
+    <p>Every row's size is driven by scroll position. Scroll with each strategy selected and watch
+      the HUD. The broken version writes <code>width</code> on every row, on every scroll event.</p>
+  </div>
+
+  <div class="controls">
+    <label>rows <input id="count" type="number" value="10000" min="100" max="60000" step="500"></label>
+    <button id="rebuild">rebuild</button>
+    <div class="sep"></div>
+    <label>strategy
+      <select id="strategy">
+        <option value="broken">1 · broken (width, every event)</option>
+        <option value="raf">2 · rAF-coalesced (still width)</option>
+        <option value="transform">3 · transform only</option>
+        <option value="visible">4 · transform + visible only</option>
+        <option value="css">5 · CSS scroll timeline (no JS)</option>
+        <option value="off">off</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="passive" checked> passive listeners</label>
+    <label><input type="checkbox" id="blocker"> block main thread 500ms every 3s</label>
+    <div class="sep"></div>
+    <button id="reset">reset HUD</button>
+  </div>
+
+  <p class="readout" id="out"></p>
+
+  <div id="list"></div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

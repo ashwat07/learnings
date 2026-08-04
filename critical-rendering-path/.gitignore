@@ -1,0 +1,11 @@
+# Generated lab assets — recreate with the make-*.mjs scripts in each lab.
+labs/11-image-disaster/images/
+labs/12-network-waterfall/modules/
+labs/12-network-waterfall/chain/
+labs/12-network-waterfall/bundle.js
+labs/13-css-blocking-first-paint/css/
+
+# Local HTTP/2 test certs (Lab 12)
+*.pem
+
+.DS_Store

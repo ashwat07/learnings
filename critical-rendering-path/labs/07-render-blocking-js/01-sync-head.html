@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>07/01 — sync script in head</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+
+  <!-- Tiny, first, so it can observe everything after it. -->
+  <script src="scripts/instrument.js"></script>
+
+  <!-- THE PROBLEM. Parser stops here. No DOM after this point until heavy.js has been
+       downloaded AND executed (800ms of synchronous work). Nothing paints. -->
+  <script src="scripts/heavy.js"></script>
+
+  <!-- Slow-DOWNLOAD variant: comment out heavy.js above, uncomment this, and throttle the
+       network to Slow 3G. Compare which problem the preload scanner can hide. -->
+  <!-- <script src="scripts/slow-download.js"></script> -->
+
+  <!-- Slow-stylesheet variant: uncomment to put a render-blocking stylesheet BEFORE the
+       script and watch script execution wait for it. -->
+  <!-- <link rel="stylesheet" href="slow.css"> -->
+
+  <script src="scripts/dependent.js"></script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>01 — synchronous script in &lt;head&gt;</h1>
+    <p>The parser stopped at <code>heavy.js</code>. Everything you're reading was parsed
+      <em>after</em> 800ms of blocking work finished.</p>
+    <p><a href="index.html" style="color:var(--accent)">← back to the lab</a></p>
+  </div>
+
+  <div class="controls">
+    <button id="counter">click me — count: 0</button>
+    <span class="hint">Try clicking during the load freeze. Reload and mash it.</span>
+  </div>
+
+  <p class="readout" id="dependent-output">dependent.js has not reported yet</p>
+  <ul id="late-list"><li>from HTML</li></ul>
+  <pre class="readout" id="lab-metrics">waiting…</pre>
+
+  <script>
+    // Inline and tiny — registers the interaction handler as early as possible.
+    (function () {
+      let n = 0;
+      const btn = document.getElementById('counter');
+      btn.addEventListener('click', () => { btn.textContent = `click me — count: ${++n}`; });
+      window.LabLog?.note('inline counter script executed');
+    })();
+  </script>
+</body>
+</html>

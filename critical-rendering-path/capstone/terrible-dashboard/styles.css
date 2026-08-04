@@ -1,0 +1,188 @@
+/* Capstone — the terrible dashboard.
+   Every sin is marked with its number and the lab that covers it. Turn them into
+   "FIXED n:" comments with your measurement as you go. */
+
+:root {
+  --bg: #0d0d12;
+  --panel: #15151f;
+  --line: #262633;
+  --text: #e9e9f2;
+  --muted: #9098ac;
+  --accent: #7c9cff;
+  --good: #6ee7a8;
+  --bad: #ff6b6b;
+  --nav-h: 52px;
+  --sidebar-w: 210px;
+}
+html.light {
+  --bg: #f6f7fb; --panel: #ffffff; --line: #e2e5ee; --text: #14141c; --muted: #5c6478;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+/* ---------------------------------------------------------------------------
+   SIN 12 (Lab 06) — a sticky, full-viewport-width bar with a backdrop-filter.
+   backdrop-filter has to read back everything behind it, blur that, and composite —
+   over the full width of the viewport, on every scroll frame.
+   --------------------------------------------------------------------------- */
+#navbar {
+  position: sticky; top: 0; z-index: 40;
+  height: var(--nav-h);
+  display: flex; align-items: center; gap: 10px; padding: 0 14px;
+  background: color-mix(in srgb, var(--panel) 60%, transparent);
+  backdrop-filter: blur(18px) saturate(180%);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 18px 50px -20px #000a;
+}
+#navbar .spacer { flex: 1; }
+#navbar input[type="search"] { width: 260px; }
+
+button, input, textarea, select {
+  font: inherit; font-size: 13px; color: var(--text);
+  background: color-mix(in srgb, var(--panel) 80%, #000 20%);
+  border: 1px solid var(--line); border-radius: 7px; padding: 5px 10px;
+}
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); }
+
+#shell { display: flex; align-items: flex-start; }
+
+/* ---------------------------------------------------------------------------
+   SIN 1 (Lab 03) — the sidebar collapse transitions `width`.
+   Every frame: style → layout of the whole page (main's available width changes,
+   so all 100 cards and 5,000 rows relayout) → paint → composite.
+   --------------------------------------------------------------------------- */
+#sidebar {
+  width: var(--sidebar-w);
+  transition: width 300ms ease, padding 300ms ease;
+  overflow: hidden;
+  border-right: 1px solid var(--line);
+  padding: 12px 10px;
+  min-height: calc(100vh - var(--nav-h));
+  position: sticky; top: var(--nav-h);
+  flex: 0 0 auto;
+}
+#sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; }
+#sidebar nav { display: flex; flex-direction: column; gap: 2px; }
+#sidebar a {
+  color: var(--muted); text-decoration: none; padding: 6px 8px; border-radius: 6px;
+  white-space: nowrap; font-size: 13px;
+}
+#sidebar a.active { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--text); }
+.sidebar-foot { color: var(--muted); font-size: 11px; margin-top: 14px; white-space: nowrap; }
+
+main { flex: 1 1 auto; padding: 16px 18px 60px; min-width: 0; }
+section { margin-bottom: 28px; }
+h2 { font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted);
+     margin: 0 0 10px; }
+.hint { color: var(--muted); font-size: 11px; text-transform: none; letter-spacing: 0; }
+
+/* charts */
+.charts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.chart {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  padding: 10px; height: 130px; display: flex; align-items: flex-end; gap: 2px;
+}
+.chart .bar {
+  flex: 1 1 auto;
+  /* SIN 4 (Labs 01/03) — the bar's `height` is written every frame from JS. */
+  height: 10px;
+  background: linear-gradient(180deg, var(--accent), #b57cff);
+  border-radius: 2px 2px 0 0;
+  min-width: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   SIN 13 (Lab 06) — a big soft shadow plus rounded corners on 100 cards.
+   SIN 14 (Lab 15) — will-change: transform on all of them, permanently, so 100
+   layers exist forever whether or not anything is animating.
+   --------------------------------------------------------------------------- */
+#cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 26px 60px -18px #000c, 0 2px 6px #0007;
+  will-change: transform;                 /* SIN 14 */
+  transition: transform 160ms ease;
+}
+.card:hover { transform: translateY(-2px); }
+.card .name { font-size: 13px; margin-bottom: 2px; }
+.card .metric { font: 20px/1.1 ui-monospace, Menlo, monospace; }
+.card .sub { color: var(--muted); font-size: 11px; }
+.card.ok .metric { color: var(--good); }
+.card.warn .metric { color: #ffd166; }
+.card.err .metric { color: var(--bad); }
+
+/* table — SIN 7 (Lab 05): 5,000 rows, all in the DOM, no containment anywhere */
+#table-wrap {
+  max-height: 60vh; overflow: auto;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--panel);
+}
+#table { width: 100%; border-collapse: collapse; }
+#table td {
+  padding: 5px 10px; border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  font: 12px/1.4 ui-monospace, Menlo, monospace; white-space: nowrap;
+}
+#table tr:hover td { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+#table .sev-err { color: var(--bad); }
+#table .sev-warn { color: #ffd166; }
+
+/* ---------------------------------------------------------------------------
+   SIN 2 (Lab 03) — drawer and modal animate `left`, not `transform`.
+   The drawer is 360px wide and full height, so each frame relayouts and repaints it.
+   --------------------------------------------------------------------------- */
+#drawer {
+  position: fixed; top: var(--nav-h); bottom: 0; left: 100%;
+  width: 360px;
+  background: var(--panel); border-left: 1px solid var(--line);
+  transition: left 320ms ease;
+  z-index: 50; overflow: auto; padding: 12px;
+  box-shadow: -30px 0 80px -30px #000d;
+}
+#drawer.open { left: calc(100% - 360px); }
+#drawer header, #modal header {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 13px; color: var(--muted); margin-bottom: 10px;
+}
+#notifications { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+#notifications li {
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 12px;
+  box-shadow: 0 12px 30px -14px #000a;    /* more shadow, on an unbounded list */
+}
+
+#modal-backdrop {
+  position: fixed; inset: 0; z-index: 60; display: none;
+  /* SIN 15-adjacent (Lab 04): fades by animating background-color, so it repaints
+     the full viewport every frame instead of compositing an opacity change. */
+  background: #000000aa;
+  transition: background-color 220ms ease;
+}
+#modal-backdrop.open { display: block; }
+#modal {
+  position: fixed; top: 90px; left: -520px; width: 480px; z-index: 61;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px;
+  transition: left 280ms ease;
+  box-shadow: 0 40px 100px -30px #000e;
+  display: grid; gap: 10px;
+}
+#modal.open { left: calc(50% - 240px); }
+#modal label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+
+/* ---------------------------------------------------------------------------
+   SIN 3 (Labs 02/03) — the tooltip is positioned with top/left from a mousemove
+   handler. Layout per mouse event, and mousemove fires far more often than 60Hz.
+   --------------------------------------------------------------------------- */
+#tooltip {
+  position: fixed; top: 0; left: 0; z-index: 100;
+  pointer-events: none;
+  background: #000d; color: #fff; border: 1px solid #ffffff22;
+  border-radius: 8px; padding: 4px 8px; font-size: 11px;
+  box-shadow: 0 10px 30px -10px #000f;
+}

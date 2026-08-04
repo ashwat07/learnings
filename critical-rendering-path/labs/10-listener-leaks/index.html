@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 10 — Listener leaks</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    #panel { display: flex; flex-wrap: wrap; gap: 4px; max-height: 200px; overflow: auto;
+             border: 1px solid var(--line); border-radius: 8px; padding: 6px; background: #101017; }
+    #panel button { padding: 2px 8px; font-size: 11px; }
+    .predict { border: 1px dashed var(--line); border-radius: 8px; padding: 10px 12px;
+               max-width: 820px; color: var(--muted); margin-bottom: 14px; }
+    .predict strong { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 10 — Event listener leaks</h1>
+    <p>1,000 buttons, mounted and unmounted repeatedly, four different ways.</p>
+  </div>
+
+  <div class="predict">
+    <strong>Before you measure:</strong> mode 1 attaches a listener to every button and never calls
+    <code>removeEventListener</code>. Nothing else holds a reference to the buttons.
+    Does it leak? Write your answer down — actually write it — then run the measurement.
+    Most people get this wrong, and getting it wrong is the point.
+  </div>
+
+  <div class="controls">
+    <label>buttons <input id="count" type="number" value="1000" min="10" max="20000" step="100"></label>
+    <label>mode
+      <select id="mode">
+        <option value="perNodeClean">1 · per-node listener, nothing retained</option>
+        <option value="perNodeRetained">2 · per-node listener, handlers retained</option>
+        <option value="documentLevel">3 · per-button document listener</option>
+        <option value="delegated">4 · delegated (your fix)</option>
+      </select>
+    </label>
+    <button id="mount">mount</button>
+    <button id="unmount">unmount</button>
+    <button id="cycle" data-variant="bad">mount+unmount ×10</button>
+    <div class="sep"></div>
+    <button id="report">listener report</button>
+    <button id="stats">read stats</button>
+  </div>
+
+  <p class="hint">
+    Open the <strong>Performance monitor</strong> for live Listeners / DOM Nodes / Detached counters,
+    and the Memory tab's <strong>Detached elements</strong> view after each cycle. In the console,
+    <code>getEventListeners($0)</code> inspects a selected node (Chrome only).
+  </p>
+
+  <p class="readout" id="out"></p>
+
+  <div id="panel"></div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

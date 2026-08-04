@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>07/05 — your fix</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <script src="scripts/instrument.js"></script>
+
+  <!-- ========================= YOUR WORK STARTS HERE =========================
+       Budget (Fast 3G + CPU 4×):
+         · FCP < 1000ms
+         · no long task > 50ms after FCP
+         · the counter button responds within 100ms at ANY point during load
+         · dependent work still runs, still in the right order, with no races
+         · the same total amount of computation as heavy.js (≈800ms of work) still happens
+           — you are not allowed to simply delete it
+
+       Two implementations to build and compare:
+         A. scripts/chunked.js  — the work, sliced, yielding to the event loop between slices
+         B. scripts/worker.js   — the work, moved off the main thread entirely
+
+       Then answer, in a comment at the bottom of this file:
+         · which one keeps the button responsive, and why
+         · which one finishes the work sooner in wall-clock time, and why
+         · when the worker is the WRONG choice
+         · what rel=preload changed when you added it, and when it would make things worse
+       ======================================================================== -->
+
+  <!-- <script type="module" src="scripts/chunked.js"></script> -->
+</head>
+<body>
+  <div class="lab-header">
+    <h1>05 — your fix</h1>
+    <p>Same content, same work, none of the blocking. Fill in the head above and create the
+      scripts you need in <code>scripts/</code>.</p>
+    <p><a href="index.html" style="color:var(--accent)">← back to the lab</a></p>
+  </div>
+
+  <div class="controls">
+    <button id="counter">click me — count: 0</button>
+    <span class="hint">This must respond during load. That's the actual acceptance test.</span>
+  </div>
+
+  <p class="readout" id="dependent-output">dependent.js has not reported yet</p>
+  <ul id="late-list"><li>from HTML</li></ul>
+  <pre class="readout" id="lab-metrics">waiting…</pre>
+
+  <script>
+    (function () {
+      let n = 0, worst = 0, pending = 0;
+      const btn = document.getElementById('counter');
+      btn.addEventListener('click', () => {
+        // Measure input latency honestly: time from the click to the next painted frame.
+        pending = performance.now();
+        btn.textContent = `click me — count: ${++n}`;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          worst = Math.max(worst, performance.now() - pending);
+          btn.title = `worst click-to-paint: ${worst.toFixed(0)}ms`;
+          console.log(`[lab07] click-to-paint ${(performance.now() - pending).toFixed(0)}ms (worst ${worst.toFixed(0)}ms)`);
+        }));
+      });
+      window.LabLog?.note('inline counter script executed');
+    })();
+  </script>
+</body>
+</html>

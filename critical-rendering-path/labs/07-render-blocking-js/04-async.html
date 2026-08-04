@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>07/04 — async (and the race it creates)</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <script src="scripts/instrument.js"></script>
+
+  <!-- async: no parser blocking while downloading, but execution happens the moment the file
+       arrives — possibly mid-parse, possibly out of order.
+       dependent.js needs a global that heavy.js defines. Reload this page several times
+       (and vary network throttling) and watch the execution order change. -->
+  <script async src="scripts/heavy.js"></script>
+  <script async src="scripts/dependent.js"></script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>04 — async, with a dependency</h1>
+    <p>Reload several times, and try Slow 3G, Fast 3G, and no throttling. Two failure modes to
+      catch: <code>dependent.js</code> running before <code>heavy.js</code> defines its global, and
+      <code>dependent.js</code> running before the DOM element it needs has been parsed.</p>
+    <p><a href="index.html" style="color:var(--accent)">← back to the lab</a></p>
+  </div>
+
+  <div class="controls">
+    <button id="counter">click me — count: 0</button>
+    <span class="hint">How many reloads until you've seen both failure modes?</span>
+  </div>
+
+  <p class="readout" id="dependent-output">dependent.js has not reported yet</p>
+  <ul id="late-list"><li>from HTML</li></ul>
+  <pre class="readout" id="lab-metrics">waiting…</pre>
+
+  <script>
+    (function () {
+      let n = 0;
+      const btn = document.getElementById('counter');
+      btn.addEventListener('click', () => { btn.textContent = `click me — count: ${++n}`; });
+      window.LabLog?.note('inline counter script executed');
+    })();
+  </script>
+</body>
+</html>

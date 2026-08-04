@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Capstone — the terrible dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="tooltip" hidden></div>
+
+  <!-- SIN 12: sticky, full-width, backdrop-filter. Repaints a viewport-wide blur on scroll. -->
+  <header id="navbar">
+    <button id="sidebar-toggle" aria-label="toggle sidebar">☰</button>
+    <strong>Ops Console</strong>
+    <input id="search" type="search" placeholder="filter 5,000 rows…" autocomplete="off">
+    <span class="spacer"></span>
+    <button id="theme-toggle">theme</button>
+    <button id="drawer-toggle">notifications</button>
+    <button id="modal-toggle">settings</button>
+  </header>
+
+  <div id="shell">
+    <!-- SIN 1: collapsing this animates `width`, so every frame is a full layout. -->
+    <aside id="sidebar">
+      <nav>
+        <a href="#" class="active">Overview</a>
+        <a href="#">Services</a>
+        <a href="#">Latency</a>
+        <a href="#">Errors</a>
+        <a href="#">Deploys</a>
+        <a href="#">Alerts</a>
+        <a href="#">Logs</a>
+        <a href="#">Settings</a>
+      </nav>
+      <div class="sidebar-foot">v0.0.1-terrible</div>
+    </aside>
+
+    <main>
+      <section id="charts-section">
+        <h2>throughput</h2>
+        <!-- SIN 4: bars are DOM elements whose heights are written every frame,
+             with a geometry read interleaved. -->
+        <div class="charts" id="charts"></div>
+      </section>
+
+      <section>
+        <h2>services <span class="hint" id="card-count"></span></h2>
+        <!-- SINS 13 + 14: big shadows, rounded corners, permanent will-change. -->
+        <div id="cards"></div>
+      </section>
+
+      <section>
+        <h2>events <span class="hint" id="row-count"></span></h2>
+        <!-- SINS 6 + 7 + 8: 5,000 rows, per-row listeners, rebuilt with innerHTML on search. -->
+        <div id="table-wrap"><table id="table"><tbody></tbody></table></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- SIN 2: animates `left`. -->
+  <aside id="drawer">
+    <header>notifications <button id="drawer-close">×</button></header>
+    <!-- SIN 9: appended forever, never trimmed. -->
+    <ul id="notifications"></ul>
+  </aside>
+
+  <!-- SIN 2 again: modal animates `left` and the backdrop fades a background-color. -->
+  <div id="modal-backdrop"></div>
+  <div id="modal" role="dialog" aria-label="settings">
+    <header>settings <button id="modal-close">×</button></header>
+    <label>display name
+      <!-- SIN 10: localStorage.setItem on every keystroke. -->
+      <input id="setting-name" type="text" autocomplete="off">
+    </label>
+    <label>notes
+      <textarea id="setting-notes" rows="4"></textarea>
+    </label>
+    <p class="hint">Type here with a Performance recording running. Every keystroke writes to
+      localStorage synchronously.</p>
+  </div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+  <!-- You write this one: scripted, repeatable interactions for measurement. -->
+  <script src="automation.js" onerror="console.info('[capstone] automation.js not written yet — that is Phase 3')"></script>
+</body>
+</html>

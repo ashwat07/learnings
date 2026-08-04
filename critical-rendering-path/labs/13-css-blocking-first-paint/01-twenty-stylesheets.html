@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>13/01 — 20 render-blocking stylesheets</title>
+
+  <!-- 20 render-blocking stylesheets. The parser keeps going; the PAINT does not.
+       On HTTP/1.1 these queue six at a time. -->
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <link rel="stylesheet" href="css/part-00.css">
+  <link rel="stylesheet" href="css/part-01.css">
+  <link rel="stylesheet" href="css/part-02.css">
+  <link rel="stylesheet" href="css/part-03.css">
+  <link rel="stylesheet" href="css/part-04.css">
+  <link rel="stylesheet" href="css/part-05.css">
+  <link rel="stylesheet" href="css/part-06.css">
+  <link rel="stylesheet" href="css/part-07.css">
+  <link rel="stylesheet" href="css/part-08.css">
+  <link rel="stylesheet" href="css/part-09.css">
+  <link rel="stylesheet" href="css/part-10.css">
+  <link rel="stylesheet" href="css/part-11.css">
+  <link rel="stylesheet" href="css/part-12.css">
+  <link rel="stylesheet" href="css/part-13.css">
+  <link rel="stylesheet" href="css/part-14.css">
+  <link rel="stylesheet" href="css/part-15.css">
+  <link rel="stylesheet" href="css/part-16.css">
+  <link rel="stylesheet" href="css/part-17.css">
+  <link rel="stylesheet" href="css/part-18.css">
+  <link rel="stylesheet" href="css/part-19.css">
+
+  <!-- Worse: an @import chain. imported-01 isn't discoverable until imported-00 has arrived
+       AND been parsed. Four serial round trips, invisible to the preload scanner. -->
+  <link rel="stylesheet" href="css/imported-00.css">
+
+  <!-- A third-party render-blocking stylesheet AND a blocking font.
+       display=block means text stays invisible until the font arrives.
+       (Needs internet. If you're offline, comment this out and note what changes.) -->
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,700&display=block">
+
+  <style>
+    .hero { font-family: Newsreader, Georgia, serif; font-size: 30px; line-height: 1.25;
+            max-width: 700px; margin: 0 0 12px; }
+    .prose { max-width: 640px; color: var(--muted); font-family: Newsreader, Georgia, serif;
+             font-size: 17px; }
+  </style>
+
+  <script src="report.js"></script>
+
+  <!-- This synchronous script cannot execute until every pending stylesheet above has arrived —
+       it might call getComputedStyle, and the browser can't know that it won't. So slow CSS
+       delays this script, and this script blocks the parser. Watch the chain in the trace. -->
+  <script>
+    window.__cssGate = performance.now();
+    // A style read, to make the dependency real rather than hypothetical.
+    void getComputedStyle(document.documentElement).color;
+    console.log(`[lab13] inline script ran at ${window.__cssGate.toFixed(0)}ms — ` +
+      `it had to wait for all pending stylesheets`);
+  </script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1 class="hero used-3">Twenty stylesheets, one import chain, one blocking font</h1>
+    <p class="prose">Record with Screenshots enabled and count the blank frames. Everything you
+      can read here was in the DOM long before it was allowed on screen.</p>
+    <p><a href="index.html" style="color:var(--accent)">← back to the lab</a></p>
+  </div>
+
+  <pre class="readout" id="out">waiting…</pre>
+
+  <p class="hint">Things to separate out: (a) 20 stylesheets, (b) the <code>@import</code> chain,
+    (c) the third-party font CSS, (d) <code>font-display: block</code>. Comment each out in turn and
+    re-measure. Only one of them will be the biggest cost on your connection — find out which, and
+    note that the answer changes with RTT.</p>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 16 — Input responsiveness (INP)</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    #interactions { display: grid; gap: 12px; max-width: 900px; }
+    .card {
+      border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: #14141d;
+    }
+    .card h3 { margin: 0 0 4px; font-size: 13px; }
+    .card p { margin: 0 0 8px; color: var(--muted); font-size: 12px; }
+    .card .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .split {
+      display: grid; grid-template-columns: 90px 1fr; gap: 2px 8px; margin-top: 8px;
+      font: 11px/1.5 ui-monospace, Menlo, monospace; color: var(--muted);
+    }
+    .bar { height: 10px; border-radius: 2px; display: flex; overflow: hidden; }
+    .bar i { display: block; height: 100%; }
+    .bar .delay { background: #ff6b6b; }
+    .bar .proc { background: #ffd166; }
+    .bar .pres { background: #7c9cff; }
+    .legend { display: flex; gap: 14px; font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .legend span::before { content: '■ '; }
+    .legend .d::before { color: #ff6b6b; }
+    .legend .p::before { color: #ffd166; }
+    .legend .r::before { color: #7c9cff; }
+    #rows { max-height: 200px; overflow: auto; border: 1px solid var(--line); border-radius: 8px;
+            margin-top: 8px; background: #101017; }
+    #rows div { height: 20px; padding: 0 8px; font: 11px/20px ui-monospace, Menlo, monospace;
+                color: var(--muted); border-bottom: 1px solid #1c1c26; white-space: nowrap; }
+    .busy { color: #ff6b6b; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 16 — Input responsiveness (INP)</h1>
+    <p>Four interactions, each broken in a different part of the latency. The colour bars show the
+      real split from the Event Timing API: <span style="color:#ff6b6b">input delay</span>,
+      <span style="color:#ffd166">processing</span>,
+      <span style="color:#7c9cff">presentation</span>.</p>
+    <p class="hint">Throttle CPU to 4× first. Then interact, and read which colour dominates —
+      that tells you which fix could possibly work.</p>
+  </div>
+
+  <div class="controls">
+    <button id="reset">reset measurements</button>
+    <label><input type="checkbox" id="extra-listeners"> add 3 × 20ms document listeners</label>
+    <span class="tag" id="inp-tag">INP —</span>
+    <span class="tag" id="tbt-tag">TBT —</span>
+  </div>
+
+  <div id="interactions">
+    <div class="card" data-id="slowHandler">
+      <h3>1 · slow handler <span class="hint">— processing time</span></h3>
+      <p>The click handler does 300ms of synchronous work, <em>then</em> updates the DOM.</p>
+      <div class="row">
+        <button data-action="slowHandler" data-variant="bad">do the thing (broken)</button>
+        <button data-action="fixSlowHandler" data-variant="good">do the thing (your fix)</button>
+        <span class="hint" data-status>idle</span>
+      </div>
+      <div class="split" data-split></div>
+    </div>
+
+    <div class="card" data-id="busyThread">
+      <h3>2 · busy main thread <span class="hint">— input delay</span></h3>
+      <p>This handler is 1ms. But a background job occupies the main thread in 200ms chunks, so your
+        click waits in line. Nothing you do <em>inside</em> the handler can fix this.</p>
+      <div class="row">
+        <button id="toggle-busy" data-variant="bad" aria-pressed="false">start background job</button>
+        <button data-action="fastHandler">click me (1ms handler)</button>
+        <button data-action="fixBusyThread" data-variant="good">apply your background fix</button>
+        <span class="hint" data-status>background job stopped</span>
+      </div>
+      <div class="split" data-split></div>
+    </div>
+
+    <div class="card" data-id="bigCommit">
+      <h3>3 · big commit <span class="hint">— presentation delay</span></h3>
+      <p>A 2ms handler that appends 5,000 rows. Your JS is fast; the frame is not.</p>
+      <div class="row">
+        <button data-action="bigCommit" data-variant="bad">render 5,000 rows (broken)</button>
+        <button data-action="fixBigCommit" data-variant="good">render 5,000 rows (your fix)</button>
+        <button data-action="clearRows">clear</button>
+        <span class="hint" data-status>idle</span>
+      </div>
+      <div id="rows"></div>
+      <div class="split" data-split></div>
+    </div>
+
+    <div class="card" data-id="debouncedSearch">
+      <h3>4 · debounced search <span class="hint">— great TBT, awful feel</span></h3>
+      <p>500ms debounce, then a synchronous filter over 5,000 items. Type a sentence and notice how
+        the metric and your patience disagree.</p>
+      <div class="row">
+        <input type="search" data-action="debouncedSearch" placeholder="broken: 500ms debounce">
+        <input type="search" data-action="fixDebouncedSearch" placeholder="your fix">
+        <span class="hint" data-status>idle</span>
+      </div>
+      <div class="split" data-split></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span class="d">input delay — the thread was busy</span>
+    <span class="p">processing — your handlers</span>
+    <span class="r">presentation — style/layout/paint</span>
+  </div>
+
+  <p class="readout" id="out"></p>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

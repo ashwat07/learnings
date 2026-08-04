@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Paint storms</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <style>
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+      gap: 4px;
+      padding: 8px;
+      background: #101017;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+    }
+    .cell {
+      height: 44px;
+      border-radius: 6px;
+      background: hsl(var(--h, 220) 70% 55%);
+      position: relative;
+      /* TODO (fix step): try `contain: paint` / `contain: strict` here and re-measure. */
+    }
+
+    /* BROKEN mode 1: hovering any cell sets .hot on the CONTAINER.
+       One hover, whole-grid repaint. */
+    #grid.hot { background: #2a1030; }
+
+    /* TODO (fix step 1): a pure-CSS, self-only hover highlight.
+       .cell:hover { ... }  */
+
+    /* TODO (fix step 2): a composited overlay you fade with opacity instead of
+       recolouring the cell.
+       .cell::after { content:''; position:absolute; inset:0; border-radius:6px;
+                      background:#fff; opacity:0; will-change:opacity; }
+       .cell.lit::after { opacity:.35; }
+       …then ask yourself whether will-change on 500 cells is a good idea, and check
+       the Layers panel before you believe your own answer. */
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Paint storms</h1>
+    <p>Turn on <strong>Rendering → Paint flashing</strong> first. Then hover cells in each mode and
+      watch how much of the screen the browser redraws for a change you think is tiny.</p>
+  </div>
+
+  <div class="controls">
+    <label>cells <input id="count" type="number" value="500" min="50" max="10000" step="50"></label>
+    <button id="rebuild">rebuild</button>
+    <div class="sep"></div>
+    <label>mode
+      <select id="mode">
+        <option value="hoverAncestor">1 · recolour the container (broken)</option>
+        <option value="hoverAll">2 · recolour every cell (broken)</option>
+        <option value="hoverSelf">3 · recolour only the hovered cell</option>
+        <option value="fadeOpacity">4 · fade an opacity overlay</option>
+        <option value="off">off</option>
+      </select>
+    </label>
+    <div class="sep"></div>
+    <button id="sweep">auto-sweep 3s</button>
+    <button id="theme">toggle theme class on &lt;html&gt;</button>
+    <button id="reset">reset HUD</button>
+  </div>
+
+  <p class="readout" id="out"></p>
+
+  <div id="grid"></div>
+
+  <script src="../../shared/perf-hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

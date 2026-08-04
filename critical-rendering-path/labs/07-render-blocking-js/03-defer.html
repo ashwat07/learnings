@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>07/03 — defer</title>
+  <link rel="stylesheet" href="../../shared/lab.css">
+  <script src="scripts/instrument.js"></script>
+
+  <!-- Downloads in parallel with parsing, executes after parsing, in document order.
+       The parser is never blocked. The main thread still is, once execution starts —
+       defer moves WHEN the work happens, not HOW MUCH work there is. -->
+  <script defer src="scripts/heavy.js"></script>
+  <script defer src="scripts/dependent.js"></script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>03 — defer</h1>
+    <p>Parsing is never interrupted, and order is still guaranteed. But look at the long-task
+      number: <code>defer</code> did not make the 800ms disappear, it just moved it after parsing
+      and before <code>DOMContentLoaded</code>.</p>
+    <p><a href="index.html" style="color:var(--accent)">← back to the lab</a></p>
+  </div>
+
+  <div class="controls">
+    <button id="counter">click me — count: 0</button>
+    <span class="hint">Compare FCP with page 01, and TBT with page 02.</span>
+  </div>
+
+  <p class="readout" id="dependent-output">dependent.js has not reported yet</p>
+  <ul id="late-list"><li>from HTML</li></ul>
+  <pre class="readout" id="lab-metrics">waiting…</pre>
+
+  <script>
+    (function () {
+      let n = 0;
+      const btn = document.getElementById('counter');
+      btn.addEventListener('click', () => { btn.textContent = `click me — count: ${++n}`; });
+      window.LabLog?.note('inline counter script executed');
+    })();
+  </script>
+</body>
+</html>
