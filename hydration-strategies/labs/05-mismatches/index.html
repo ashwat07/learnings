@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Hydration mismatches</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .diff { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 1000px; }
+    .diff > div { background: #0a0a10; border: 1px solid var(--line); border-radius: 8px; padding: 10px;
+                  font: 12px/1.6 var(--mono); white-space: pre-wrap; word-break: break-all; }
+    .diff h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
+    .diff .server { border-color: #3d5bbf; }
+    .diff .client { border-color: #5c2b2b; }
+    mark { background: #5c2b2b; color: #ffb3b3; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Hydration mismatches</h1>
+    <p>Hydration assumes the client will produce exactly the markup the server already sent. When
+      it doesn't, you get anything from a console warning to a silently wrong page to a full
+      client-side re-render that throws away every benefit of server rendering.</p>
+    <p class="hint">Six causes. Five are obvious once you know them; the sixth (invalid nesting)
+      produces a mismatch even when your code is perfectly deterministic — and it is demonstrated
+      for real here, not described.</p>
+  </div>
+
+  <div class="controls">
+    <button id="time" data-variant="bad">1. time &amp; dates</button>
+    <button id="random" data-variant="bad">2. random &amp; ids</button>
+    <button id="locale" data-variant="bad">3. locale &amp; timezone</button>
+    <button id="browser" data-variant="bad">4. browser-only APIs</button>
+    <button id="nesting" data-variant="bad">5. invalid HTML nesting</button>
+    <button id="extension">6. things outside your control</button>
+  </div>
+
+  <div class="controls">
+    <button id="fixes" data-variant="good">the four fixes</button>
+    <button id="cost">what a mismatch actually costs</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div class="diff">
+    <div class="server"><h3>server said</h3><span id="server">—</span></div>
+    <div class="client"><h3>client rendered</h3><span id="client">—</span></div>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Work through 1–6.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — SSG &amp; ISR</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — SSG &amp; ISR</h1>
+    <p>Static generation gives you the fastest possible page and a snapshot that is wrong the
+      moment your data changes. Incremental regeneration keeps the delivery and bounds the
+      wrongness. The only real question is <strong>how big your staleness window is and who pays
+      for the refresh</strong>.</p>
+    <p class="hint">The sandbox's ISR is literally stale-while-revalidate implemented on the
+      server — same idea as the HTTP header from the caching course, different place.</p>
+  </div>
+
+  <div class="controls">
+    <label>revalidate <input id="revalidate" type="number" value="4" min="1" max="60">s</label>
+    <button id="poll" data-variant="good">poll for 20s and watch the cache states</button>
+    <button id="bump" data-variant="warn">change the content on the server</button>
+    <button id="invalidate">invalidate on demand</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="bars"></div>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Poll for 20 seconds, bumping the content halfway through.</p>
+
+  <h2>the staleness window, out loud</h2>
+  <pre class="readout" id="window">—</pre>
+
+  <div class="controls">
+    <button id="cost">who pays for the regeneration?</button>
+    <button id="scale">build-time scaling</button>
+  </div>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

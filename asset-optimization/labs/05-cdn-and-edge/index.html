@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — CDN &amp; edge</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — CDN &amp; edge</h1>
+    <p>A CDN is a cache close to the user. That single sentence contains the whole subject: what it
+      caches (the key), how long (the TTL), how you change your mind (the purge), and what it
+      cannot help with (anything uncacheable).</p>
+    <p class="hint">The sandbox has a toy CDN at <code>/api/edge</code> — it caches by
+      <code>pop + path</code>, reports HIT/MISS/EXPIRED with an <code>Age</code>, and can be purged.
+      Enough to reason about the real thing.</p>
+  </div>
+
+  <div class="controls">
+    <label>origin delay <input id="delay" type="number" value="600" min="0" max="3000" step="100">ms</label>
+    <label>edge TTL <input id="ttl" type="number" value="8" min="1" max="60">s</label>
+    <button id="basics" data-variant="good">1. MISS then HIT</button>
+    <button id="pops">2. several POPs</button>
+    <button id="purge">3. purge</button>
+    <button id="stampede" data-variant="bad">4. the stampede</button>
+    <button id="keys">5. cache keys</button>
+    <button id="cant">6. what the edge cannot fix</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start with MISS then HIT.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "bundle-strategy-labs",
+  "private": true,
+  "type": "module",
+  "description": "Bundling labs. esbuild is the only dependency: one binary, no config, fast enough to rebuild while you read the output.",
+  "scripts": {
+    "build": "node build.mjs",
+    "build:all": "node build.mjs --all",
+    "analyse": "node analyse.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

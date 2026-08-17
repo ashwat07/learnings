@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Crawlability</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    textarea { width: 100%; max-width: 900px; height: 160px; font: 12px/1.5 var(--mono);
+               background: #0f0f16; color: var(--text); border: 1px solid var(--line);
+               border-radius: 8px; padding: 10px; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 900px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Crawlability</h1>
+    <p>robots.txt, sitemaps, canonicals and pagination: the plumbing that decides which of your URLs
+      get crawled, which get indexed, and which compete with each other. Mostly mechanical — and
+      the failure modes are expensive because they are silent and take weeks to show up.</p>
+  </div>
+
+  <h2>1. robots.txt tester</h2>
+  <p class="hint">Implements the real matching rules: <code>Allow</code> and <code>Disallow</code>
+    are matched by <strong>longest path</strong>, not by order, with <code>Allow</code> winning ties.
+    Almost everyone assumes first-match-wins.</p>
+  <div class="cols">
+    <textarea id="robots">User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /search
+Allow: /search/help
+Disallow: /_next/static/
+Sitemap: https://example.com/sitemap.xml</textarea>
+    <textarea id="paths">/
+/products/9
+/admin/users
+/api/products
+/data.json
+/search?q=shoes
+/search/help
+/_next/static/chunks/main.js</textarea>
+  </div>
+  <div class="controls">
+    <button id="testRobots" data-variant="good">test every path</button>
+    <button id="robotsTraps">the robots.txt traps</button>
+  </div>
+
+  <h2>2. sitemap validator</h2>
+  <div class="controls">
+    <button id="genSitemap">generate one from the sandbox</button>
+    <button id="checkSitemap">validate it</button>
+  </div>
+  <textarea id="sitemap" spellcheck="false"></textarea>
+
+  <h2>3. canonicals &amp; pagination</h2>
+  <div class="controls">
+    <button id="canonicals">the decision table</button>
+    <button id="noindex" data-variant="bad">the noindex traps</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start with the robots.txt tester.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

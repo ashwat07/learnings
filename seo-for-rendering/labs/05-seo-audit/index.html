@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Audit it</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Audit it</h1>
+    <p>Everything from labs 01–04, as one pass over a list of URLs. The page audits the sandbox;
+      <code>seo-audit.mjs</code> in this folder does the same for any real URL from the command
+      line, and exits non-zero so it can gate a deploy.</p>
+  </div>
+
+  <div class="controls">
+    <button id="audit" data-variant="good">audit every sandbox mode</button>
+    <button id="detail">show the findings</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run the audit. Then run the CLI against something real.</p>
+
+  <h2>the CLI</h2>
+  <pre class="readout">$ node seo-audit.mjs https://example.com/product/123
+$ node seo-audit.mjs --json https://example.com/ | jq '.[0].findings'
+$ node seo-audit.mjs $(curl -s https://example.com/sitemap.xml | grep -o 'https://[^&lt;]*' | head -20)
+
+exit code 1 if there are error-level findings — so it gates a deploy.</pre>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

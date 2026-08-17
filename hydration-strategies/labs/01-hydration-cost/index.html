@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — The cost of hydration</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #stage { max-height: 260px; overflow: auto; }
+    #stage .row { display: flex; gap: 10px; align-items: center; padding: 4px 6px;
+                  border-bottom: 1px solid var(--line); font-size: 13px; }
+    #stage button { padding: 2px 8px; font-size: 12px; }
+    #stage button[data-hydrated] { border-color: var(--good); color: var(--good); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — The cost of hydration</h1>
+    <p>Server HTML makes the page <em>look</em> finished. Hydration is what makes it work — and it
+      is a main-thread walk over every component, whether or not that component needed anything.
+      This lab measures the gap between "looks ready" and "is ready", and lets you click into it.</p>
+    <p class="hint"><strong>CPU throttle 4×.</strong> Hydration is pure CPU; unthrottled, every
+      strategy in this course looks the same.</p>
+  </div>
+
+  <div class="controls">
+    <label>components <input id="n" type="number" value="300" min="10" max="3000" step="10"></label>
+    <label>ms each <input id="cost" type="number" value="1" min="0" max="20" step="0.5"></label>
+    <button id="hydrateAll" data-variant="bad">hydrate everything (blocking)</button>
+    <button id="hydrateIslands" data-variant="good">hydrate only the interactive ones</button>
+    <button id="reset">reset</button>
+  </div>
+
+  <div class="controls">
+    <span class="hint">click a button below during hydration — count how many clicks are lost:</span>
+    <b id="clicks">0 handled</b>
+    <b id="lost" style="color:var(--bad)">0 lost</b>
+  </div>
+
+  <div id="stage" class="stage"></div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Render 300 components at 1ms each, then hydrate — and mash the
+buttons while it runs.</p>
+
+  <h2>the same thing on real pages</h2>
+  <div class="controls">
+    <a href="/render/ssr-par/?repeat=10&hydrationCost=0" target="_blank"><button data-variant="good">120 islands, 0ms each</button></a>
+    <a href="/render/ssr-par/?repeat=10&hydrationCost=2" target="_blank"><button data-variant="warn">120 islands, 2ms each</button></a>
+    <a href="/render/ssr-par/?repeat=20&hydrationCost=3" target="_blank"><button data-variant="bad">240 islands, 3ms each</button></a>
+    <span class="hint">Compare TBT in the corner scoreboard, and try to click during load.</span>
+  </div>
+
+  <div id="log" class="log"></div>
+
+  <script src="/shared/perf-hud.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

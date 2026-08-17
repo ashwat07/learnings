@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 06 — Choose per route</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    table.policy { border-collapse: collapse; width: 100%; max-width: 1150px; font-size: 13px; }
+    table.policy th, table.policy td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    table.policy th { color: var(--muted); font-weight: 500; }
+    table.policy .what { color: var(--muted); font-size: 12px; }
+    table.policy .fb { font: 12px/1.5 var(--mono); }
+    table.policy .fb.ok { color: var(--good); } table.policy .fb.no { color: var(--bad); }
+    table.policy .fb.meh { color: var(--warn); }
+    body { padding-bottom: 120px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 06 — Choose per route</h1>
+    <p>The interview question, in full: <em>"Here's the app. Which rendering strategy per route,
+      and why?"</em> Fourteen routes. Several have more than one defensible answer; the grader tells
+      you what each trade costs.</p>
+    <p class="hint">Do it cold first. Then read every explanation, including for the ones you got
+      right — the reasoning is the deliverable, not the answer.</p>
+  </div>
+
+  <div class="controls">
+    <button id="grade" data-variant="good">grade my choices</button>
+    <button id="best">show a model answer</button>
+    <button id="clear">clear</button>
+    <span class="hint" id="score">not graded yet</span>
+  </div>
+
+  <table class="policy" id="table"></table>
+
+  <h2>what your choices cost</h2>
+  <div id="sim"></div>
+
+  <p class="readout" id="out"></p>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

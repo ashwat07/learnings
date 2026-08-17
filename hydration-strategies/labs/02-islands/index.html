@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Islands</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .page { border: 1px solid var(--line); border-radius: 10px; padding: 14px; max-width: 900px; background: #101017; }
+    .page h2 { margin-top: 0; }
+    .article p { color: var(--muted); font-size: 14px; }
+    .island { border: 1px dashed var(--line); border-radius: 8px; padding: 10px; margin: 12px 0; }
+    .island[data-hydrated] { border-color: var(--good); border-style: solid; }
+    .island .tag { float: right; }
+    .island button { padding: 2px 9px; font-size: 12px; }
+    .island [data-value] { font: 16px/1.4 var(--mono); color: var(--good); }
+    canvas { width: 100%; height: 110px; background: #0a0a10; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Islands</h1>
+    <p>Static by default, interactive by exception. The page below is server-shaped HTML with three
+      islands in it. Each island's JavaScript is a separate module, loaded only when that island is
+      actually hydrated — so "JS shipped" becomes a per-island decision you can measure instead of
+      a whole-bundle number you can only regret.</p>
+    <p class="hint">Watch the Network panel while you hydrate: each island's module appears
+      individually.</p>
+  </div>
+
+  <div class="controls">
+    <button id="all" data-variant="bad">hydrate all three now</button>
+    <button id="selective" data-variant="good">counter now · cart on idle · chart when visible</button>
+    <button id="none">reload with none hydrated</button>
+    <div class="sep"></div>
+    <button id="talk">test cross-island communication</button>
+  </div>
+
+  <div id="results"></div>
+
+  <div class="page">
+    <h2>Nimbus 9</h2>
+    <div class="article">
+      <p>This paragraph is static. So is the heading, the specification table, the footer, and about
+        85% of every real page. None of it needs a single byte of JavaScript, and shipping a
+        framework to make it "interactive" is the default that islands exist to reject.</p>
+    </div>
+
+    <div class="island" data-island="counter" data-props='{"start":0}'>
+      <span class="tag">island · counter</span>
+      quantity: <span data-value>0</span>
+      <button data-dec>−</button><button data-inc>+</button>
+    </div>
+
+    <div class="island" data-island="cart">
+      <span class="tag">island · cart (12KB)</span>
+      cart: <span data-value>0 items</span>
+      <button data-clear>clear</button>
+    </div>
+
+    <div class="article"><p>More static content, so the chart island starts below the fold.</p></div>
+    <div style="height: 700px" class="hint">↓ scroll: the chart island is down here ↓</div>
+
+    <div class="island" data-island="chart">
+      <span class="tag">island · chart (90KB)</span>
+      <canvas width="360" height="110"></canvas>
+    </div>
+  </div>
+
+  <p class="readout" id="out">Start with "hydrate all three now", then reload and try the selective
+version. Compare JS bytes and TBT.</p>
+
+  <div id="log" class="log"></div>
+
+  <script src="/shared/perf-hud.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — What crawlers see</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #raw { max-height: 260px; overflow: auto; font: 11px/1.5 var(--mono); white-space: pre-wrap;
+           background: #0a0a10; border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — What crawlers see</h1>
+    <p>A crawler that does not run JavaScript sees exactly the bytes your server sent. This lab
+      fetches each rendering mode and extracts what a non-JS consumer would find: the title, the
+      headings, the body text, the links, and the metadata. No opinions — just what is in the
+      response.</p>
+    <p class="hint">This is also how you check a real site: <code>curl -s URL | less</code>. If the
+      content is not in there, it does not exist for most of the web.</p>
+  </div>
+
+  <div class="controls">
+    <label>page
+      <select id="route">
+        <option value="product/3">product/3</option>
+        <option value="">listing</option>
+      </select>
+    </label>
+    <button id="compare" data-variant="good">what does each mode expose?</button>
+    <button id="raw">show the raw HTML of one mode</button>
+    <label>mode
+      <select id="mode">
+        <option>csr</option><option selected>ssr-par</option><option>stream</option><option>rsc</option>
+      </select>
+    </label>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run the comparison.</p>
+
+  <h2>raw response</h2>
+  <div id="raw">—</div>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

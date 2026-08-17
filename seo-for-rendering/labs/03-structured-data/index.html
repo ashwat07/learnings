@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Structured data</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    textarea { width: 100%; max-width: 900px; height: 220px; font: 12px/1.5 var(--mono);
+               background: #0f0f16; color: var(--text); border: 1px solid var(--line);
+               border-radius: 8px; padding: 10px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Structured data</h1>
+    <p>JSON-LD is how you tell a search engine what a page <em>means</em> rather than what it says:
+      this is a product, that number is its price, those stars are an aggregate rating. Get it right
+      and you are eligible for rich results. Get it subtly wrong and you get nothing, silently, with
+      no error anywhere.</p>
+    <p class="hint">The validator below implements the rules that actually cause rejections. Paste
+      your own JSON-LD into it.</p>
+  </div>
+
+  <div class="controls">
+    <button id="fromPage" data-variant="good">extract from the sandbox product page</button>
+    <button id="validate">validate what's in the box</button>
+    <div class="sep"></div>
+    <button id="ex-product">example: Product</button>
+    <button id="ex-article">example: Article</button>
+    <button id="ex-breadcrumb">example: BreadcrumbList</button>
+    <button id="ex-broken" data-variant="bad">example: subtly broken</button>
+  </div>
+
+  <textarea id="json" spellcheck="false"></textarea>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Extract the sandbox's JSON-LD, then validate it. Then break it on
+purpose and see which rules catch what.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

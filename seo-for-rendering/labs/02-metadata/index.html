@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Metadata</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .card { max-width: 460px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+            background: var(--panel); }
+    .card img { width: 100%; display: block; background: #0a0a10; aspect-ratio: 1200/630; object-fit: cover; }
+    .card .body { padding: 10px 12px; }
+    .card .host { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+    .card h3 { margin: 4px 0; font-size: 15px; }
+    .card p { margin: 0; color: var(--muted); font-size: 13px; }
+    .card.broken { border-color: var(--bad); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Metadata</h1>
+    <p>Title, description, canonical, Open Graph. Boring, mechanical, and the difference between a
+      link that gets clicked and a bare URL in a chat window. All of it must be in the HTML — social
+      scrapers do not run JavaScript, so a title set by your client router does not exist.</p>
+  </div>
+
+  <div class="controls">
+    <label>page
+      <select id="url">
+        <option value="/render/ssr-par/product/3">product, no metadata</option>
+        <option value="/render/ssr-par/product/3?meta=full">product, with metadata</option>
+        <option value="/render/ssr-par/?meta=full">listing, with metadata</option>
+        <option value="/render/csr/product/3?meta=full">CSR, "with" metadata</option>
+        <option value="/render/stream/product/3?meta=full">streaming</option>
+      </select>
+    </label>
+    <button id="check" data-variant="good">check the metadata</button>
+    <button id="preview">render the social card</button>
+    <button id="traps">the three traps</button>
+  </div>
+
+  <div id="results"></div>
+
+  <h2>social card preview</h2>
+  <div class="card" id="card">
+    <img id="card-img" alt="">
+    <div class="body">
+      <div class="host" id="card-host">example.com</div>
+      <h3 id="card-title">—</h3>
+      <p id="card-desc">—</p>
+    </div>
+  </div>
+
+  <p class="readout" id="out">Check a page with and without metadata and compare.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

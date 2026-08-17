@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Fonts</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <!-- The @font-face rules are injected by app.js so the case can be chosen from the URL. The
+       preload, however, must be in the HTML to be worth anything — see case 5. -->
+  <style>
+    .specimen { font-family: LabFont, Georgia, serif; font-size: 30px; line-height: 1.35;
+                border: 1px solid var(--line); border-radius: 10px; padding: 14px; max-width: 900px;
+                margin: 10px 0; }
+    .specimen small { font-size: 14px; color: var(--muted); font-family: var(--mono); }
+    .body-copy { font-family: LabFont, Georgia, serif; font-size: 17px; max-width: 640px;
+                 color: var(--muted); }
+    .marker { height: 3px; background: var(--accent); border-radius: 2px; margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Fonts</h1>
+    <p>A font is a render-blocking dependency discovered three hops in: HTML → CSS → layout decides
+      the font is used → fetch. Everything about font loading is managing the gap between "text
+      exists" and "text is in the right typeface" — and the two failure modes are invisible text
+      (FOIT) and text that jumps (FOUT + metric mismatch).</p>
+    <p class="hint" id="fontStatus">checking for font files…</p>
+  </div>
+
+  <div class="controls">
+    <a href="?case=block"><button data-variant="bad">1. font-display: block</button></a>
+    <a href="?case=swap"><button data-variant="good">2. swap</button></a>
+    <a href="?case=fallback"><button>3. fallback</button></a>
+    <a href="?case=optional"><button data-variant="good">4. optional</button></a>
+    <a href="?case=preload"><button data-variant="good">5. swap + preload</button></a>
+    <a href="?case=adjust"><button data-variant="good">6. swap + metric overrides</button></a>
+  </div>
+
+  <div class="controls">
+    <label>font delay <input id="delay" type="number" value="2500" min="0" max="8000" step="500">ms</label>
+    <span class="hint">changing this reloads the page — the timeline only means anything on a fresh load</span>
+  </div>
+
+  <div id="scoreboard"></div>
+
+  <div class="marker"></div>
+  <div class="specimen" id="specimen">
+    Hamburgefonstiv 0123
+    <small id="which">—</small>
+  </div>
+  <p class="body-copy">This paragraph is set in the web font too. Watch what happens to the text
+    while the font is loading, and — more importantly — watch whether the layout moves when it
+    arrives. The second thing is the one that shows up in your Core Web Vitals.</p>
+  <div class="marker"></div>
+
+  <p class="readout" id="out">Pick a case. Each is a fresh page load with a deliberately slow font.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

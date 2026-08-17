@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Compression</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Compression</h1>
+    <p>Text compresses enormously and costs almost nothing to compress. Everything about this
+      topic is choosing an algorithm and a level, and then not applying it to things that are
+      already compressed — where it costs CPU and adds bytes.</p>
+  </div>
+
+  <div class="controls">
+    <label>payload
+      <select id="kind">
+        <option value="json">JSON (repetitive records)</option>
+        <option value="text">prose</option>
+        <option value="random">already-compressed bytes</option>
+      </select>
+    </label>
+    <label>size <input id="bytes" type="number" value="200000" min="1000" max="5000000" step="10000"></label>
+    <button id="compare" data-variant="good">compare encodings</button>
+    <button id="levels">sweep compression levels</button>
+    <button id="what">what to compress</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Compare encodings on the default JSON payload.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Images: formats &amp; sizes</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #hero { max-width: 100%; border-radius: 10px; display: block; }
+    .frame { border: 1px solid var(--line); border-radius: 10px; padding: 10px; max-width: 900px; }
+    .frame.narrow { max-width: 380px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Images: formats &amp; sizes</h1>
+    <p>Two decisions, in order of impact: <strong>how many pixels</strong> and <strong>which
+      format</strong>. Sending a 2000px image to a 400px slot wastes more bytes than any format
+      choice can recover, and it is the more common mistake by a wide margin.</p>
+    <p class="hint">Run <code>node make-images.mjs</code> in <code>asset-optimization/</code> first
+      — these are real files, encoded on your machine.</p>
+  </div>
+
+  <div class="controls">
+    <button id="formats" data-variant="good">compare formats (same pixels)</button>
+    <button id="sizes">compare sizes (same format)</button>
+    <button id="waste" data-variant="bad">the cost of the wrong size</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+
+  <h2>responsive images: which candidate did the browser pick?</h2>
+  <p class="hint">Resize the window and press the button again. <code>currentSrc</code> tells you
+    what the browser actually chose — the only reliable way to check a <code>srcset</code>.</p>
+
+  <div class="controls">
+    <button id="picked" data-variant="good">what did it pick?</button>
+    <label>container
+      <select id="width">
+        <option value="900">wide (900px)</option>
+        <option value="380">narrow (380px)</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="frame" id="frame">
+    <img id="hero"
+         src="/asset-optimization/images/hero-800.png"
+         srcset="/asset-optimization/images/hero-400.png 400w,
+                 /asset-optimization/images/hero-800.png 800w,
+                 /asset-optimization/images/hero-1200.png 1200w,
+                 /asset-optimization/images/hero-2000.png 2000w"
+         sizes="(max-width: 500px) 380px, 900px"
+         width="1200" height="675" alt="a generated gradient">
+  </div>
+
+  <p class="readout" id="out">Start with the format comparison.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

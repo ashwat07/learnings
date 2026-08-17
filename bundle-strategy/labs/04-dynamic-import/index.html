@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Dynamic import</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>#app { min-height: 140px; }</style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Dynamic import</h1>
+    <p>Deferring code is easy. Deferring it without making the interaction that needs it feel slow
+      is the actual skill — and it is the same intent-based idea as speculative preconnect and
+      interaction-triggered hydration, applied to chunks.</p>
+    <p class="hint">Build first: <code>cd bundle-strategy && node build.mjs --all</code>. This page
+      loads the real built output from <code>dist/</code>.</p>
+  </div>
+
+  <div class="controls">
+    <label>network <select id="net">
+      <option value="0">no added delay</option>
+      <option value="300" selected>+300ms per request</option>
+      <option value="1000">+1000ms per request</option>
+    </select></label>
+    <button id="load-single" data-variant="bad">load the single bundle</button>
+    <button id="load-split" data-variant="good">load the split build</button>
+    <button id="reset">reset</button>
+  </div>
+
+  <div class="controls">
+    <button id="go-home">navigate: home</button>
+    <button id="go-product">navigate: product</button>
+    <button id="go-admin" data-variant="warn">navigate: admin (the lazy chunk)</button>
+    <div class="sep"></div>
+    <button id="prefetch" data-variant="good">prefetch the admin chunk now</button>
+    <span class="hint">hover me first, then click admin</span>
+  </div>
+
+  <div id="results"></div>
+
+  <div id="app" class="stage"></div>
+
+  <p class="readout" id="out">Load the split build, then navigate to admin and watch the cost of
+the first visit.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

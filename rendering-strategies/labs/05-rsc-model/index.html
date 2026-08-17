@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — The RSC model</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — The RSC model</h1>
+    <p>Server Components are not "SSR with extra steps". The distinction that matters:
+      <strong>a server component's code never reaches the browser at all</strong>. It runs once, on
+      the server, and what crosses the wire is a description of its output — not the component, not
+      its dependencies, not its data-fetching code.</p>
+    <p class="hint">The sandbox has a deliberately small model of the wire format
+      (<code>/render/rsc/</code> + <code>shared/app/rsc-client.js</code>). Read it before running
+      anything — 40 lines, and it makes the shape obvious.</p>
+  </div>
+
+  <div class="controls">
+    <button id="wire" data-variant="good">what crosses the wire?</button>
+    <button id="boundary">the client boundary</button>
+    <button id="nav">navigation: payload vs full HTML</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start with "what crosses the wire".</p>
+
+  <h2>the mental model</h2>
+  <pre class="readout">Server Component                        Client Component ("use client")
+─────────────────                       ──────────────────────────────
+runs on the server, once                runs on the server (SSR) AND in the browser
+can await a database directly           cannot: no db, no secrets, no fs
+its code is NEVER sent to the client    its code IS sent, and hydrated
+cannot use state, effects, or events    can: useState, useEffect, onClick
+zero KB of client JS                    costs bundle bytes + hydration time
+can render client components            can only render server components passed as children
+
+the boundary is one-way: once you are in a client component, everything you import
+comes with you into the bundle. That is why "use client" at the top of a shared
+utility file is the most expensive line of code in a lot of Next.js apps.</pre>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

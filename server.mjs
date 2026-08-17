@@ -26,6 +26,8 @@ import fsp from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import zlib from 'node:zlib';
+import { renderRoute, MODES, routeCache, cacheStats, invalidate } from './shared/app/render.mjs';
+import * as appData from './shared/app/data.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const APP_PORT = Number(process.argv[2] || 8080);
@@ -413,6 +415,35 @@ async function apiRows(req, res, url) {
   send(res, 200, headers, body);
 }
 
+/**
+ * /api/font — serve a real font file with a configurable delay, so the font-loading labs can
+ * observe FOIT/FOUT timelines. Files live in asset-optimization/fonts/ (run make-fonts.mjs).
+ */
+async function apiFont(req, res, url) {
+  const q = url.searchParams;
+  const name = (q.get('name') || 'inter-400').replace(/[^a-z0-9-]/gi, '');
+  const file = path.join(ROOT, 'asset-optimization', 'fonts', `${name}.woff2`);
+  bump(`font:${name}`);
+  await sleep(num(q, 'delay', 0));
+
+  if (!fs.existsSync(file)) {
+    // No font available: return a 404 AFTER the delay. The block/swap timeline is still
+    // observable (the browser does not know the request will fail until it does), which is
+    // most of what the lab is teaching.
+    return send(res, 404, { 'content-type': 'text/plain', 'cache-control': 'no-store' },
+      'no font file — run: node asset-optimization/make-fonts.mjs\n');
+  }
+  const buf = fs.readFileSync(file);
+  send(res, 200, {
+    'content-type': 'font/woff2',
+    'cache-control': q.get('cc') || 'no-store',
+    // Fonts are always fetched in CORS mode, so this matters even same-origin-ish.
+    'access-control-allow-origin': '*',
+    'timing-allow-origin': '*',
+    'content-length': buf.length,
+  }, buf);
+}
+
 /** Binary-ish payload of a given size in MB, for storage/quota labs. */
 async function apiBlob(req, res, url) {
   const q = url.searchParams;
@@ -426,6 +457,130 @@ async function apiBlob(req, res, url) {
     'access-control-allow-origin': '*',
     'content-length': buf.length,
   }, buf);
+}
+
+/**
+ * /api/text — a text payload with a chosen content-encoding, for the compression lab.
+ *
+ *   ?bytes=100000&encoding=gzip|br|identity&kind=text|json|already-compressed
+ *
+ * Compression is applied here explicitly (rather than by a middleware) so the lab can compare
+ * encodings on identical bytes and time the CPU cost of each.
+ */
+async function apiText(req, res, url) {
+  const q = url.searchParams;
+  const bytes = Math.min(num(q, 'bytes', 100000), 20 * 1024 * 1024);
+  const kind = q.get('kind') || 'text';
+  bump(`text:${kind}`);
+
+  let body;
+  if (kind === 'json') {
+    const n = Math.max(1, Math.round(bytes / 120));
+    body = JSON.stringify(Array.from({ length: n }, (_, i) => ({
+      id: i, name: `record ${i}`, status: 'active', createdAt: '2026-01-01T00:00:00Z',
+    })));
+  } else if (kind === 'random') {
+    // Incompressible: already-compressed data (an image, a zip) looks like this to gzip.
+    const buf = Buffer.alloc(bytes);
+    for (let i = 0; i < bytes; i++) buf[i] = (i * 2654435761) & 0xff;
+    body = buf;
+  } else {
+    body = Buffer.from(filler(bytes));
+  }
+  const raw = Buffer.isBuffer(body) ? body : Buffer.from(body);
+
+  const encoding = q.get('encoding') || 'identity';
+  const t0 = performance.now();
+  let out = raw;
+  if (encoding === 'gzip') out = zlib.gzipSync(raw, { level: num(q, 'level', 6) });
+  else if (encoding === 'br') out = zlib.brotliCompressSync(raw, {
+    params: { [zlib.constants.BROTLI_PARAM_QUALITY]: num(q, 'level', 5) },
+  });
+  else if (encoding === 'deflate') out = zlib.deflateSync(raw);
+  const encodeMs = performance.now() - t0;
+
+  const headers = {
+    'content-type': kind === 'json' ? MIME['.json'] : 'text/plain; charset=utf-8',
+    'cache-control': q.get('cc') || 'no-store',
+    'access-control-allow-origin': '*',
+    'timing-allow-origin': '*',
+    'content-length': out.length,
+    'x-uncompressed-length': raw.length,
+    'x-encode-ms': encodeMs.toFixed(2),
+    'server-timing': `encode;dur=${encodeMs.toFixed(2)}`,
+  };
+  if (encoding !== 'identity') headers['content-encoding'] = encoding;
+  headers.vary = 'Accept-Encoding';
+  send(res, 200, headers, out);
+}
+
+/**
+ * /api/edge — a toy CDN in front of any other lab endpoint.
+ *
+ *   ?path=/api/asset?name=x&type=json&delay=800&ttl=10&pop=lhr
+ *
+ * Caches by path + pop, reports HIT/MISS/EXPIRED and an Age header, and can be purged. Enough
+ * to reason about edge caching without needing an actual CDN account.
+ */
+const edgeCache = new Map();          // `${pop}|${path}` -> { body, headers, storedAt }
+
+async function apiEdge(req, res, url) {
+  const q = url.searchParams;
+  const target = q.get('path') || '/api/asset?name=edge&type=json&delay=500';
+  const pop = q.get('pop') || 'lhr';
+  const ttl = num(q, 'ttl', 10);
+  const key = `${pop}|${target}`;
+
+  if (bool(q, 'purge')) {
+    const purged = [...edgeCache.keys()].filter((k) => k.endsWith(`|${target}`));
+    for (const k of purged) edgeCache.delete(k);
+    return json(res, { purged: purged.length, pops: purged.map((k) => k.split('|')[0]) });
+  }
+  if (bool(q, 'stats')) {
+    return json(res, {
+      entries: [...edgeCache.entries()].map(([k, v]) => ({
+        key: k, ageSec: Math.round((Date.now() - v.storedAt) / 1000), bytes: v.body.length,
+      })),
+    });
+  }
+
+  const hit = edgeCache.get(key);
+  const ageSec = hit ? (Date.now() - hit.storedAt) / 1000 : Infinity;
+
+  if (hit && ageSec < ttl) {
+    bump(`edge:hit:${pop}`);
+    // A real POP is close to the user, so a hit is fast wherever the origin is.
+    await sleep(num(q, 'popRtt', 10));
+    return send(res, 200, {
+      ...hit.headers,
+      'x-cache': 'HIT',
+      'x-cache-pop': pop,
+      age: String(Math.round(ageSec)),
+      'access-control-allow-origin': '*',
+    }, hit.body);
+  }
+
+  bump(`edge:miss:${pop}`);
+  const originStart = performance.now();
+  const originRes = await fetch(`http://localhost:${APP_PORT}${target.startsWith('/') ? '' : '/'}${target}`);
+  const body = Buffer.from(await originRes.arrayBuffer());
+  const originMs = performance.now() - originStart;
+
+  const headers = {
+    'content-type': originRes.headers.get('content-type') || 'application/octet-stream',
+    'cache-control': `public, max-age=${ttl}`,
+    'content-length': body.length,
+  };
+  edgeCache.set(key, { body, headers, storedAt: Date.now() });
+
+  send(res, 200, {
+    ...headers,
+    'x-cache': hit ? 'EXPIRED' : 'MISS',
+    'x-cache-pop': pop,
+    'x-origin-ms': originMs.toFixed(1),
+    age: '0',
+    'access-control-allow-origin': '*',
+  }, body);
 }
 
 /** Fails on demand — for network-first fallbacks, stale-if-error, retry logic. */
@@ -594,7 +749,14 @@ a{color:#7c9cff;text-decoration:none}a:hover{text-decoration:underline}ul{list-s
   return streamFile(req, res, abs, url);
 }
 
-function streamFile(req, res, abs, url) {
+async function streamFile(req, res, abs, url) {
+  // `?delay=` on ANY static file, so the asset labs can create controlled timing without
+  // needing a synthetic endpoint. `?cc=` sets its caching.
+  if (url.searchParams.has('delay')) await sleep(num(url.searchParams, 'delay'));
+  return sendFile(req, res, abs, url);
+}
+
+function sendFile(req, res, abs, url) {
   const ext = path.extname(abs).toLowerCase();
   const headers = {
     'content-type': MIME[ext] || 'application/octet-stream',
@@ -619,6 +781,80 @@ function streamFile(req, res, abs, url) {
 }
 
 // ---------------------------------------------------------------------------
+// The rendering sandbox — /render/<mode>/[product/<id>]
+//
+// One app, seven rendering strategies, identical markup. See shared/app/render.mjs.
+// ---------------------------------------------------------------------------
+
+async function renderSandbox(req, res, url) {
+  const parts = url.pathname.split('/').filter(Boolean);       // ['render', mode, ...]
+  const mode = parts[1];
+
+  if (!mode) return json(res, { modes: MODES, usage: '/render/<mode>/ or /render/<mode>/product/<id>' });
+  if (!MODES.includes(mode)) return json(res, { error: `unknown mode "${mode}"`, modes: MODES }, 404);
+
+  const route = parts[2] === 'product' ? 'product' : 'listing';
+  const id = route === 'product' ? (parts[3] || '1') : null;
+
+  // Per-request latency overrides, so a lab can ask "what if reviews took 3 seconds?"
+  for (const key of ['products', 'product', 'recommends', 'reviews']) {
+    if (url.searchParams.has(`${key}Delay`)) {
+      appData.latency[key] = num(url.searchParams, `${key}Delay`);
+    }
+  }
+
+  bump(`render:${mode}:${route}`);
+  return renderRoute({ mode, route, id, query: url.searchParams }, res);
+}
+
+/** The data API the CSR and RSC clients use. Same functions the server renderer calls. */
+async function dataRoute(req, res, url) {
+  const parts = url.pathname.split('/').filter(Boolean);      // ['api','data',name,id?]
+  const name = parts[2];
+  const id = parts[3] || '1';
+  const delay = url.searchParams.has('delay') ? num(url.searchParams, 'delay') : undefined;
+  bump(`data:${name}`);
+
+  const opts = delay === undefined ? {} : { delay };
+  const version = appData.version.n;
+
+  switch (name) {
+    case 'products': return json(res, { products: await appData.getProducts(opts), version });
+    case 'product': return json(res, { product: await appData.getProduct(id, opts), version });
+    case 'recommends': return json(res, { recommends: await appData.getRecommends(id, opts), version });
+    case 'reviews': return json(res, { reviews: await appData.getReviews(id, opts), version });
+    case 'calls': return json(res, { calls: appData.calls, latency: appData.latency });
+    default: return json(res, { error: `unknown data source "${name}"` }, 404);
+  }
+}
+
+/** Introspection + control for the rendering labs. */
+function renderControl(req, res, url) {
+  const q = url.searchParams;
+  if (q.has('bumpVersion')) {
+    const v = appData.bumpVersion();
+    return json(res, { version: v, note: 'content changed — cached renders are now stale' });
+  }
+  if (q.has('invalidate')) {
+    return json(res, { invalidated: invalidate(q.get('invalidate') === '1' ? '' : q.get('invalidate')) });
+  }
+  if (q.has('resetCalls')) { appData.resetCalls(); return json(res, { ok: true }); }
+  if (q.has('latency')) {
+    for (const [k, v] of Object.entries(JSON.parse(q.get('latency')))) appData.latency[k] = v;
+    return json(res, { latency: appData.latency });
+  }
+  return json(res, {
+    version: appData.version,
+    latency: appData.latency,
+    calls: appData.calls,
+    cacheStats,
+    cachedRoutes: [...routeCache.entries()].map(([key, v]) => ({
+      key, ageSec: Math.round((Date.now() - v.renderedAt) / 1000), bytes: v.html.length,
+    })),
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
 
@@ -631,11 +867,15 @@ const ROUTES = {
   '/api/script.js': (q, r, u) => apiSlow(q, r, u, 'js'),
   '/api/style.css': (q, r, u) => apiSlow(q, r, u, 'css'),
   '/api/image.svg': apiImage,
+  '/api/font': apiFont,
+  '/api/text': apiText,
+  '/api/edge': apiEdge,
   '/api/rows': apiRows,
   '/api/blob': apiBlob,
   '/api/flaky': apiFlaky,
   '/api/redirect': apiRedirect,
   '/api/probe': apiProbe,
+  '/api/render': renderControl,
   '/api/stats': apiStats,
   '/api/reset': apiReset,
   '/api/bump': apiBump,
@@ -649,6 +889,10 @@ async function handler(req, res) {
   try {
     const route = ROUTES[url.pathname];
     if (route) return await route(req, res, url);
+    if (url.pathname === '/render' || url.pathname.startsWith('/render/')) {
+      return await renderSandbox(req, res, url);
+    }
+    if (url.pathname.startsWith('/api/data/')) return await dataRoute(req, res, url);
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       return send(res, 405, { 'content-type': 'text/plain' }, 'method not allowed for static files\n');
     }

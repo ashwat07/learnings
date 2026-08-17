@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Lazy &amp; progressive hydration</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px;
+            max-height: 300px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+    #grid button { width: 100%; font-size: 12px; padding: 6px; }
+    #grid button[data-hydrated] { border-color: var(--good); color: var(--good); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Lazy &amp; progressive hydration</h1>
+    <p>Once you can hydrate one component at a time, the question becomes <em>when</em>. Five
+      answers, each moving cost somewhere different — and one of them moves it onto the user's
+      first click, which is a trade you have to measure rather than assume.</p>
+    <p class="hint"><strong>CPU 4×.</strong> The interesting number here is not TBT alone, it is TBT
+      <em>and</em> the latency of the first interaction.</p>
+  </div>
+
+  <div class="controls">
+    <label>components <input id="n" type="number" value="200" min="20" max="2000" step="20"></label>
+    <label>ms each <input id="cost" type="number" value="2" min="0" max="30" step="0.5"></label>
+    <button id="reset">rebuild</button>
+  </div>
+
+  <div class="controls">
+    <button id="s-load" data-variant="bad">load — all at once</button>
+    <button id="s-idle">idle — requestIdleCallback</button>
+    <button id="s-visible" data-variant="good">visible — IntersectionObserver</button>
+    <button id="s-interaction" data-variant="good">interaction — on first touch</button>
+    <button id="s-replay" data-variant="good">interaction + event replay</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Pick a strategy, then click a button in the grid and watch the
+"first interaction latency" column.</p>
+
+  <div id="grid"></div>
+
+  <h2>the same knobs on a real page</h2>
+  <div class="controls">
+    <a href="/render/ssr-par/?repeat=15&hydrationCost=2&hydrate=load" target="_blank"><button data-variant="bad">180 islands · load</button></a>
+    <a href="/render/ssr-par/?repeat=15&hydrationCost=2&hydrate=idle" target="_blank"><button>180 islands · idle</button></a>
+    <a href="/render/ssr-par/?repeat=15&hydrationCost=2&hydrate=visible" target="_blank"><button data-variant="good">180 islands · visible</button></a>
+    <a href="/render/ssr-par/?repeat=15&hydrationCost=2&hydrate=interaction" target="_blank"><button data-variant="good">180 islands · interaction</button></a>
+  </div>
+
+  <div id="log" class="log"></div>
+
+  <script src="/shared/perf-hud.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

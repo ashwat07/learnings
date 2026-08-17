@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Image loading</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .strip { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+    .strip img { width: 110px; height: 62px; border-radius: 4px; background: #101017; }
+    .hero { width: 100%; max-width: 760px; border-radius: 10px; background: #101017; display: block; }
+    .demo { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin: 10px 0; max-width: 900px; }
+    .shifty { min-height: 40px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Image loading</h1>
+    <p>The bytes are right (lab 01). Now: when does the browser start fetching them, in what order,
+      and does the page move when they arrive? These three questions are LCP, bandwidth contention
+      and CLS respectively — and each has a one-attribute answer people get backwards.</p>
+    <p class="hint">Throttle to <strong>Fast 4G</strong>. On an unthrottled connection none of this
+      is visible, which is why it ships broken.</p>
+  </div>
+
+  <div class="controls">
+    <a href="?case=baseline"><button data-variant="bad">1. baseline: hero last</button></a>
+    <a href="?case=priority"><button data-variant="good">2. fetchpriority on the hero</button></a>
+    <a href="?case=lazyhero"><button data-variant="bad">3. lazy hero (the codemod bug)</button></a>
+    <a href="?case=lazyrest"><button data-variant="good">4. eager hero, lazy thumbnails</button></a>
+    <a href="?case=cls"><button data-variant="bad">5. no dimensions → CLS</button></a>
+    <a href="?case=fixed"><button data-variant="good">6. dimensions reserved</button></a>
+  </div>
+
+  <div id="scoreboard"></div>
+
+  <p class="readout" id="out">Pick a case. Each one is a full page load, so the metrics are real.</p>
+
+  <div id="stage"></div>
+
+  <h2>what loaded, and when</h2>
+  <div id="results"></div>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

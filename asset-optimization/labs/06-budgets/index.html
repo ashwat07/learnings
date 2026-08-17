@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 06 — Budgets</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 06 — Budgets</h1>
+    <p>A budget turns "make it faster" into a number a build can check. The useful budget is not
+      "be under 2.5s" — it is the byte allowance that <em>produces</em> 2.5s on the connection your
+      users actually have, allocated across asset types before anyone writes any code.</p>
+  </div>
+
+  <div class="controls">
+    <label>connection
+      <select id="profile">
+        <option value="slow4g">Slow 4G — 400 kbps, 400ms RTT</option>
+        <option value="fast4g" selected>Fast 4G — 1.5 MB/s, 150ms RTT</option>
+        <option value="cable">Cable — 5 MB/s, 30ms RTT</option>
+      </select>
+    </label>
+    <label>LCP target <input id="target" type="number" value="2500" min="1000" max="6000" step="250">ms</label>
+    <button id="calc" data-variant="good">work out the budget</button>
+    <button id="audit">audit the sandbox pages</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Work out the budget for Fast 4G and a 2.5s LCP.</p>
+
+  <h2>the CLI</h2>
+  <pre class="readout">$ node budget-check.mjs http://localhost:8080/render/ssr-par/product/3
+$ node budget-check.mjs --budget js=120,total=900 https://example.com/
+$ node budget-check.mjs --json https://example.com/ | jq '.[0].assets[:5]'
+
+exit code 1 when a budget is exceeded, so it gates a deploy.</pre>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

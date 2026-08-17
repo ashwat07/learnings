@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Resumability</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .component { border: 1px dashed var(--line); border-radius: 8px; padding: 10px 12px; margin: 8px 0;
+                 display: flex; gap: 12px; align-items: center; max-width: 520px; }
+    .component [data-value] { font: 18px/1 var(--mono); color: var(--good); min-width: 3ch; }
+    .component button { padding: 3px 10px; }
+    .component .tag { margin-left: auto; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Resumability</h1>
+    <p>Hydration re-executes your components on the client so the framework can discover which
+      element has which handler. Resumability skips that entirely: the server already knew, so it
+      <em>writes the answer into the HTML</em> — which handler, from which module, with which
+      state. The client ships one small listener and runs no component code at all until an event
+      happens.</p>
+    <p class="hint">Read <code>resume.js</code> first. It is 30 lines, and once you have read it
+      the idea stops sounding magical.</p>
+  </div>
+
+  <div class="controls">
+    <button id="measure" data-variant="good">measure: what shipped on load?</button>
+    <button id="compare">compare with hydration</button>
+    <button id="serialise">the state serialisation problem</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+
+  <h2>three resumable components</h2>
+  <p class="hint">No component JavaScript has run. Click a button — the handler module is fetched
+    at that moment. Click again: it is already cached.</p>
+
+  <div class="component" data-component data-state='{"count":3}'>
+    <span data-value>3</span>
+    <button data-on-click="./handlers.js#decrement">−</button>
+    <button data-on-click="./handlers.js#increment">+</button>
+    <button data-on-click="./handlers.js#reset">reset</button>
+    <span class="tag">resumable</span>
+  </div>
+
+  <div class="component" data-component data-state='{"count":10}'>
+    <span data-value>10</span>
+    <button data-on-click="./handlers.js#decrement">−</button>
+    <button data-on-click="./handlers.js#increment">+</button>
+    <span class="tag">same module, different state</span>
+  </div>
+
+  <div class="component" data-component data-state='{"count":0}'>
+    <span data-value>0</span>
+    <button data-on-click="./handlers.js#increment">+</button>
+    <span class="tag">state lives in the DOM</span>
+  </div>
+
+  <p class="readout" id="out">Click a button, then look at the log: the first click pays for the
+module, the rest are free.</p>
+
+  <div id="log" class="log"></div>
+
+  <script src="/shared/perf-hud.js"></script>
+  <script type="module" src="./resume.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Bundle strategy — anatomy</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>anatomy</h1>
+    <p>This lab is driven from the command line — the README has the exercise. The buttons below
+      render the same metafile data the CLI uses, so you can look at it without leaving the page.</p>
+    <p class="hint">Build first: <code>cd bundle-strategy && npm install && node make-fixture.mjs && node build.mjs --all</code></p>
+  </div>
+
+  <div class="controls">
+    <button id="compare" data-variant="good">compare every variant</button>
+    <label>variant
+      <select id="variant">
+        <option>split</option><option>single</option><option>no-split</option>
+        <option>no-treeshake</option><option>barrel</option><option>no-bundle</option>
+      </select>
+    </label>
+    <button id="modules">largest modules in that variant</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Read the README alongside this — the commands are the lab.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module">
+    import { comparePage } from '/bundle-strategy/labs/_ui.js';
+    comparePage(['single', 'split', 'no-split', 'no-treeshake', 'barrel']);
+  </script>
+</body>
+</html>

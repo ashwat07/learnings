@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Streaming</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #chunks { font: 12px/1.5 var(--mono); }
+    #chunks div { display: flex; gap: 12px; border-bottom: 1px solid var(--line); padding: 3px 0; }
+    #chunks .t { color: var(--accent); min-width: 70px; text-align: right; }
+    #chunks .b { color: var(--muted); min-width: 70px; text-align: right; }
+    #chunks .c { color: var(--text); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Streaming</h1>
+    <p>The server does not have to finish thinking before it starts talking. Streaming SSR sends
+      the shell immediately, then flushes each slow section as its data resolves — so TTFB stops
+      being hostage to your slowest query, and the browser can start fetching CSS and JS a second
+      earlier than it otherwise would.</p>
+    <p class="hint">The browser hides chunk boundaries. This lab reads the response as a stream so
+      you can see exactly what arrived when — and <code>curl -N</code> shows the same thing in a
+      terminal.</p>
+  </div>
+
+  <div class="controls">
+    <label>reviews delay <input id="d-reviews" type="number" value="1500" min="0" max="6000" step="100">ms</label>
+    <label>recommends <input id="d-recommends" type="number" value="600" min="0" max="6000" step="100">ms</label>
+    <button id="watch" data-variant="good">watch the stream arrive</button>
+    <button id="compare">compare against blocking SSR</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <h2>chunks, as they arrived</h2>
+  <div id="chunks" class="log" style="max-height:300px"></div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Click "watch the stream arrive".</p>
+
+  <div class="controls">
+    <a href="/render/stream/product/3?reviewsDelay=2500" target="_blank"><button data-variant="good">open the streamed page</button></a>
+    <a href="/render/ssr-par/product/3?reviewsDelay=2500" target="_blank"><button data-variant="bad">open the blocking page</button></a>
+    <span class="hint">Both with a 2.5s reviews query. Watch which one shows you a product.</span>
+  </div>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

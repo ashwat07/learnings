@@ -1,0 +1,59 @@
+{
+  "split": {
+    "initialBytes": 1589,
+    "initialBrotli": 859,
+    "maxDuplicatedBytes": 8192,
+    "baseline": {
+      "variant": "split",
+      "initialBytes": 1513,
+      "initialBrotli": 818,
+      "totalBytes": 84275,
+      "modules": {
+        "src/lib/index.js": {
+          "bytes": 0,
+          "initial": true
+        },
+        "src/lib/dates.js": {
+          "bytes": 395,
+          "initial": true
+        },
+        "src/lib/analytics.js": {
+          "bytes": 161,
+          "initial": true
+        },
+        "src/routes/home.js": {
+          "bytes": 171,
+          "initial": true
+        },
+        "src/routes/product.js": {
+          "bytes": 152,
+          "initial": true
+        },
+        "src/main.js": {
+          "bytes": 265,
+          "initial": true
+        },
+        "src/vendor/chart-data.js": {
+          "bytes": 82296,
+          "initial": false
+        },
+        "src/vendor/chart.js": {
+          "bytes": 181,
+          "initial": false
+        },
+        "src/routes/admin.js": {
+          "bytes": 210,
+          "initial": false
+        },
+        "src/lib/format.js": {
+          "bytes": 187,
+          "initial": true
+        },
+        "src/lib/validate.js": {
+          "bytes": 75,
+          "initial": true
+        }
+      }
+    }
+  }
+}

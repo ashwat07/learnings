@@ -28,13 +28,25 @@ the same four questions every time:
 | [Web workers](web-workers/) | Moving parse/transform off the main thread, transferables, pools, RPC | 5 |
 | [Browser storage](browser-storage/) | IndexedDB, Cache API, quotas, eviction, an offline-first data layer | 6 |
 | [SPA memory leaks](spa-memory-leaks/) | Detached nodes, dangling listeners, closures, the heap-snapshot workflow | 6 |
+| [Rendering strategies](rendering-strategies/) | CSR / SSR / SSG / ISR / streaming / RSC, chosen per route | 6 |
+| [Hydration strategies](hydration-strategies/) | The cost of hydration, islands, lazy triggers, resumability, mismatches | 5 |
+| [SEO for rendered content](seo-for-rendering/) | What crawlers see, metadata, structured data, crawlability | 5 |
+| [Asset optimization](asset-optimization/) | Images, fonts, compression, CDN/edge, budgets | 6 |
+| [Bundle strategy](bundle-strategy/) | Splitting, tree shaking, dynamic import, size gates (esbuild) | 5 |
+| [Next.js caching](nextjs-caching/) | Request memo, data cache, full route cache, router cache (real Next.js) | 5 |
 
 Order isn't enforced, but the dependencies are real: **event loop** underpins everything about
 jank and scheduling, **HTTP caching** underpins service workers, and **CORS** shows up inside
 resource hints (`crossorigin`) and service workers (opaque responses).
 
 Suggested run: `event-loop` → `http-caching` → `cors` → `resource-hints` → `service-workers` →
-`web-workers` → `browser-storage` → `spa-memory-leaks`.
+`web-workers` → `browser-storage` → `spa-memory-leaks` → `rendering-strategies` →
+`hydration-strategies` → `seo-for-rendering` → `asset-optimization` → `bundle-strategy` →
+`nextjs-caching`.
+
+The last six form their own arc: **how a page is produced (rendering) → what the browser must do
+with it (hydration) → who else reads it (SEO) → what it weighs (assets, bundles) → how a framework
+caches all of it (Next.js)**.
 
 ---
 
@@ -85,6 +97,36 @@ Example — a JS file that takes 800ms to arrive, then may be cached for a minut
 Add `?isolate=1` to any lab page's URL to get `Cross-Origin-Opener-Policy` +
 `Cross-Origin-Embedder-Policy` on that document — required for `SharedArrayBuffer` and
 `performance.measureUserAgentSpecificMemory()` (web-workers lab 02, spa-memory-leaks lab 06).
+
+### The rendering sandbox
+
+Three of the later courses share one small app rendered seven ways from identical templates —
+read [`shared/app/render.mjs`](shared/app/render.mjs), it is the whole rendering-strategies course
+in 300 lines:
+
+```
+/render/csr/product/3        a shell + JS
+/render/ssr/product/3        per request, data fetched sequentially  (TTFB 1706ms)
+/render/ssr-par/product/3    the same page, fetched in parallel      (TTFB 903ms)
+/render/ssg/product/3        rendered once, cached forever
+/render/isr/product/3?revalidate=10    cached, refreshed in the background
+/render/stream/product/3     shell flushed immediately               (TTFB 1ms)
+/render/rsc/product/3        a serialised tree, rendered by the client
+```
+
+Knobs: `?repeat=`, `?hydrationCost=`, `?hydrate=load|idle|visible|interaction`, `?meta=full`,
+`?productDelay=`, `?reviewsDelay=`. Control and introspection at `/api/render`. Every page carries a
+live TTFB/FCP/LCP/CLS/TBT scoreboard.
+
+### Courses that need their own setup
+
+| Course | Setup | Why |
+|---|---|---|
+| [asset-optimization](asset-optimization/) | `node make-images.mjs`, `node make-fonts.mjs` | real image encoding and real font files; both gitignored, both have `--clean` |
+| [bundle-strategy](bundle-strategy/) | `npm install` (esbuild, ~10MB) | you cannot learn tree shaking from a description of tree shaking |
+| [nextjs-caching](nextjs-caching/) | `npm install` (next + react) | the four cache layers only exist in the framework |
+
+Everything else is zero-dependency and runs on `./serve.sh` alone.
 
 ### Shared front-end bits
 

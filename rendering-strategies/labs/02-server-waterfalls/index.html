@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Server waterfalls</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Server waterfalls</h1>
+    <p>Your SSR page is slower than any of its queries. Not because the server is slow — because
+      you awaited three independent things in a row. This lab makes the server's own waterfall
+      visible from the browser using <code>Server-Timing</code>, which is the header you should be
+      emitting in production and almost certainly aren't.</p>
+  </div>
+
+  <div class="controls">
+    <label>product <input id="d-product" type="number" value="200" min="0" max="3000" step="50">ms</label>
+    <label>recommends <input id="d-recommends" type="number" value="600" min="0" max="3000" step="50">ms</label>
+    <label>reviews <input id="d-reviews" type="number" value="900" min="0" max="3000" step="50">ms</label>
+    <button id="compare" data-variant="good">compare sequential vs parallel</button>
+  </div>
+
+  <div class="controls">
+    <button id="waterfall">show the server waterfall</button>
+    <button id="nplus1" data-variant="bad">simulate an N+1 on the listing</button>
+    <button id="dedupe">request deduplication</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+  <h2>server-side waterfall</h2>
+  <div id="bars"></div>
+
+  <p class="readout" id="out">Compare the two, then look at the waterfall.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
