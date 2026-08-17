@@ -54,44 +54,120 @@ function broken() {
   });
 }
 
+// Same visual range the `width` version produced: 60px → 360px.
+const scaleFor = y => (60 + (y % 300)) / 60;
+
 // ---------------------------------------------------------------------------
-// 2. TODO — rAF-coalesced.
-//    Same width write, but at most one pass per frame. Read scrollY once per event,
-//    stash it, and let a single rAF callback do the writing.
-//    Predict the improvement BEFORE you measure. Then measure. Were you right?
+// 2. rAF-coalesced — same width write, at most one pass per frame.
+//    MEASURED: no improvement. `scroll` on the window is dispatched by the browser
+//    during the frame's rendering steps, so it already fires at most once per frame —
+//    there was never a duplicate pass inside a frame for the latch to suppress.
+//    `events handled` ≈ `DOM update passes` is the proof.
 // ---------------------------------------------------------------------------
 function rafCoalesced() {
-  throw new Error('TODO: rafCoalesced() — coalesce writes into one rAF per frame');
+  let scheduled = false, y = 0, rafId = 0;
+  const stop = listen('scroll', () => {
+    eventCount++;
+    y = window.scrollY;                        // read every event, latest wins
+    if (scheduled) return;
+    scheduled = true;
+    rafId = requestAnimationFrame(() => {
+      scheduled = false;
+      updateCount++;
+      rows.forEach(row => {
+        row.style.width = 60 + (y % 300) + 'px'; // layout property write
+      });
+    });
+  });
+  return () => { stop(); cancelAnimationFrame(rafId); };
 }
 
 // ---------------------------------------------------------------------------
-// 3. TODO — transform only.
-//    Same coalescing, but write `transform: scaleX(...)` (or translateX) instead of width.
-//    Which trace entry vanished? Write the answer in a comment.
+// 3. transform only — same coalescing, composited property.
+//    WHICH ENTRY VANISHED: Layout. `transform` is not a layout property, so the write
+//    dirties the paint/property trees but never invalidates geometry. Paint drops hard
+//    too (the rasterized content is unchanged; only its transform node moves).
+//    Recalculate style STAYS — we still set an inline style on all 10,000 rows, so
+//    10,000 elements still get their computed style rebuilt. That's what step 4 fixes.
 // ---------------------------------------------------------------------------
 function transformOnly() {
-  throw new Error('TODO: transformOnly() — composite-friendly property, still coalesced');
+  let scheduled = false, y = 0, rafId = 0;
+  const stop = listen('scroll', () => {
+    eventCount++;
+    y = window.scrollY;
+    if (scheduled) return;
+    scheduled = true;
+    rafId = requestAnimationFrame(() => {
+      scheduled = false;
+      updateCount++;
+      const scale = scaleFor(y);
+      rows.forEach(row => {
+        row.style.transform = `scaleX(${scale})`;
+      });
+    });
+  });
+  return () => { stop(); cancelAnimationFrame(rafId); };
 }
 
 // ---------------------------------------------------------------------------
-// 4. TODO — visible rows only.
-//    Maintain a Set of rows currently intersecting the viewport with IntersectionObserver,
-//    and only update those. Do NOT call getBoundingClientRect in the scroll handler.
-//    Remember to disconnect the observer in your teardown.
+// 4. visible rows only — transform, coalesced, ~40 elements instead of 10,000.
+//    IntersectionObserver computes intersections off the main thread and hands us the
+//    result in a callback, so "which rows are visible" costs nothing per frame.
+//    getBoundingClientRect() here would force a layout per row per event — that's
+//    Lab 01 rebuilt inside Lab 02's handler.
 // ---------------------------------------------------------------------------
 function visibleOnly() {
-  throw new Error('TODO: visibleOnly() — IntersectionObserver + transform, visible rows only');
+  const visible = new Set();
+  let scheduled = false, y = 0, rafId = 0;
+
+  // rootMargin gives a buffer band above/below the viewport, so a row is already in
+  // the Set (and already written) before it scrolls into view — no flash of a stale
+  // transform on the way in.
+  const io = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) visible.add(entry.target);
+      else visible.delete(entry.target);
+    }
+  }, { rootMargin: '200px 0px' });
+
+  rows.forEach(row => io.observe(row));
+
+  const stop = listen('scroll', () => {
+    eventCount++;
+    y = window.scrollY;
+    if (scheduled) return;
+    scheduled = true;
+    rafId = requestAnimationFrame(() => {
+      scheduled = false;
+      updateCount++;
+      const scale = scaleFor(y);
+      visible.forEach(row => {
+        row.style.transform = `scaleX(${scale})`;
+      });
+    });
+  });
+
+  return () => {
+    stop();
+    cancelAnimationFrame(rafId);
+    io.disconnect();
+    visible.clear();
+  };
 }
 
 // ---------------------------------------------------------------------------
-// 5. TODO — no JS at all.
-//    Drive the effect from CSS with a scroll-progress timeline. Add a class here and put
-//    the @keyframes + animation-timeline: scroll() in index.html's <style>.
-//    Feature-detect with CSS.supports('animation-timeline', 'scroll()') and report if
-//    the browser can't do it.
+// 5. cssOnly — no scroll listener, no rAF, no per-frame main-thread work at all.
+//    The @keyframes + `animation-timeline: scroll()` live in index.html's <style>.
+//    `events handled` and `DOM update passes` should both stay at 0.
 // ---------------------------------------------------------------------------
 function cssOnly() {
-  throw new Error('TODO: cssOnly() — scroll-driven CSS animation, zero scroll handlers');
+  if (!CSS.supports('animation-timeline', 'scroll()')) {
+    // activate()'s catch reports this in the readout.
+    throw new Error('no animation-timeline: scroll() support in this browser');
+  }
+  // Class name must match what activate() strips on teardown.
+  rows.forEach(row => row.classList.add('scroll-driven'));
+  return () => rows.forEach(row => row.classList.remove('scroll-driven'));
 }
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Cache-Control basics</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Cache-Control basics</h1>
+    <p>Each preset below fetches the same URL three times in a row, then tells you how many of
+      those three actually reached the server. One number, no interpretation needed: <strong>3
+      means the cache did nothing.</strong></p>
+    <p class="hint">Before you start: DevTools → Network → make sure <strong>Disable cache is
+      OFF</strong>, or every row will say 3 and you'll learn nothing. Keep the Network panel open
+      with the <code>Size</code> and <code>Priority</code> columns visible.</p>
+  </div>
+
+  <div class="controls">
+    <button id="all" data-variant="good">run every preset</button>
+    <button id="reset">new generation (fresh URLs)</button>
+    <div class="sep"></div>
+    <label>repeats <input id="repeats" type="number" value="3" min="1" max="10"></label>
+    <span class="hint" id="gen"></span>
+  </div>
+
+  <div id="results"></div>
+
+  <h2>expiry: does <code>max-age=5</code> mean anything after 5 seconds?</h2>
+  <div class="controls">
+    <button id="expiry">fetch, wait 6s, fetch again</button>
+    <span class="hint">Watch the server hit count jump on the second round.</span>
+  </div>
+
+  <h2>fetch() cache modes — the other half of the story</h2>
+  <div class="controls">
+    <button id="modes">test all RequestCache modes</button>
+    <span class="hint">Your code can override the headers. Sometimes that's the fix; usually it's the bug.</span>
+  </div>
+
+  <div id="modeResults"></div>
+
+  <p class="readout" id="out">Click "run every preset".</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

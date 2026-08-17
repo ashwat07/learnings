@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — SWR &amp; navigation preload</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — SWR &amp; navigation preload</h1>
+    <p>Two things: implementing stale-while-revalidate yourself (with the expiry and coalescing
+      the HTTP cache doesn't give you), and the uncomfortable fact that <strong>having a service
+      worker makes navigations slower</strong> until you deal with its startup cost.</p>
+  </div>
+
+  <div class="controls">
+    <button id="register" data-variant="good">register (no preload, boot 0ms)</button>
+    <button id="registerBoot" data-variant="bad">register with a 300ms boot cost</button>
+    <button id="registerPreload" data-variant="good">register: 300ms boot + navigation preload</button>
+    <div class="sep"></div>
+    <button id="unregister" data-variant="bad">unregister + clear</button>
+  </div>
+
+  <div class="controls">
+    <button id="swr" data-variant="good">fetch through SWR (repeat me)</button>
+    <button id="burst">10 simultaneous fetches (coalescing)</button>
+    <button id="bump" data-variant="warn">change the data on the server</button>
+    <button id="clearCache">clear the SW cache</button>
+    <div class="sep"></div>
+    <button id="navTiming">this page's navigation timing</button>
+    <button id="clear">clear log</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Register, reload once, then click "fetch through SWR" several
+times and watch the "served by" column.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

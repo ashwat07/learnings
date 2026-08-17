@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>04 — blocking</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+
+  <!-- Render-blocking: nothing paints until this arrives. It does NOT block the preload
+       scanner, so requests below still start early — the delay is to PAINT, not to discovery. -->
+  <link rel="stylesheet" href="/api/style.css?name=blocking&delay=900">
+
+  <!-- Parser-blocking: a classic synchronous script. The parser stops here. The preload
+       scanner still runs ahead and starts the downloads it can see — which is the single most
+       under-appreciated optimisation in any browser. -->
+  <script src="/api/script.js?name=sync-head&delay=800"></script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>04 — blocking</h1>
+    <p>A 900ms render-blocking stylesheet and an 800ms parser-blocking script, both in the head.
+      Look at the milestones: FCP is pinned behind the CSS; the script delays DOMContentLoaded.</p>
+    <p class="hint">Now look at when the image below <em>started</em> downloading. It is far
+      earlier than the parser reached it — the preload scanner found it while the parser was
+      blocked. Then compare with the image injected by JavaScript, which the scanner cannot see
+      at all.</p>
+  </div>
+
+  <img src="/api/image.svg?name=scanned&delay=300&w=600&h=200&label=found+by+the+preload+scanner">
+  <div id="late"></div>
+
+  <script>
+    // Invisible to the preload scanner: the URL does not exist until this runs.
+    const el = document.createElement('img');
+    el.src = '/api/image.svg?name=js-injected&delay=300&w=600&h=200&label=injected+by+JS';
+    document.getElementById('late').append(el);
+  </script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

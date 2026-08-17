@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 06 — Build a CORS diagnoser</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; max-width: 1000px; }
+    .panel .card label { display: flex; gap: 8px; align-items: center; margin: 5px 0; color: var(--text); font-size: 13px; }
+    .panel .card label span { color: var(--muted); }
+    textarea { font: 12px/1.5 var(--mono); background: #0f0f16; color: var(--text);
+      border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
+    #headersOut { font: 12px/1.6 var(--mono); background: #0a0a10; border: 1px solid var(--line);
+      border-radius: 10px; padding: 10px 12px; white-space: pre-wrap; max-width: 1000px; }
+    .audit div { font: 12px/1.6 var(--mono); }
+    .audit .no { color: var(--bad); }
+    .audit .meh { color: var(--warn); }
+    .audit .ok { color: var(--good); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 06 — Build a CORS diagnoser</h1>
+    <p>Everything from labs 01–05, as one tool. Configure a server's CORS policy on the left; the
+      simulator runs ten different requests against it using the Fetch spec's algorithm and tells
+      you exactly what a browser would do, including the error text. Then it audits your config
+      for the security mistakes that actually get exploited.</p>
+    <p class="hint">This is the deliverable to keep: a config you can defend, and a tool that
+      explains why.</p>
+  </div>
+
+  <div class="panel">
+    <div class="card">
+      <h3>Access-Control-Allow-Origin</h3>
+      <label><input type="radio" name="acao" value="none"> <span>omit the header</span></label>
+      <label><input type="radio" name="acao" value="star" checked> <span><code>*</code></span></label>
+      <label><input type="radio" name="acao" value="reflect"> <span>reflect any Origin (echo it back)</span></label>
+      <label><input type="radio" name="acao" value="allowlist"> <span>allowlist (below)</span></label>
+      <textarea id="allowlist" rows="3">https://app.example.com
+http://localhost:8080</textarea>
+      <label><input type="checkbox" id="vary" checked> <span>send <code>Vary: Origin</code></span></label>
+    </div>
+
+    <div class="card">
+      <h3>Preflight response</h3>
+      <label><span>Allow-Methods</span></label>
+      <label><input type="checkbox" class="m" value="GET" checked> GET</label>
+      <label><input type="checkbox" class="m" value="POST" checked> POST</label>
+      <label><input type="checkbox" class="m" value="PUT"> PUT</label>
+      <label><input type="checkbox" class="m" value="PATCH"> PATCH</label>
+      <label><input type="checkbox" class="m" value="DELETE"> DELETE</label>
+      <label><span>Allow-Headers</span><input id="acah" type="text" value="content-type" size="24"></label>
+      <label><span>Max-Age</span><input id="maxage" type="number" value="0" min="0" max="86400" step="600"></label>
+      <label><input type="checkbox" id="optionsAuth"> <span>auth middleware also guards OPTIONS</span></label>
+    </div>
+
+    <div class="card">
+      <h3>Credentials &amp; exposure</h3>
+      <label><input type="checkbox" id="acac"> <span>Allow-Credentials: true</span></label>
+      <label><span>Expose-Headers</span><input id="expose" type="text" value="" size="24" placeholder="x-total-count, link"></label>
+      <label><input type="checkbox" id="errorCors" checked> <span>CORS headers on 4xx/5xx responses too</span></label>
+      <label><input type="checkbox" id="redirects"> <span>the endpoint redirects (trailing slash)</span></label>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="run" data-variant="good">simulate 10 requests</button>
+    <button id="audit">security audit</button>
+    <div class="sep"></div>
+    <button id="preset-public">preset: public read-only API</button>
+    <button id="preset-spa">preset: credentialed SPA API</button>
+    <button id="preset-widget">preset: embeddable widget</button>
+  </div>
+
+  <h2>what the server sends</h2>
+  <div id="headersOut"></div>
+
+  <h2>what browsers do</h2>
+  <div id="results"></div>
+
+  <h2>audit</h2>
+  <div id="auditOut" class="audit"></div>
+
+  <p class="readout" id="out"></p>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

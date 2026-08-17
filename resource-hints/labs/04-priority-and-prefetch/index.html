@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Priority &amp; prefetch</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Priority &amp; prefetch</h1>
+    <p>The browser already assigns a priority to every request. Most of the time it guesses well;
+      the two things it cannot know are <strong>which image is the LCP</strong> and
+      <strong>where the user is going next</strong>. That is exactly what
+      <code>fetchpriority</code> and <code>prefetch</code> are for.</p>
+    <p class="hint">Turn on the <strong>Priority</strong> column in the Network panel
+      (right-click the header row). Everything in this lab is visible there.</p>
+  </div>
+
+  <h2>Chrome's default priorities</h2>
+  <table class="data">
+    <tr><th>Resource</th><th>Priority</th><th>Note</th></tr>
+    <tr><td>HTML document</td><td>Highest</td><td></td></tr>
+    <tr><td>CSS in head (render-blocking)</td><td>Highest</td><td>preloading it changes nothing</td></tr>
+    <tr><td>Font discovered by CSS</td><td>High</td><td>but discovered late — that's the real problem</td></tr>
+    <tr><td>Sync script in head</td><td>High</td><td></td></tr>
+    <tr><td>Script with <code>defer</code>/<code>async</code></td><td>Low</td><td></td></tr>
+    <tr><td>Image, in viewport</td><td>Low → High</td><td>starts Low, raised once layout proves it's visible</td></tr>
+    <tr><td>Image, out of viewport</td><td>Low</td><td></td></tr>
+    <tr><td><code>fetch()</code> / XHR</td><td>High</td><td>even for something trivial</td></tr>
+    <tr><td><code>fetch(..., {priority:'low'})</code></td><td>Low</td><td>use it for analytics and prefetching data</td></tr>
+    <tr><td><code>preload</code></td><td>as per <code>as</code></td><td>which is why <code>as</code> is mandatory</td></tr>
+    <tr><td><code>prefetch</code></td><td>Lowest</td><td>idle-time only, for the <em>next</em> page</td></tr>
+  </table>
+
+  <p class="hint">The "Low → High" row is the interesting one: an image's priority is raised only
+    after layout establishes that it is in the viewport, which happens after CSS. That delay is why
+    <code>fetchpriority="high"</code> on the LCP image is one of the cheapest wins available —
+    it skips the wait.</p>
+
+  <h2>the pages</h2>
+  <ul>
+    <li><a href="01-fetchpriority.html">01-fetchpriority.html</a> — the same 12 images, with and
+      without priority hints. Watch the order change.</li>
+    <li><a href="02-lazy.html">02-lazy.html</a> — <code>loading="lazy"</code> on the hero, which
+      is a self-inflicted LCP regression you will meet in real code.</li>
+    <li><a href="03-prefetch.html">03-prefetch.html</a> → navigates to a heavy page, with and
+      without <code>rel="prefetch"</code>.</li>
+    <li><a href="04-speculation.html">04-speculation.html</a> — the Speculation Rules API:
+      prefetch and full prerender of the next page.</li>
+  </ul>
+
+  <div class="controls">
+    <button id="fetchPri" data-variant="good">demo: fetch() priorities</button>
+    <button id="clear">clear</button>
+  </div>
+  <div id="results"></div>
+  <p class="readout" id="out"></p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

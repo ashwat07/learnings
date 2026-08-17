@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>03 — connection limit</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>img { width: 150px; height: 80px; border-radius: 6px; margin: 2px; }</style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>03 — connection limit</h1>
+    <p>Twenty images, each with a 400ms server delay, all discoverable immediately. If bandwidth
+      were the constraint they would all finish in ~400ms. They don't.</p>
+    <p class="hint">This server speaks HTTP/1.1, so the browser opens at most <strong>six</strong>
+      connections per origin. The rest queue — look for the long grey "queue/stall" segments in
+      the waterfall. 20 images ÷ 6 connections × 400ms ≈ 4 rounds ≈ 1.6s.</p>
+    <p class="hint">The second row loads the same images from <code>localhost:8081</code> — a
+      different origin, therefore a different connection pool, therefore another six in parallel.
+      That is exactly why sites used to shard assets across <code>img1/img2/img3.example.com</code>,
+      and why that practice became an anti-pattern the moment HTTP/2 arrived with one multiplexed
+      connection.</p>
+  </div>
+
+  <h2>20 images, one origin</h2>
+  <div id="a"></div>
+  <h2>the same 20, split across two origins</h2>
+  <div id="b"></div>
+
+  <script>
+    const img = (parent, i, origin) => {
+      const el = document.createElement('img');
+      el.src = `${origin}/api/image.svg?name=grid${origin.includes('8081') ? 'B' : 'A'}${i}&delay=400&w=150&h=80&label=${i}`;
+      document.getElementById(parent).append(el);
+    };
+    for (let i = 0; i < 20; i++) img('a', i, '');
+    for (let i = 0; i < 20; i++) img('b', i, i % 2 ? 'http://localhost:8081' : '');
+  </script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

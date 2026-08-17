@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>05 — prerender target</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>the prerendered page</h1>
+    <p>If you arrived here from a prerendered link, everything below had already loaded and run
+      before you clicked — the navigation itself cost roughly nothing.</p>
+  </div>
+
+  <p class="readout" id="state">…</p>
+
+  <img src="/api/image.svg?name=prerender-hero&delay=700&w=900&h=380&size=400000&label=heavy+hero&cc=max-age%3D300"
+       width="900" height="380">
+
+  <script>
+    const log = [];
+    const say = (m) => { log.push(m); document.getElementById('state').textContent = log.join('\n'); };
+
+    // This runs during prerendering — possibly minutes before the user decides to come here.
+    say(`script ran at ${Math.round(performance.now())}ms; document.prerendering = ${document.prerendering}`);
+
+    if (document.prerendering) {
+      say('⚠ we are being prerendered. Anything with a side effect must WAIT.');
+      document.addEventListener('prerenderingchange', () => {
+        say(`activated at ${Math.round(performance.now())}ms — NOW send the analytics page view`);
+        sendPageView();
+      }, { once: true });
+    } else {
+      sendPageView();
+    }
+
+    function sendPageView() {
+      say('page view recorded (this is the line that must never run during prerendering)');
+    }
+
+    addEventListener('load', () => {
+      const nav = performance.getEntriesByType('navigation')[0];
+      say(`activationStart = ${Math.round(nav.activationStart || 0)}ms  ` +
+        '← subtract this from every metric, or your LCP will look impossibly good');
+    });
+  </script>
+
+  <p><a href="04-speculation.html">← back</a></p>
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

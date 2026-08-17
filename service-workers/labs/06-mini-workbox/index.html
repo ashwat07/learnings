@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 06 — Build a mini-Workbox</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 06 — Build a mini-Workbox</h1>
+    <p>A routing layer with pluggable strategies — the shape every real service-worker library
+      converges on, because a service worker's job is not "caching", it's <strong>a policy per
+      kind of request</strong>. The router and two strategies are written; five TODOs are yours.</p>
+    <p class="hint">Open <code>sw.js</code> and read it top to bottom before you start. The
+      interesting design is in the plugin hooks, not the strategies.</p>
+  </div>
+
+  <div class="controls">
+    <button id="register" data-variant="good">register</button>
+    <button id="inspect">inspect caches</button>
+    <button id="clearCaches">clear caches</button>
+    <button id="unregister" data-variant="bad">unregister + clear</button>
+    <button id="clear">clear log</button>
+  </div>
+
+  <h2>the test suite</h2>
+  <div class="controls">
+    <button id="runAll" data-variant="good">run all route tests</button>
+    <span class="hint">Each test asserts which strategy answered and how it behaved. Red rows are
+      unimplemented TODOs.</span>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Register, reload once, then run the tests. Four of six will fail
+until you implement the TODOs.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

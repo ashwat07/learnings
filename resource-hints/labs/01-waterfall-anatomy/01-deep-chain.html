@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>01 — deep chain</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+
+  <!-- Chain link 1: a stylesheet that takes 400ms and, once parsed, reveals a background image. -->
+  <link rel="stylesheet"
+        href="/api/style.css?name=theme&delay=400&img=%2Fapi%2Fimage.svg%3Fname%3Dhero%26delay%3D400%26w%3D900%26h%3D400%26label%3DLCP%2Bimage">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>01 — deep chain</h1>
+    <p>Five resources. Each one is only <em>discovered</em> after the previous one has downloaded
+      and been processed. The bytes are trivial; the latency is five round trips deep.</p>
+    <p class="hint">HTML → CSS (400ms) → background image (400ms)<br>
+      HTML → app script (300ms) → dynamic import (300ms) → fetch (300ms)</p>
+  </div>
+
+  <div id="hero" class="stage" style="height:400px">the LCP element — its background comes from the CSS</div>
+
+  <!-- Chain link 2: a deferred script that imports another module, which then fetches data. -->
+  <script type="module">
+    // Discovered only when the parser gets here; runs after download.
+    const t0 = performance.now();
+    const mod = await import('/api/script.js?name=chunk&delay=300');
+    // …and only now does the browser learn about the data request.
+    const res = await fetch('/api/asset?name=user&type=json&delay=300');
+    await res.json();
+    document.querySelector('#hero').insertAdjacentHTML('beforeend',
+      `<p class="hint">data arrived ${Math.round(performance.now() - t0)}ms after the module started</p>`);
+  </script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Debug a preflight failure</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .case { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 10px; max-width: 980px; background: var(--panel); }
+    .case h3 { margin: 0 0 4px; font-size: 13px; }
+    .case .desc { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+    .case .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .case pre { font: 11px/1.5 var(--mono); background: #0a0a10; border: 1px solid var(--line);
+      border-radius: 6px; padding: 8px 10px; margin: 8px 0 0; overflow: auto; white-space: pre-wrap; }
+    .case .diag { display: none; color: var(--good); font-size: 12px; margin-top: 8px; white-space: pre-wrap; }
+    .case.revealed .diag { display: block; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Debug a preflight failure</h1>
+    <p>Eight broken CORS configurations. For each one: run it, read the console error, look at the
+      raw <code>OPTIONS</code> exchange, and write down the diagnosis <em>before</em> you reveal it.
+      Aim to name the missing or wrong header from the error message alone.</p>
+    <p class="hint">The workflow that matters here is the one you will use at work:
+      <strong>error message → Network panel → raw OPTIONS → the one header that is wrong</strong>.
+      The "probe" button is a <code>curl -X OPTIONS</code> that runs on the server, because CORS
+      deliberately hides the failing response from JavaScript.</p>
+  </div>
+
+  <div class="controls">
+    <button id="runAll" data-variant="bad">run all (broken)</button>
+    <button id="fixAll" data-variant="good">run all (fixed)</button>
+    <button id="revealAll">reveal all diagnoses</button>
+    <button id="clear">clear log</button>
+    <span class="hint">Keep the DevTools console open — the real message only appears there.</span>
+  </div>
+
+  <div id="cases"></div>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

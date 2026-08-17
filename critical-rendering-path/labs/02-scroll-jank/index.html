@@ -13,11 +13,32 @@
       width: 60px;
       background: linear-gradient(90deg, #7c9cff, #b57cff);
       border-radius: 3px;
-      /* Strategy 6 asks you to add: content-visibility / contain. Do it here. */
+      /* So scaleX() grows rightward, the way the `width` write did. Inert until a
+         transform is actually set, so it does not affect strategies 1–2. */
+      transform-origin: left center;
+
+      /* Strategy 6: uncomment, re-measure every strategy, and explain what it skipped.
+         (Layout + Paint for off-screen rows. Catch: scrollbar position jumps unless you
+         give the skipped boxes a size estimate, which is what contain-intrinsic-size is.) */
+      /* content-visibility: auto; contain-intrinsic-size: auto 22px; */
     }
-    /* Strategy 5 (cssOnly): define a scroll-driven animation here and add the class in app.js.
-       Progressive enhancement:
-       @supports (animation-timeline: scroll()) { ... }  */
+
+    /* Strategy 5 (cssOnly) — zero JS. The animation is driven by scroll progress. */
+    @keyframes grow-with-scroll {
+      from { transform: scaleX(1); }
+      to   { transform: scaleX(6); }
+    }
+    @supports (animation-timeline: scroll()) {
+      .row.scroll-driven {
+        animation-name: grow-with-scroll;
+        animation-duration: auto;        /* maps the animation across the whole scroll range */
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        /* animation-timeline is NOT part of the `animation` shorthand, and the shorthand
+           resets it to `auto` — so it must come after any shorthand, or it silently dies. */
+        animation-timeline: scroll(root block);
+      }
+    }
   </style>
 </head>
 <body>

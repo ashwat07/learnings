@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Task vs microtask</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Task vs microtask</h1>
+    <p><strong>Write your prediction down before clicking.</strong> Every demo below has exactly
+      one correct order, and it is derivable from the loop diagram in the course README. Getting it
+      right by accident doesn't count — if you can't explain <em>why</em> line 4 comes before
+      line 5, you haven't got it yet.</p>
+    <p class="hint">Colours: <span style="color:#e9e9f2">sync</span> ·
+      <span style="color:#b3ffd6">microtask</span> ·
+      <span style="color:#ffd166">task (macrotask)</span> ·
+      <span style="color:#7c9cff">render step</span> ·
+      <span style="color:#c9a3ff">idle</span></p>
+  </div>
+
+  <div class="controls">
+    <button id="baseline" data-variant="good">1. ordering baseline</button>
+    <button id="drain">2. microtask drain</button>
+    <button id="raf">3. microtasks between rAF callbacks</button>
+    <button id="observers">4. which observers are microtasks?</button>
+    <button id="nesting">5. nesting: microtask vs task</button>
+    <button id="sources">6. task sources race</button>
+    <div class="sep"></div>
+    <button id="clear">clear log</button>
+  </div>
+
+  <div id="log" class="log"></div>
+
+  <p class="readout" id="out">Pick a demo.</p>
+
+  <!-- The element the MutationObserver demo mutates. -->
+  <div id="target" class="stage" style="min-height:40px">mutation target</div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

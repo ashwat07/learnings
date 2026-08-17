@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>03 — preload traps</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+
+  <!-- TRAP 1: URL mismatch. The preload and the actual request differ by one query parameter,
+       so the browser fetches the resource TWICE. Look for two entries for name=trap-mismatch
+       in the waterfall. -->
+  <link rel="preload" as="image" href="/api/image.svg?name=trap-mismatch&delay=300&w=600&h=200">
+
+  <!-- TRAP 2: as="fetch" without crossorigin. A fetch() is a CORS-mode request; this preload
+       is not, so it cannot be reused. Two downloads again, plus a console warning. -->
+  <link rel="preload" as="fetch" href="/api/asset?name=trap-nocors&type=json&delay=300">
+
+  <!-- TRAP 3: preloaded and never used. Chrome will warn:
+       "The resource ... was preloaded using link preload but not used within a few seconds". -->
+  <link rel="preload" as="script" href="/api/script.js?name=trap-unused&delay=300">
+
+  <!-- TRAP 4: missing `as`. Wrong priority, wrong Accept header, usually no reuse. -->
+  <link rel="preload" href="/api/image.svg?name=trap-no-as&delay=300&w=600&h=200">
+
+  <!-- TRAP 5: preloading a big non-critical asset ahead of the LCP image. It is not "extra"
+       bandwidth — it is the SAME bandwidth, taken from the thing users are waiting for. -->
+  <link rel="preload" as="image" fetchpriority="high"
+        href="/api/image.svg?name=trap-hog&delay=100&w=400&h=200&size=900000">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>03 — preload traps</h1>
+    <p><strong>Open the console.</strong> Then read the waterfall and count how many times each
+      resource was downloaded.</p>
+    <ol class="hint">
+      <li><code>trap-mismatch</code> — preload URL differs from the used URL by one parameter →
+        downloaded twice.</li>
+      <li><code>trap-nocors</code> — <code>as="fetch"</code> without <code>crossorigin</code> →
+        downloaded twice.</li>
+      <li><code>trap-unused</code> — preloaded, never used → pure waste plus a warning.</li>
+      <li><code>trap-no-as</code> — no <code>as</code> → wrong priority, no reuse.</li>
+      <li><code>trap-hog</code> — a 900KB high-priority preload of something below the fold,
+        competing with the LCP image for the same pipe.</li>
+    </ol>
+  </div>
+
+  <img id="lcp" src="/api/image.svg?name=trap-lcp&delay=300&w=1000&h=420&label=the+actual+LCP+image">
+
+  <img src="/api/image.svg?name=trap-mismatch&delay=300&w=600&h=200&extra=1">
+  <img src="/api/image.svg?name=trap-no-as&delay=300&w=600&h=200">
+
+  <script type="module">
+    // The CORS-mode fetch that the non-crossorigin preload cannot satisfy.
+    await fetch('/api/asset?name=trap-nocors&type=json&delay=300').then((r) => r.json());
+  </script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

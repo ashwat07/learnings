@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Network first &amp; offline</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Network first &amp; offline</h1>
+    <p>Network-first says: try the network, fall back to the cache. Correct for data that must be
+      fresh. The part everyone leaves out is the <strong>timeout</strong> — without it, a user on
+      a bad connection waits 30 seconds for a response you already have a copy of.</p>
+    <p class="hint">"Offline" is rare. "Connected to something that never answers" is common, and
+      only a timeout handles it.</p>
+  </div>
+
+  <div class="controls">
+    <button id="register" data-variant="good">register sw (timeout 1200ms)</button>
+    <button id="register500" data-variant="warn">re-register with timeout 500ms</button>
+    <div class="sep"></div>
+    <button id="inspect">inspect caches</button>
+    <button id="unregister" data-variant="bad">unregister + clear</button>
+  </div>
+
+  <div class="controls">
+    <label>server delay <input id="delay" type="number" value="300" min="0" max="8000" step="100">ms</label>
+    <button id="fetchData" data-variant="good">fetch /api/data</button>
+    <button id="fetchSlow">fetch it slowly (3000ms)</button>
+    <button id="fetchDead">fetch a dead endpoint</button>
+    <div class="sep"></div>
+    <button id="clear">clear log</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Register, reload once, then try the fetch buttons — and then repeat
+them all with DevTools → Network → Offline.</p>
+
+  <h2>the offline checklist</h2>
+  <ol class="hint">
+    <li>Go offline (Network panel) and click <strong>fetch /api/data</strong> — cached copy,
+      instantly.</li>
+    <li>Still offline, reload this page — the shell comes from cache.</li>
+    <li>Still offline, navigate to <a href="./does-not-exist.html">a page that was never
+      cached</a> — you should get the precached offline page, not the browser's error page.</li>
+    <li>Go back online and repeat. Everything should return to normal with no further action.</li>
+  </ol>
+
+  <h2>caches</h2>
+  <div id="caches" class="log" style="max-height:180px"></div>
+
+  <h2>log</h2>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

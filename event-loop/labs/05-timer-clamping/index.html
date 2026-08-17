@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Timer clamping &amp; throttling</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Timer clamping &amp; throttling</h1>
+    <p><code>setTimeout(fn, 0)</code> does not mean 0. It means "queue a task, then wait at least
+      the clamped minimum" — and the clamp changes depending on how deeply nested you are, whether
+      the tab is visible, and how long it has been hidden. If your scheduling primitive is a timer,
+      the browser is allowed to slow you down, and it will.</p>
+  </div>
+
+  <div class="controls">
+    <button id="nesting" data-variant="good">1. measure the nesting clamp</button>
+    <button id="throughput">2. throughput per primitive</button>
+    <button id="pileup">3. setInterval pile-up</button>
+    <button id="drift">4. setInterval drift over 10s</button>
+    <div class="sep"></div>
+    <button id="background" data-variant="warn">5. background throttling (needs you to switch tabs)</button>
+    <div class="sep"></div>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start with 1.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

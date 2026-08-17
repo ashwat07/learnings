@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>04 — Speculation Rules</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+
+  <!-- Speculation Rules: the modern replacement for rel=prefetch on navigations.
+       `prefetch` fetches the next DOCUMENT; `prerender` renders it completely in a hidden
+       tab — HTML, CSS, JS, images, and the JS actually executes — so the navigation is
+       instant.
+
+       "eagerness" is the bet size:
+         immediate  — right now
+         eager      — as soon as the link is even slightly likely (hover intent, ~0ms)
+         moderate   — on hover for ~200ms  ← the sensible default
+         conservative — on pointerdown, which still buys ~100ms
+  -->
+  <script type="speculationrules">
+  {
+    "prefetch": [{
+      "where": { "href_matches": "/resource-hints/labs/04-priority-and-prefetch/03-next.html" },
+      "eagerness": "moderate"
+    }],
+    "prerender": [{
+      "where": { "href_matches": "/resource-hints/labs/04-priority-and-prefetch/05-prerender-target.html" },
+      "eagerness": "moderate"
+    }]
+  }
+  </script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>04 — Speculation Rules</h1>
+    <p>Hover the links below for a moment before clicking. With <code>eagerness: moderate</code>
+      the browser starts speculating after ~200ms of hover — usually enough to have the next page
+      ready before your click lands.</p>
+    <p class="hint" id="support"></p>
+  </div>
+
+  <div class="controls">
+    <a href="03-next.html"><button>prefetched target (document only)</button></a>
+    <a href="05-prerender-target.html"><button data-variant="good">prerendered target (fully rendered)</button></a>
+  </div>
+
+  <h2>what you are trading</h2>
+  <table class="data">
+    <tr><th></th><th>rel=prefetch</th><th>Speculation: prefetch</th><th>Speculation: prerender</th></tr>
+    <tr><td>fetches</td><td>one subresource</td><td>the whole document</td><td>document + subresources</td></tr>
+    <tr><td>runs JS</td><td>no</td><td>no</td><td><strong>yes</strong></td></tr>
+    <tr><td>navigation cost</td><td>subresource cached</td><td>document cached</td><td>≈0ms — instant</td></tr>
+    <tr><td>cost if unused</td><td>bytes</td><td>bytes</td><td>bytes + CPU + memory for a full page</td></tr>
+    <tr><td>analytics risk</td><td>none</td><td>none</td><td>a page view that never happened, unless you handle it</td></tr>
+  </table>
+
+  <ul class="hint">
+    <li>A prerendered page runs its JavaScript <em>before the user has decided to visit</em>. Gate
+      anything with side effects — analytics, A/B assignment, ad impressions, writes — behind
+      <code>document.prerendering === false</code> or the
+      <code>prerenderingchange</code> event.</li>
+    <li>Speculation Rules respect the user's data-saver setting and the browser's own memory
+      pressure heuristics; the browser can and does ignore your rules.</li>
+    <li>Same-origin prerendering is broadly supported; cross-origin prerendering has extra
+      restrictions (and needs opt-in headers).</li>
+    <li>This replaces the old "prefetch on hover" libraries (quicklink, instant.page) with a
+      declarative, browser-scheduled version that also knows about memory and data saver.</li>
+  </ul>
+
+  <script>
+    document.getElementById('support').textContent =
+      HTMLScriptElement.supports?.('speculationrules')
+        ? 'This browser supports Speculation Rules. Hover a link for ~200ms, then click.'
+        : 'This browser does NOT support Speculation Rules (Chromium only, currently) — the rules ' +
+          'above are ignored and the links behave normally. Note how it degrades: a speculation ' +
+          'rule can never break a page, which is why it is safe to ship.';
+  </script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

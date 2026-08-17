@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Response headers &amp; opaque responses</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Response headers &amp; opaque responses</h1>
+    <p>The response arrived with fifteen headers. Your JavaScript can see seven of them, and none
+      of yours. This lab covers the read side of CORS: what is visible by default, how to expose
+      more, and what an opaque response actually is.</p>
+  </div>
+
+  <div class="controls">
+    <button id="default" data-variant="bad">1. cross-origin, no Expose-Headers</button>
+    <button id="exposed" data-variant="good">2. with Access-Control-Expose-Headers</button>
+    <button id="star">3. Expose-Headers: *</button>
+    <button id="starCreds" data-variant="bad">4. Expose-Headers: * with credentials</button>
+    <div class="sep"></div>
+    <button id="sameOrigin">same-origin, for comparison</button>
+  </div>
+
+  <div class="controls">
+    <button id="opaque">5. opaque response (mode: no-cors)</button>
+    <button id="opaqueRedirect">6. opaqueredirect (redirect: 'manual')</button>
+    <button id="errors">7. error opacity: a 500 with and without CORS</button>
+    <button id="progress">8. download progress needs a header</button>
+    <div class="sep"></div>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start with 1 and 2 — the difference is the lab.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

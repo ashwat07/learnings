@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Waterfall anatomy</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Waterfall anatomy</h1>
+    <p>Four pages, the same total bytes, wildly different load times. Open each one, read its
+      waterfall, and learn to see the two things that actually decide page speed:
+      <strong>chain depth</strong> and <strong>connection contention</strong>.</p>
+    <p class="hint">Throttle to <em>Fast 4G</em> in DevTools → Network before you start, and
+      hard-reload each page.</p>
+  </div>
+
+  <h2>the pages</h2>
+  <ul>
+    <li><a href="01-deep-chain.html">01-deep-chain.html</a> — five resources, each discovered by
+      the previous one. Same bytes, five sequential round trips.</li>
+    <li><a href="02-flat.html">02-flat.html</a> — the same five resources, all declared in the
+      HTML head. One round trip's worth of latency instead of five.</li>
+    <li><a href="03-connection-limit.html">03-connection-limit.html</a> — 20 images at once over
+      HTTP/1.1. Watch six go at a time.</li>
+    <li><a href="04-blocking.html">04-blocking.html</a> — what render-blocking CSS and a
+      parser-blocking script do to <em>discovery</em> of everything after them.</li>
+  </ul>
+
+  <p class="readout" id="out">Each page prints its own waterfall and milestones at the bottom.
+Compare LCP across all four and write the numbers down before reading the README.</p>
+
+  <h2>what to look for in each waterfall</h2>
+  <ul class="hint">
+    <li><strong>Staircase</strong> — each bar starts where the previous one ended. That is a
+      dependency chain, and no amount of bandwidth fixes it.</li>
+    <li><strong>Six at a time</strong> — bars starting in groups of six with a long grey
+      queue/stall segment: you are at the HTTP/1.1 per-origin connection limit.</li>
+    <li><strong>Long grey before a bar</strong> — queued or stalled, not slow. The network hadn't
+      started yet.</li>
+    <li><strong>A gap with nothing happening</strong> — the browser was busy parsing or executing,
+      not waiting on the network. Check the Performance panel, not the Network one.</li>
+  </ul>
+
+  <script src="/shared/perf-hud.js"></script>
+</body>
+</html>

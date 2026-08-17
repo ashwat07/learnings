@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Credentials</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Credentials</h1>
+    <p>Cookies cross-origin are governed by <strong>two independent systems</strong> that people
+      constantly conflate: <em>CORS</em> decides whether your JavaScript may send credentials and
+      read the response; <em>SameSite</em> decides whether the browser attaches the cookie at all.
+      A request can pass one and fail the other, and the error messages look nothing alike.</p>
+    <p class="hint">This lab uses two targets to separate them:<br>
+      <code>localhost:8081</code> — cross-<strong>origin</strong> but same-<strong>site</strong>
+      (different port only), so SameSite does not block it.<br>
+      <code>127.0.0.1:8080</code> — cross-origin <em>and</em> cross-site, so SameSite applies in
+      full.</p>
+  </div>
+
+  <div class="controls">
+    <label>target
+      <select id="target">
+        <option value="http://localhost:8081">http://localhost:8081 (cross-origin, same-site)</option>
+        <option value="http://127.0.0.1:8080">http://127.0.0.1:8080 (cross-origin, cross-site)</option>
+      </select>
+    </label>
+    <label>cookie SameSite
+      <select id="samesite">
+        <option value="Lax">Lax (the default)</option>
+        <option value="Strict">Strict</option>
+        <option value="None">None (requires Secure)</option>
+      </select>
+    </label>
+    <button id="setCookie" data-variant="good">1. set the cookie on the target</button>
+    <button id="clearCookie">clear it</button>
+  </div>
+
+  <div class="controls">
+    <button id="omit">credentials: 'omit'</button>
+    <button id="sameOrigin">credentials: 'same-origin'</button>
+    <button id="include" data-variant="good">credentials: 'include'</button>
+    <div class="sep"></div>
+    <button id="wildcard" data-variant="bad">include + ACAO: *</button>
+    <button id="noAcac" data-variant="bad">include + exact origin, no ACAC</button>
+    <button id="correct" data-variant="good">include + exact origin + ACAC (correct)</button>
+  </div>
+
+  <div class="controls">
+    <button id="matrix">run the whole matrix</button>
+    <button id="readCookie">try to read the cookie from JS</button>
+    <button id="wildcardHeaders">what does ACAH: * do with credentials?</button>
+    <button id="clear">clear log</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Set the cookie first, then work down the buttons.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

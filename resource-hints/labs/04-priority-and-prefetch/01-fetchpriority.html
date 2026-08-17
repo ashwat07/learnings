@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>01 — fetchpriority</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .strip { display: flex; flex-wrap: wrap; gap: 4px; }
+    .strip img { width: 130px; height: 70px; border-radius: 4px; }
+    #hero { width: 100%; max-width: 900px; height: 380px; object-fit: cover; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>01 — fetchpriority</h1>
+    <p>The hero below is the LCP element. Eleven thumbnails are declared before it in the HTML, so
+      the preload scanner queues them first and — on a connection-limited origin — they get the
+      sockets. <code>fetchpriority="high"</code> on the hero jumps it to the front.</p>
+    <p class="hint">Load this page, note LCP. Then load
+      <a href="01-fetchpriority.html?fix=1">?fix=1</a>, which adds the one attribute, and compare.
+      Throttle to Fast 4G or the difference is noise.</p>
+  </div>
+
+  <div class="strip" id="strip"></div>
+
+  <script>
+    // Eleven thumbnails, written before the hero so they are discovered first.
+    const fix = new URLSearchParams(location.search).has('fix');
+    let html = '';
+    for (let i = 0; i < 11; i++) {
+      html += `<img src="/api/image.svg?name=thumb${i}&delay=250&w=130&h=70&size=300000&label=${i}"` +
+        (fix ? ' fetchpriority="low"' : '') + '>';
+    }
+    document.getElementById('strip').innerHTML = html;
+
+    document.write(
+      `<img id="hero" ${fix ? 'fetchpriority="high"' : ''} ` +
+      `src="/api/image.svg?name=hero-pri&delay=250&w=900&h=380&size=300000&label=LCP+hero">`);
+  </script>
+
+  <p class="readout" id="verdict"></p>
+  <script>
+    addEventListener('load', () => {
+      const q = new URLSearchParams(location.search);
+      document.getElementById('verdict').textContent = q.has('fix')
+        ? 'fetchpriority="high" on the hero, "low" on the thumbnails. The hero should now be among ' +
+          'the first requests to complete. Check the Priority column in the Network panel.'
+        : 'No priority hints. The hero is queued behind eleven thumbnails that nobody is looking at. ' +
+          'Now load ?fix=1 and compare LCP.';
+    });
+  </script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

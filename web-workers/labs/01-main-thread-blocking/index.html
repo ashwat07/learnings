@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Main-thread blocking</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #spinner { width: 46px; height: 46px; border-radius: 10px; margin: 12px 0;
+               background: linear-gradient(135deg, #7c9cff, #b57cff); }
+    .anim { animation: spin 1.2s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #jsSpinner { width: 46px; height: 46px; border-radius: 10px; margin: 12px 0;
+                 background: linear-gradient(135deg, #6ee7a8, #7c9cff); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Main-thread blocking</h1>
+    <p>Fetch 200,000 rows of JSON, parse them, group and sort them. About 400ms of CPU on a
+      laptop, several seconds on a phone. Do it on the main thread and the page is dead for the
+      duration; do it in a worker and nothing moves except the clock.</p>
+    <p class="hint">Two spinners below. The <strong>left</strong> one is a CSS animation on the
+      compositor — it keeps going even when the main thread is blocked, which is why it is a
+      terrible loading indicator for this. The <strong>right</strong> one is driven by
+      <code>requestAnimationFrame</code>, so it freezes exactly when your users' clicks do. Watch
+      the right one.</p>
+  </div>
+
+  <div style="display:flex;gap:20px;align-items:center">
+    <div><div id="spinner" class="anim"></div><span class="hint">CSS / compositor</span></div>
+    <div><div id="jsSpinner"></div><span class="hint">rAF / main thread</span></div>
+    <button id="poke">poke me (0 handled)</button>
+  </div>
+
+  <div class="controls">
+    <label>rows <input id="rows" type="number" value="200000" min="10000" max="400000" step="10000"></label>
+    <div class="sep"></div>
+    <button id="main" data-variant="bad">A. on the main thread</button>
+    <button id="chunked" data-variant="warn">B. chunked on the main thread</button>
+    <button id="worker" data-variant="good">C. in a worker</button>
+    <button id="workerNaive" data-variant="warn">D. worker, but fetched on the main thread</button>
+    <div class="sep"></div>
+    <button id="reset">reset table</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run A, then C. Then read the wall-time column and notice that the
+worker version is not actually faster.</p>
+
+  <h2>top teams</h2>
+  <div id="summary" class="log" style="max-height:200px"></div>
+
+  <h2>log</h2>
+  <div id="log" class="log" style="max-height:200px"></div>
+
+  <script src="/shared/perf-hud.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

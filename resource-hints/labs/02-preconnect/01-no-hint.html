@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>01 — no hint</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <!-- A slow same-origin stylesheet: 700ms of time during which the browser could have been
+       opening the connection to the other origin, and isn't. -->
+  <link rel="stylesheet" href="/api/style.css?name=slow-a&delay=700">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>01 — no hint</h1>
+    <p>The cross-origin script below is discovered by the parser as normal, but its connection to
+      <code>localhost:8081</code> only begins when the request does. With Slow 4G throttling, that
+      handshake is a visible chunk of time on the critical path.</p>
+  </div>
+  <p class="hint">Look for: <code>dns</code> + <code>connect</code> segments on the :8081 row in
+    the waterfall below, and when that row <em>starts</em>.</p>
+
+  <script src="http://localhost:8081/api/script.js?name=third-party-a&delay=200"></script>
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

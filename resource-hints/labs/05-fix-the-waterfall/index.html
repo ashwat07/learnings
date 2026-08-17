@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Fix the waterfall</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Fix the waterfall</h1>
+    <p>One product page with eight independent discovery problems. Your job: get LCP under
+      1.5s at Fast 4G <strong>without removing any resource</strong> — same bytes, same content,
+      same third-party origin. Only discovery, priority and blocking may change.</p>
+  </div>
+
+  <h2>the pages</h2>
+  <ul>
+    <li><a href="broken.html">broken.html</a> — the patient. Measure it first, at Fast 4G, three
+      times, and take the median.</li>
+    <li><a href="your-fix.html">your-fix.html</a> — an identical copy with a TODO list in the
+      source. Edit this file.</li>
+  </ul>
+
+  <h2>the rules</h2>
+  <ul class="hint">
+    <li>Every resource that loads in <code>broken.html</code> must still load in your fix, with
+      the same server delay and the same byte size. No deleting the tracking script, no shrinking
+      images. (Both would be right in real life; both would also let you skip the lesson.)</li>
+    <li>The visible result must be identical: same hero, same 12 thumbnails, same text, same data
+      rendered.</li>
+    <li>You may add hints, change attributes, move tags, inline things, and change how the
+      JavaScript discovers its data.</li>
+  </ul>
+
+  <h2>the scoreboard</h2>
+  <table class="data">
+    <tr><th>metric</th><th>broken (typical, Fast 4G)</th><th>target</th><th>yours</th></tr>
+    <tr><td>LCP</td><td>~4.5s</td><td>&lt; 1.5s</td><td></td></tr>
+    <tr><td>FCP</td><td>~2.2s</td><td>&lt; 1.0s</td><td></td></tr>
+    <tr><td>critical chain depth</td><td>4</td><td>1</td><td></td></tr>
+    <tr><td>duplicate downloads</td><td>1</td><td>0</td><td></td></tr>
+    <tr><td>CLS</td><td>&gt; 0.2</td><td>&lt; 0.05</td><td></td></tr>
+    <tr><td>console warnings</td><td>2</td><td>0</td><td></td></tr>
+  </table>
+
+  <p class="readout">Measure with Fast 4G throttling and a hard reload every time. Take the median
+of three runs — a single measurement on a throttled connection is noise, and reporting one number
+from one run is the most common way performance work gets discredited.</p>
+
+  <script src="/shared/perf-hud.js"></script>
+</body>
+</html>

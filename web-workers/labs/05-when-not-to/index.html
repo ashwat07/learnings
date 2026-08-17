@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — When NOT to use a worker</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    canvas { border: 1px solid var(--line); border-radius: 8px; background: #0a0a10; }
+    .canvases { display: flex; gap: 12px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — When <em>not</em> to use a worker</h1>
+    <p>Workers cost a thread, a spawn, a round trip per call, and a permanent increase in how
+      hard your code is to follow. This lab measures those costs so you can find the crossover
+      point — below which a worker makes everything worse — and shows the two cases where a
+      worker is unambiguously right.</p>
+  </div>
+
+  <h2>1. what does a worker cost before it does anything?</h2>
+  <div class="controls">
+    <button id="spawn" data-variant="good">measure spawn cost (×8)</button>
+    <button id="roundtrip">measure round-trip latency (×200)</button>
+  </div>
+
+  <h2>2. where is the crossover?</h2>
+  <div class="controls">
+    <label>tasks <input id="tasks" type="number" value="200" min="10" max="2000" step="10"></label>
+    <button id="sweep" data-variant="good">sweep task size: 0.1ms → 50ms</button>
+    <span class="hint">Same total work, split into different task sizes. Find where the worker
+      stops losing.</span>
+  </div>
+
+  <div id="results"></div>
+
+  <h2>3. the case where a worker is unambiguous: OffscreenCanvas</h2>
+  <div class="controls">
+    <button id="startCanvas" data-variant="good">start both animations</button>
+    <button id="block" data-variant="bad">block the main thread for 2s</button>
+  </div>
+  <div class="canvases">
+    <div><canvas id="mainCanvas" width="420" height="150"></canvas>
+      <div class="hint">main thread rAF</div></div>
+    <div><canvas id="workerCanvas" width="420" height="150"></canvas>
+      <div class="hint">worker + OffscreenCanvas</div></div>
+  </div>
+
+  <p class="readout" id="out">Start with the spawn and round-trip measurements — every later
+decision is arithmetic on those two numbers.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

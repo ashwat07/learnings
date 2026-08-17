@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>02 — lazy loading</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    img { display: block; width: 100%; max-width: 900px; height: 340px; object-fit: cover;
+          border-radius: 8px; margin-bottom: 12px; background: #101017; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>02 — lazy loading, used correctly and incorrectly</h1>
+    <p>The first image is the LCP element and it is marked <code>loading="lazy"</code> — which is
+      what happens when a team adds lazy loading "to all images" with a codemod. The browser now
+      has to run layout before it will even start the request.</p>
+    <p class="hint">Load this page and note LCP. Then load
+      <a href="02-lazy.html?fix=1">?fix=1</a>, which marks the hero <code>eager</code> +
+      <code>fetchpriority="high"</code> and leaves the rest lazy.</p>
+  </div>
+
+  <div id="imgs"></div>
+  <p class="readout" id="verdict"></p>
+
+  <script>
+    const fix = new URLSearchParams(location.search).has('fix');
+    const box = document.getElementById('imgs');
+    for (let i = 0; i < 12; i++) {
+      const img = document.createElement('img');
+      img.src = `/api/image.svg?name=lazy${i}&delay=300&w=900&h=340&size=200000&label=image+${i}`;
+      if (i === 0) {
+        img.loading = fix ? 'eager' : 'lazy';
+        if (fix) img.setAttribute('fetchpriority', 'high');
+      } else {
+        img.loading = 'lazy';
+      }
+      // Always give images intrinsic dimensions: without them the page shifts as each one
+      // arrives, which is a CLS problem on top of the LCP one.
+      img.width = 900; img.height = 340;
+      box.append(img);
+    }
+    addEventListener('load', () => {
+      document.getElementById('verdict').textContent = fix
+        ? 'Hero is eager + high priority; images 1–11 stay lazy and are never fetched until you ' +
+          'scroll. Best of both.'
+        : 'Every image lazy, including the LCP one. Lazy loading below the fold saves real ' +
+          'bandwidth; applying it to the hero costs you LCP for nothing.';
+    });
+  </script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

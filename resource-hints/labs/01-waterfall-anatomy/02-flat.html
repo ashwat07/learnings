@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>02 — flat</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+
+  <!-- Exactly the same five resources as 01-deep-chain, but every URL is stated in the HTML,
+       so the preload scanner finds them all before the parser has even finished the head.
+       Nothing is faster; everything just STARTS at the same moment. -->
+  <link rel="stylesheet" href="/api/style.css?name=theme2&delay=400">
+  <link rel="preload" as="image" href="/api/image.svg?name=hero2&delay=400&w=900&h=400&label=LCP+image">
+  <link rel="modulepreload" href="/api/script.js?name=app2&delay=300">
+  <link rel="modulepreload" href="/api/script.js?name=chunk2&delay=300">
+  <link rel="preload" as="fetch" crossorigin href="/api/asset?name=user2&type=json&delay=300">
+  <style>
+    #hero { background-image: url("/api/image.svg?name=hero2&delay=400&w=900&h=400&label=LCP+image");
+            background-size: cover; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>02 — flat</h1>
+    <p>Same five resources, same bytes, same server delays. All five requests start within a few
+      milliseconds of each other because every URL was knowable from the HTML alone.</p>
+    <p class="hint">Total time is now roughly max(400, 300+…) instead of 400+400 and 300+300+300.</p>
+  </div>
+
+  <div id="hero" class="stage" style="height:400px">the LCP element</div>
+
+  <script type="module">
+    const t0 = performance.now();
+    await import('/api/script.js?name=app2&delay=300');
+    await import('/api/script.js?name=chunk2&delay=300');
+    const res = await fetch('/api/asset?name=user2&type=json&delay=300');
+    await res.json();
+    document.querySelector('#hero').insertAdjacentHTML('beforeend',
+      `<p class="hint">data ready ${Math.round(performance.now() - t0)}ms after the module started
+       — the preloads had already fetched all of it</p>`);
+  </script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

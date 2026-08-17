@@ -1,0 +1,127 @@
+/* Shared chrome for every lab in the repo. Deliberately cheap to paint — the point is that
+   the *lab* code is the slow part, not the page shell. */
+:root {
+  --bg: #0d0d12;
+  --panel: #16161f;
+  --line: #2a2a38;
+  --text: #e9e9f2;
+  --muted: #9a9ab0;
+  --accent: #7c9cff;
+  --bad: #ff6b6b;
+  --good: #6ee7a8;
+  --warn: #ffd166;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  padding: 20px 20px 80px;
+}
+h1 { font-size: 18px; margin: 0 0 4px; }
+h2 { font-size: 14px; margin: 24px 0 8px; letter-spacing: .02em; }
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: .92em; }
+.lab-header { max-width: 900px; margin-bottom: 16px; }
+.lab-header p { color: var(--muted); margin: 4px 0; }
+.lab-header code { background: var(--panel); padding: 1px 5px; border-radius: 4px; }
+.controls {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  padding: 12px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; margin-bottom: 12px; max-width: 900px;
+}
+.controls + .controls { margin-top: -4px; }
+button {
+  font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 7px; cursor: pointer;
+  background: #23233010; color: var(--text); border: 1px solid var(--line);
+}
+button:hover { border-color: var(--accent); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button[data-variant="bad"] { border-color: #5c2b2b; color: #ffb3b3; }
+button[data-variant="good"] { border-color: #2b5c42; color: #b3ffd6; }
+button[data-variant="warn"] { border-color: #5c4f2b; color: #ffe3a3; }
+button[aria-pressed="true"] { background: var(--accent); color: #0d0d12; border-color: var(--accent); }
+label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; }
+input[type="number"], input[type="search"], input[type="text"], input[type="url"], select {
+  font: inherit; font-size: 13px; background: #0f0f16; color: var(--text);
+  border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px;
+}
+input[type="number"] { width: 90px; }
+.readout {
+  font: 12px/1.6 var(--mono);
+  color: var(--muted); white-space: pre-wrap; margin: 8px 0 0; max-width: 900px;
+}
+.hint { color: var(--muted); font-size: 12px; max-width: 900px; }
+.sep { width: 1px; align-self: stretch; background: var(--line); margin: 0 4px; }
+.tag {
+  font: 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+  border: 1px solid var(--line); border-radius: 4px; padding: 3px 5px; color: var(--muted);
+}
+.stage {
+  border: 1px solid var(--line); border-radius: 10px; padding: 12px;
+  background: #101017; min-height: 120px;
+}
+
+/* --- log panel: the workhorse of the non-visual labs ------------------------ */
+.log {
+  font: 12px/1.55 var(--mono);
+  background: #0a0a10; border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 12px; max-width: 900px; max-height: 460px; overflow: auto;
+  white-space: pre-wrap; margin: 0 0 12px;
+}
+.log:empty::before { content: "(empty)"; color: var(--muted); }
+.log div { display: flex; gap: 10px; }
+.log .seq { color: #4d4d63; min-width: 2.5ch; text-align: right; user-select: none; }
+.log .msg { flex: 1; }
+.log .sync   .msg { color: #e9e9f2; }
+.log .micro  .msg { color: #b3ffd6; }
+.log .macro  .msg { color: #ffd166; }
+.log .render .msg { color: #7c9cff; }
+.log .idle   .msg { color: #c9a3ff; }
+.log .bad    .msg { color: var(--bad); }
+.log .good   .msg { color: var(--good); }
+.log .muted  .msg { color: var(--muted); }
+.log .head   .msg { color: var(--muted); border-top: 1px solid var(--line); padding-top: 6px; margin-top: 4px; letter-spacing: .06em; }
+
+/* --- tables ---------------------------------------------------------------- */
+table.data {
+  border-collapse: collapse; font: 12px/1.5 var(--mono); max-width: 900px; width: 100%;
+  background: #0a0a10; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+}
+table.data th, table.data td { padding: 5px 9px; text-align: left; border-bottom: 1px solid var(--line); }
+table.data th { color: var(--muted); font-weight: 500; letter-spacing: .04em; }
+table.data tr:last-child td { border-bottom: 0; }
+table.data td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.data .ok { color: var(--good); }
+table.data .no { color: var(--bad); }
+table.data .meh { color: var(--warn); }
+
+/* --- little status pills --------------------------------------------------- */
+.pill {
+  display: inline-block; font: 11px/1.5 var(--mono); padding: 1px 7px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--muted);
+}
+.pill.ok { color: var(--good); border-color: #2b5c42; }
+.pill.no { color: var(--bad); border-color: #5c2b2b; }
+.pill.meh { color: var(--warn); border-color: #5c4f2b; }
+
+/* --- horizontal bar chart (waterfalls, timings) ---------------------------- */
+.bars { display: grid; grid-template-columns: minmax(90px, max-content) 1fr; gap: 4px 10px; max-width: 900px; }
+.bars .label { font: 11px/1.6 var(--mono); color: var(--muted); }
+.bars .track { background: #0a0a10; border-radius: 4px; position: relative; height: 18px; }
+.bars .track i {
+  position: absolute; top: 0; bottom: 0; border-radius: 4px;
+  background: linear-gradient(90deg, #3d5bbf, #7c9cff);
+}
+.bars .track b { position: absolute; right: 6px; top: 2px; font: 11px/1.3 var(--mono); color: var(--muted); font-weight: 400; }
+.bars .track i.wait { background: linear-gradient(90deg, #4a4a5e, #6b6b85); }
+.bars .track i.bad { background: linear-gradient(90deg, #a13b3b, #ff6b6b); }
+.bars .track i.good { background: linear-gradient(90deg, #2f7d5a, #6ee7a8); }
+
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 12px; max-width: 900px; }
+.card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--panel); }
+.card h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .04em; color: var(--muted); }
+.big { font: 22px/1.2 var(--mono); font-variant-numeric: tabular-nums; }
+.big.ok { color: var(--good); } .big.no { color: var(--bad); } .big.meh { color: var(--warn); }

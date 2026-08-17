@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Nimbus 9 — product</title>
+
+  <!-- A third-party tag manager, synchronous, in the head, on another origin. -->
+  <script src="http://localhost:8081/api/script.js?name=tagmanager&delay=500&size=120000"></script>
+
+  <link rel="stylesheet" href="/shared/lab.css">
+
+  <!-- The app stylesheet: 600ms, and it is where the hero image URL lives. -->
+  <link rel="stylesheet"
+        href="/api/style.css?name=product&delay=600&img=%2Fapi%2Fimage.svg%3Fname%3Dproduct-hero%26delay%3D700%26w%3D1000%26h%3D460%26size%3D250000%26label%3DNimbus%2B9">
+
+  <style>
+    #hero { height: 460px; background-size: cover; border-radius: 10px; }
+    .thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .thumbs img { width: 120px; border-radius: 6px; }
+    .price { font-size: 26px; margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Nimbus 9</h1>
+    <p>A product page with eight discovery problems. Find them all in the waterfall.</p>
+  </div>
+
+  <!-- LCP element. Its image comes from the stylesheet, and it is lazy for good measure. -->
+  <div id="hero" class="stage" loading="lazy"></div>
+
+  <p class="price" id="price">loading price…</p>
+  <p id="stock">loading stock…</p>
+
+  <div class="thumbs" id="thumbs"></div>
+
+  <!-- A preload that does not match the request the app actually makes (note the missing
+       crossorigin, and the extra parameter on the real request). -->
+  <link rel="preload" as="fetch" href="/api/asset?name=product-data&type=json&delay=400">
+
+  <script type="module">
+    // Chain: this module downloads, then imports another, which then fetches the data.
+    await import('/api/script.js?name=product-app&delay=400&size=90000');
+    const data = await fetch('/api/asset?name=product-data&type=json&delay=400&fields=all')
+      .then((r) => r.json());
+    document.getElementById('price').textContent = `£249.00 — served ${data.servedAt}`;
+    document.getElementById('stock').textContent = 'In stock';
+
+    // Thumbnails: URLs only exist once this script runs, so the preload scanner never saw them.
+    // No width/height either, so every arrival shifts the page.
+    const box = document.getElementById('thumbs');
+    for (let i = 0; i < 12; i++) {
+      const img = document.createElement('img');
+      img.src = `/api/image.svg?name=thumb${i}&delay=300&w=120&h=90&size=80000&label=${i}`;
+      box.append(img);
+    }
+  </script>
+
+  <!-- Analytics, at the bottom but still competing for bandwidth at default priority. -->
+  <script src="http://localhost:8081/api/script.js?name=analytics&delay=300&size=200000" defer></script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

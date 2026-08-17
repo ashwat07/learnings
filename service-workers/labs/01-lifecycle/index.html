@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Service worker lifecycle</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .states { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 900px; margin-bottom: 12px; }
+    .states .card { text-align: center; }
+    .states .card .big { font-size: 15px; }
+    .states .card.on { border-color: var(--good); }
+    .states .card.on .big { color: var(--good); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Service worker lifecycle</h1>
+    <p>Register, update, wait, activate, claim. Every confusing thing about service workers is in
+      these five words, and the confusion is nearly always one of two facts: <strong>a new worker
+      waits until every old page is gone</strong>, and <strong>the page that registered a worker
+      is not controlled by it</strong>.</p>
+    <p class="hint"><strong>Turn OFF "Update on reload"</strong> in Application → Service Workers
+      for this lab, or you will never see the waiting state.</p>
+  </div>
+
+  <div class="states">
+    <div class="card" id="s-installing"><h3>installing</h3><div class="big">–</div></div>
+    <div class="card" id="s-waiting"><h3>waiting</h3><div class="big">–</div></div>
+    <div class="card" id="s-active"><h3>active</h3><div class="big">–</div></div>
+    <div class="card" id="s-controlled"><h3>this page is</h3><div class="big">–</div></div>
+  </div>
+
+  <div class="controls">
+    <button id="register" data-variant="good">register sw.js (v1)</button>
+    <button id="deploy" data-variant="warn">"deploy" v2 (register sw.js?v=2)</button>
+    <button id="deploy3" data-variant="warn">deploy v3</button>
+    <div class="sep"></div>
+    <button id="update">registration.update()</button>
+    <button id="skip">postMessage('skipWaiting')</button>
+    <button id="claim">postMessage('claim')</button>
+  </div>
+
+  <div class="controls">
+    <button id="fetchTest">make a fetch (does the SW see it?)</button>
+    <button id="who">ask the active worker its version</button>
+    <div class="sep"></div>
+    <button id="unregister" data-variant="bad">unregister + clear caches</button>
+    <button id="clear">clear log</button>
+  </div>
+
+  <p class="readout" id="out">Start by registering v1, then read what happens.</p>
+
+  <div id="log" class="log" style="max-height:420px"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

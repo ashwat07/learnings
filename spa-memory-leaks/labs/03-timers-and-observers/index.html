@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Timers &amp; observers</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>#targets div { height: 40px; border: 1px solid var(--line); border-radius: 6px; margin: 3px 0; }</style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Timers &amp; observers</h1>
+    <p>Timers and observers are GC roots with a schedule. An uncleaned <code>setInterval</code>
+      doesn't only retain memory — it keeps <em>executing</em>, forever, doing work for a component
+      that no longer exists. Add a fetch inside it and your dead component is still talking to
+      your API.</p>
+  </div>
+
+  <div class="controls">
+    <label>components <input id="n" type="number" value="30" min="1" max="200"></label>
+    <div class="sep"></div>
+    <button id="interval" data-variant="bad">A. setInterval, never cleared</button>
+    <button id="observers" data-variant="bad">B. observers, never disconnected</button>
+    <button id="raf" data-variant="bad">C. a rAF loop with no stop condition</button>
+    <button id="promise" data-variant="bad">D. a promise that never settles</button>
+    <div class="sep"></div>
+    <button id="clean" data-variant="good">E. all of it, with one AbortSignal</button>
+  </div>
+
+  <div class="controls">
+    <button id="measure">measure</button>
+    <button id="stopAll" data-variant="warn">stop everything</button>
+    <button id="clear">clear log</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run A with 30 components and watch the tick counter keep climbing
+after they are all "destroyed".</p>
+
+  <div id="targets"></div>
+  <div id="log" class="log" style="max-height:220px"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

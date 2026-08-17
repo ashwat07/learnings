@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — The cost of localStorage</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — The cost of localStorage</h1>
+    <p><code>localStorage</code> is the friendliest API in the platform and the only storage API
+      that is <strong>synchronous</strong>. Every read and write blocks the main thread — layout,
+      input, paint, everything — and it blocks it while touching <em>disk</em>.</p>
+    <p class="hint">Throttle CPU to 4× and watch the frame counter while each test runs.</p>
+  </div>
+
+  <div class="controls">
+    <button id="poke">poke me (0 handled)</button>
+    <span class="hint">worst frame: <b id="worst">–</b></span>
+  </div>
+
+  <div class="controls">
+    <label>items <input id="n" type="number" value="2000" min="100" max="20000" step="100"></label>
+    <label>KB each <input id="kb" type="number" value="2" min="1" max="200"></label>
+    <div class="sep"></div>
+    <button id="write" data-variant="bad">write to localStorage</button>
+    <button id="read" data-variant="bad">read it all back</button>
+    <button id="idb" data-variant="good">the same thing in IndexedDB</button>
+    <div class="sep"></div>
+    <button id="jsonCost">JSON round-trip cost</button>
+    <button id="quota" data-variant="warn">find the quota (fills localStorage)</button>
+    <button id="clearAll">clear storage</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run the write test with the poke button held down.</p>
+
+  <h2>the other traps</h2>
+  <div class="controls">
+    <button id="patterns">common localStorage patterns, measured</button>
+    <button id="tabs">the multi-tab problem</button>
+  </div>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

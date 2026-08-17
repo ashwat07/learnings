@@ -1,42 +1,63 @@
 // Lab 01 — Layout thrashing.
-// One function is implemented (badly, on purpose). Three are yours to write.
 
-PerfHUD.start({ countReflows: true, note: 'reads = candidate\nforced layouts' });
+import FastDOM from './fast-dom.js';
+
+PerfHUD.start({
+  countReflows: true,
+  note: 'reads = candidate\nforced layouts',
+});
 
 const stage = document.getElementById('stage');
 const out = document.getElementById('out');
 const countInput = document.getElementById('count');
 
+const fd = new FastDOM();
+
 let boxes = [];
 
 function build(n) {
   stage.textContent = '';
+
   const frag = document.createDocumentFragment();
+
   for (let i = 0; i < n; i++) {
     const box = document.createElement('div');
     box.className = 'box';
     frag.appendChild(box);
   }
+
   stage.appendChild(frag);
+
   boxes = [...stage.children];
+
   report(`built ${n} boxes`);
 }
 
 function report(msg) {
-  out.textContent = `${msg}\ngeometry reads so far: ${PerfHUD.stats.reflowReads}`;
+  out.textContent =
+    `${msg}\ngeometry reads so far: ${PerfHUD.stats.reflowReads}`;
 }
 
-/** Time a strategy and print the JS duration. The layout cost is *inside* this measurement
- *  when layout is forced — which is exactly why the broken version looks so bad. */
+/**
+ * Time a strategy and print the JS duration.
+ */
 function run(label, fn) {
   const reads0 = PerfHUD.stats.reflowReads;
   const t0 = performance.now();
+
   performance.mark(`${label}:start`);
+
   const widths = fn();
+
   performance.mark(`${label}:end`);
   performance.measure(label, `${label}:start`, `${label}:end`);
+
   const dt = performance.now() - t0;
-  const sum = widths ? widths.reduce((a, b) => a + b, 0) : 0;
+
+  const sum = widths
+    ? widths.reduce((a, b) => a + b, 0)
+    : 0;
+
   report(
     `${label}\n` +
     `  JS + forced layout: ${dt.toFixed(1)}ms\n` +
@@ -46,50 +67,141 @@ function run(label, fn) {
 }
 
 // ---------------------------------------------------------------------------
-// 1. BROKEN — write, read, write, read. One forced layout per box.
+// 1. BROKEN
+//
+// WRITE → READ → WRITE → READ
+//
+// Every offsetWidth read can force layout because the previous iteration
+// dirtied the layout.
 // ---------------------------------------------------------------------------
+
 function thrash() {
   const widths = [];
-  boxes.forEach(box => {
+
+  boxes.forEach((box) => {
+    // WRITE
     box.style.width = Math.random() * 500 + 'px';
-    widths.push(box.offsetWidth); // ← forces layout, every single iteration
+
+    // READ
+    // Potentially forces layout.
+    widths.push(box.offsetWidth);
   });
+
   return widths;
 }
 
 // ---------------------------------------------------------------------------
-// 2. TODO — batched.
-//    Produce the same array of widths with exactly ONE layout flush.
-//    Rule: same visual result, same checksum semantics (a width per box).
-//    Think about *which order* the passes have to be in.
-// ---------------------------------------------------------------------------
-function batched() {
-  throw new Error('TODO: implement batched() — read pass and write pass, one Layout entry total');
-}
-
-// ---------------------------------------------------------------------------
-// 3. TODO — batched + requestAnimationFrame.
-//    Do the writes inside a single rAF callback and the reads in the frame after.
-//    Return value can be a Promise<number[]>; run() will just print NaN for the
-//    checksum, so print your own report from inside instead.
+// 2. BATCHED
 //
-//    Then answer in a comment here: what does rAF buy you that batching alone does not?
+// WRITE → WRITE → WRITE
+// READ  → READ  → READ
+//
+// There is only one forced layout: the first offsetWidth read.
 // ---------------------------------------------------------------------------
-function batchedRaf() {
-  throw new Error('TODO: implement batchedRaf()');
+
+function batched() {
+  const widths = [];
+
+  // -------------------------
+  // WRITE PHASE
+  // -------------------------
+
+  boxes.forEach((box) => {
+    box.style.width = Math.random() * 500 + 'px';
+  });
+
+  // -------------------------
+  // READ PHASE
+  // -------------------------
+
+  boxes.forEach((box) => {
+    widths.push(box.offsetWidth);
+  });
+
+  return widths;
 }
 
 // ---------------------------------------------------------------------------
-// 4. TODO — cached read.
-//    The realistic version of this bug: the read is loop-invariant. Every box is
-//    sized relative to the CONTAINER width, which cannot change while you write
-//    to children (the container is a flex row of fixed-height items — convince
-//    yourself of that before you cache it, because caching a value that *can*
-//    change is a correctness bug, not an optimisation).
-//    Target: ZERO geometry reads inside the loop.
+// 3. BATCHED + rAF
+//
+// Frame N:
+//   WRITE
+//
+// Browser performs its normal layout after the rAF callback.
+//
+// Frame N+1:
+//   READ
+//
+// Therefore the reads don't need to synchronously force layout.
 // ---------------------------------------------------------------------------
+
+function batchedRaf() {
+  requestAnimationFrame(() => {
+    // -------------------------
+    // Frame N — WRITE
+    // -------------------------
+
+    boxes.forEach((box) => {
+      box.style.width = Math.random() * 500 + 'px';
+    });
+
+    // Schedule READS for the next frame.
+    requestAnimationFrame(() => {
+      // -------------------------
+      // Frame N+1 — READ
+      // -------------------------
+
+      const widths = [];
+
+      boxes.forEach((box) => {
+        widths.push(box.offsetWidth);
+      });
+
+      const sum = widths.reduce((a, b) => a + b, 0);
+
+      report(
+        `batched + rAF\n` +
+        `  checksum (sum of widths): ${Math.round(sum)}\n` +
+        `  geometry reads: ${PerfHUD.stats.reflowReads}`
+      );
+    });
+  });
+
+  // The actual result doesn't exist yet.
+  // The reads happen asynchronously in the next frame.
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// 4. CACHED READ
+//
+// Read the container width ONCE.
+//
+// Then calculate every box width from that cached value.
+// There is no offsetWidth read inside the loop.
+//
+// ---------------------------------------------------------------------------
+
 function cachedConstant() {
-  throw new Error('TODO: implement cachedConstant() — hoist the invariant read out of the loop');
+  const widths = [];
+
+  // One geometry read.
+  //
+  // This happens BEFORE we make the children dirty.
+  const containerWidth = stage.offsetWidth;
+
+  boxes.forEach((box) => {
+    const width = containerWidth * Math.random();
+
+    // WRITE
+    box.style.width = width + 'px';
+
+    // We already know the width we wrote.
+    // There is no reason to read offsetWidth again.
+    widths.push(width);
+  });
+
+  return widths;
 }
 
 // ---------------------------------------------------------------------------
@@ -112,7 +224,13 @@ for (const [id, [label, fn]] of Object.entries(strategies)) {
   });
 }
 
-document.getElementById('rebuild').addEventListener('click', () => build(+countInput.value));
-document.getElementById('reset').addEventListener('click', () => { PerfHUD.reset(); report('HUD reset'); });
+document.getElementById('rebuild').addEventListener('click', () => {
+  build(+countInput.value);
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  PerfHUD.reset();
+  report('HUD reset');
+});
 
 build(+countInput.value);

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Simple vs preflighted requests</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Simple vs preflighted requests</h1>
+    <p>Some cross-origin requests go straight out. Others are preceded by an <code>OPTIONS</code>
+      asking permission. The rule is not "reads vs writes" and it is not "GET vs POST" — it is a
+      specific safelist, and the reason for it is historical: <strong>a preflight is required
+      exactly when the request could not have been made by an HTML form before CORS existed.</strong></p>
+    <p class="hint">Build a request below, predict whether it preflights, then send it. The verdict
+      is measured from the server's own OPTIONS counter, not guessed.</p>
+  </div>
+
+  <div class="controls">
+    <label>method
+      <select id="method">
+        <option>GET</option><option>HEAD</option><option selected>POST</option>
+        <option>PUT</option><option>PATCH</option><option>DELETE</option>
+      </select>
+    </label>
+    <label>Content-Type
+      <select id="ctype">
+        <option value="">(none — no body)</option>
+        <option value="text/plain">text/plain</option>
+        <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+        <option value="multipart/form-data">multipart/form-data</option>
+        <option value="application/json" selected>application/json</option>
+        <option value="text/plain;charset=utf-8">text/plain;charset=utf-8</option>
+      </select>
+    </label>
+    <label>extra headers <input id="headers" type="text" size="26" placeholder="x-token, x-request-id"></label>
+    <label><input type="checkbox" id="creds"> credentials: include</label>
+  </div>
+
+  <div class="controls">
+    <button id="predict">predict (no request sent)</button>
+    <button id="send" data-variant="good">send it</button>
+    <div class="sep"></div>
+    <button id="maxage">Access-Control-Max-Age: send the same request 3×</button>
+    <button id="quiz">run the whole safelist quiz</button>
+    <div class="sep"></div>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Build a request and predict first.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

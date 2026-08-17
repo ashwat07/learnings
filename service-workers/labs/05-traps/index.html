@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Service worker traps</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — The traps</h1>
+    <p>A service worker is a proxy you ship to a user's device and cannot recall. These are the
+      six ways that goes wrong in production — five of which look fine in development and one of
+      which can make a site permanently unusable for a user you have no way to reach.</p>
+    <p class="hint">Register the worker, reload once, then work down the list. Read the log after
+      each one.</p>
+  </div>
+
+  <div class="controls">
+    <button id="register" data-variant="good">register</button>
+    <button id="unregister" data-variant="bad">unregister + clear everything</button>
+    <button id="estimate">storage estimate</button>
+    <button id="clear">clear log</button>
+  </div>
+
+  <h2>1. opaque responses</h2>
+  <div class="controls">
+    <button id="opaque">cache a cross-origin no-cors response</button>
+    <button id="opaque404">…now cache a 404 the same way</button>
+    <span class="hint">Check the storage estimate before and after.</span>
+  </div>
+
+  <h2>2. range requests</h2>
+  <div class="controls">
+    <button id="range">request bytes 0-99 of a cached file</button>
+    <span class="hint">A cached 200 answering a Range request is why video breaks in Safari.</span>
+  </div>
+
+  <h2>3. redirects</h2>
+  <div class="controls">
+    <button id="redirect">respondWith a redirect:'manual' response</button>
+  </div>
+
+  <h2>4. a handler that throws</h2>
+  <div class="controls">
+    <button id="throw" data-variant="bad">trigger a bug in the fetch handler</button>
+  </div>
+
+  <h2>5. caching non-GET</h2>
+  <div class="controls">
+    <button id="post">cache.put() a POST</button>
+  </div>
+
+  <h2>6. cache bloat &amp; quota</h2>
+  <div class="controls">
+    <label>entries <input id="count" type="number" value="10" min="1" max="200"></label>
+    <label>MB each <input id="mb" type="number" value="4" min="1" max="32"></label>
+    <button id="bloat" data-variant="bad">fill Cache Storage</button>
+    <span class="hint">Watch usage climb, then think about what the browser evicts under
+      pressure — and what that does to your "offline" app.</span>
+  </div>
+
+  <h2>7. the kill switch — build this first, not last</h2>
+  <div class="controls">
+    <button id="checkKill">check the kill switch now</button>
+    <button id="activateKill" data-variant="bad">flip the server-side kill switch</button>
+    <button id="resetKill">reset it</button>
+  </div>
+
+  <p class="readout" id="out"></p>
+
+  <div id="log" class="log" style="max-height:420px"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

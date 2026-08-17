@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 07 — Scheduling APIs</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #bar { height: 10px; background: #1c1c28; border-radius: 5px; overflow: hidden; max-width: 900px; margin: 10px 0 14px; }
+    #bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: none; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 07 — Scheduling APIs</h1>
+    <p>200 units of work, 4ms each — 800ms of CPU that has to happen, but none of it is urgent.
+      Six ways to schedule it. The question is never "is it async", it's <strong>"what does the
+      browser get to do in between, and who goes first"</strong>.</p>
+    <p class="hint" id="support">checking API support…</p>
+  </div>
+
+  <div id="bar"><i></i></div>
+
+  <div class="controls">
+    <label>units <input id="units" type="number" value="200" min="10" max="2000" step="10"></label>
+    <label>ms each <input id="cost" type="number" value="4" min="1" max="50"></label>
+    <div class="sep"></div>
+    <button id="poke">poke me (0 handled)</button>
+    <button id="reset">reset table</button>
+  </div>
+
+  <div class="controls">
+    <button id="sync" data-variant="bad">A. plain loop</button>
+    <button id="timeout">B. setTimeout(0) each</button>
+    <button id="idle">C. requestIdleCallback</button>
+    <button id="postTask">D. postTask (background)</button>
+    <button id="yield" data-variant="good">E. chunk + scheduler.yield</button>
+    <button id="best" data-variant="warn">F. yours: budget + isInputPending (TODO)</button>
+  </div>
+
+  <div class="controls">
+    <button id="priorities">priority ordering demo</button>
+    <button id="controller">TaskController: promote &amp; abort</button>
+    <button id="starve">starve requestIdleCallback</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run A through E while mashing the poke button.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

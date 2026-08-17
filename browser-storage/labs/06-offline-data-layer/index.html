@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 06 — An offline data layer</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #items { max-width: 640px; }
+    #items li { list-style: none; display: flex; gap: 10px; align-items: center;
+                padding: 6px 8px; border-bottom: 1px solid var(--line); font-size: 13px; }
+    #items li.pending { color: var(--warn); }
+    #items li.failed { color: var(--bad); }
+    #items li.conflict { color: #c9a3ff; }
+    #items .state { font: 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+    #items button { padding: 2px 8px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 06 — An offline data layer</h1>
+    <p>The capstone: reads that never wait for the network, writes that survive a closed tab, a
+      queue that drains in order, and conflicts you resolve on purpose. Reads are implemented;
+      the writes, the outbox and the conflict policy are yours.</p>
+    <p class="hint">The "server" is simulated locally (<code>fake-server.js</code>) so you can
+      make it slow, flaky and conflicted on demand — which is exactly the environment sync code
+      has to survive and exactly what you cannot stage against a real backend.</p>
+  </div>
+
+  <div class="controls">
+    <label>latency <input id="latency" type="number" value="400" min="0" max="5000" step="100">ms</label>
+    <label>fail rate <input id="failRate" type="number" value="0" min="0" max="1" step="0.1"></label>
+    <label><input type="checkbox" id="offline"> offline</label>
+    <div class="sep"></div>
+    <button id="sync" data-variant="good">sync now</button>
+    <button id="resetAll" data-variant="bad">reset everything</button>
+  </div>
+
+  <div class="controls">
+    <input id="text" type="text" size="30" placeholder="a new item…">
+    <button id="add" data-variant="good">add</button>
+    <div class="sep"></div>
+    <button id="conflict" data-variant="warn">change item 1 on the server behind your back</button>
+    <button id="tests">run the test suite</button>
+  </div>
+
+  <ul id="items"></ul>
+
+  <h2>outbox</h2>
+  <div id="outbox" class="log" style="max-height:160px"></div>
+
+  <h2>tests</h2>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Add an item. It should appear instantly, marked pending, and turn
+confirmed once it syncs. Then go offline and add three more.</p>
+
+  <div id="log" class="log" style="max-height:220px"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

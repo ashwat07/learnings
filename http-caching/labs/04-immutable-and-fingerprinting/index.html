@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Immutable &amp; fingerprinting</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Immutable &amp; fingerprinting</h1>
+    <p>How do you cache something for a year and still ship a fix in sixty seconds? You never
+      change a URL's content — you change the URL. This lab simulates deploys against four
+      different naming strategies and counts the bytes each one costs a returning user.</p>
+    <p class="hint">The app being simulated: <code>vendor</code> 300KB, <code>app</code> 80KB,
+      <code>styles</code> 40KB, <code>icons</code> 120KB. Each "deploy" changes <strong>only
+      <code>app</code></strong> — the realistic case, and the one where the strategies diverge.</p>
+  </div>
+
+  <div class="controls">
+    <button id="visit" data-variant="good">1. first visit (cold cache)</button>
+    <button id="deploy" data-variant="warn">2. deploy (change app only)</button>
+    <button id="revisit">3. returning visit</button>
+    <div class="sep"></div>
+    <button id="reset">start over</button>
+    <span class="hint" id="state">no run yet</span>
+  </div>
+
+  <div id="results"></div>
+
+  <h2>reload behaviour — <code>immutable</code></h2>
+  <p class="hint">These three scripts were loaded by this page's HTML. Press <kbd>Cmd/Ctrl-R</kbd>
+    (normal reload) and watch the server hit counts below. Then press <kbd>Cmd/Ctrl-Shift-R</kbd>
+    (hard reload) and watch them again. Write down what your browser actually does — the answer
+    differs between Chrome, Firefox and Safari, and that difference is the entire reason
+    <code>immutable</code> exists.</p>
+  <div id="reloadResults"></div>
+  <div class="controls">
+    <button id="checkReload">refresh the hit counts</button>
+    <button id="clearReload">reset counters</button>
+  </div>
+
+  <p class="readout" id="out">Run 1 → 2 → 3.</p>
+
+  <div id="log" class="log"></div>
+
+  <!-- Three subresources with different caching postures, loaded declaratively so that a
+       browser reload treats them the way it treats real page assets. -->
+  <script src="/api/asset?name=reload-classic&type=js&cc=max-age%3D3600&etag=1"></script>
+  <script src="/api/asset?name=reload-immutable&type=js&cc=max-age%3D3600,immutable&etag=1"></script>
+  <script src="/api/asset?name=reload-nocache&type=js&cc=no-cache&etag=1"></script>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

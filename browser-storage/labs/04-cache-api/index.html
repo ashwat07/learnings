@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Cache API</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Cache API</h1>
+    <p>Cache Storage holds <code>Request</code> → <code>Response</code> pairs. It is not
+      service-worker-only: it works on the main thread and in workers, and it is the right place
+      for anything that came off the network. Where it ends and IndexedDB begins is the decision
+      this lab is about.</p>
+  </div>
+
+  <div class="controls">
+    <button id="basics" data-variant="good">1. put / match / keys / delete</button>
+    <button id="addAll">2. addAll (and how it fails)</button>
+    <button id="matchOptions">3. matchOptions: ignoreSearch, ignoreVary</button>
+    <button id="synthetic">4. store a response you made up</button>
+  </div>
+
+  <div class="controls">
+    <label>blobs <input id="count" type="number" value="20" min="1" max="200"></label>
+    <label>MB each <input id="mb" type="number" value="1" min="1" max="20"></label>
+    <button id="vsIdb" data-variant="good">5. Cache API vs IndexedDB for binary</button>
+    <button id="usage">storage usage</button>
+    <button id="clearAll" data-variant="bad">delete everything</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start with 1.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

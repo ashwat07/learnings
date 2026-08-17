@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Closures &amp; caches</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Closures &amp; caches</h1>
+    <p>The two leaks that survive every framework's cleanup, because they are not the framework's
+      to clean: a <strong>cache that only grows</strong>, and a <strong>closure that captures more
+      than it needs</strong>. This lab also settles what <code>WeakMap</code>,
+      <code>WeakRef</code> and <code>FinalizationRegistry</code> actually do — and what they
+      don't.</p>
+  </div>
+
+  <div class="controls">
+    <label>items <input id="n" type="number" value="2000" min="100" max="20000" step="100"></label>
+    <button id="measure">measure heap</button>
+    <button id="clear">clear log</button>
+  </div>
+
+  <div class="controls">
+    <button id="unbounded" data-variant="bad">A. an unbounded memo cache</button>
+    <button id="lru" data-variant="good">B. the same, bounded (LRU)</button>
+    <button id="mapVsWeak" data-variant="warn">C. Map vs WeakMap keyed by object</button>
+    <button id="bus" data-variant="bad">D. an event bus with no unsubscribe</button>
+  </div>
+
+  <div class="controls">
+    <button id="closureSize" data-variant="bad">E. a closure that captures too much</button>
+    <button id="weakref">F. WeakRef &amp; FinalizationRegistry</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start with A, then B, and compare the heap.</p>
+
+  <div id="log" class="log" style="max-height:240px"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — IndexedDB basics</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — IndexedDB basics</h1>
+    <p>IndexedDB is an object store with indexes and transactions. The API is from 2011 and it
+      shows — but the model underneath is simple and worth knowing precisely, because every
+      wrapper you might use (idb, Dexie, RxDB) is a thin layer over exactly these concepts.</p>
+    <p class="hint">Open Application → IndexedDB in DevTools alongside this page. It does not
+      live-update reliably — refresh the panel after each write.</p>
+  </div>
+
+  <div class="controls">
+    <button id="create" data-variant="good">1. create the database (v1)</button>
+    <button id="seed">2. seed 5,000 people</button>
+    <button id="upgrade" data-variant="warn">3. upgrade to v2 (add an index)</button>
+    <button id="destroy" data-variant="bad">delete the database</button>
+  </div>
+
+  <div class="controls">
+    <button id="getOne">get by key</button>
+    <button id="byIndex">query an index</button>
+    <button id="range">key range (score 800–900)</button>
+    <button id="cursorDemo">cursor: first 5 in a range</button>
+    <button id="multiEntry">multiEntry index (tags)</button>
+    <button id="unique">unique index conflict</button>
+  </div>
+
+  <div class="controls">
+    <button id="txScope">transaction scope &amp; auto-close</button>
+    <button id="txAbort">abort a transaction</button>
+    <button id="blocked">the "blocked" problem</button>
+    <button id="clear">clear log</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Create the database, then seed it, then work down the queries.</p>
+
+  <div id="log" class="log" style="max-height:420px"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

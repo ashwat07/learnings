@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — preconnect &amp; DNS</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — preconnect &amp; DNS</h1>
+    <p>Before a single byte of a resource can move, the browser needs a connection: DNS lookup,
+      TCP handshake, TLS handshake. On a mobile network that is <strong>three round trips</strong>
+      — often 300–600ms — paid per origin, before the request is even sent.
+      <code>preconnect</code> pays it early, in parallel with something else.</p>
+    <p class="hint"><strong>Throttle to Slow 4G in DevTools first.</strong> On an unthrottled
+      localhost, connection setup is ~0ms and this entire lab looks pointless — which is itself
+      the lesson about measuring performance on your own machine.</p>
+  </div>
+
+  <div class="controls">
+    <button id="cold" data-variant="good">measure a cold connection to :8081</button>
+    <button id="warm">measure again (warm)</button>
+    <button id="phases">phase breakdown of everything loaded so far</button>
+    <div class="sep"></div>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+
+  <h2>the two pages to compare</h2>
+  <ul>
+    <li><a href="01-no-hint.html">01-no-hint.html</a> — a cross-origin script discovered late.
+      The connection is set up when it is needed.</li>
+    <li><a href="02-preconnect.html">02-preconnect.html</a> — identical, plus one
+      <code>&lt;link rel="preconnect"&gt;</code> in the head.</li>
+  </ul>
+  <p class="hint">Hard-reload each with Slow 4G on, and compare when the cross-origin script
+    <em>starts transferring</em> — not when it finishes.</p>
+
+  <h2>a real third-party origin</h2>
+  <div class="controls">
+    <label>origin <input id="origin" type="url" size="34" value="https://cdn.jsdelivr.net"></label>
+    <button id="real">measure it (needs internet)</button>
+    <span class="hint">Cross-origin timing phases are only visible if the server sends
+      <code>Timing-Allow-Origin</code>. Most CDNs do; many APIs don't.</span>
+  </div>
+
+  <p class="readout" id="out">Throttle to Slow 4G, then measure a cold connection.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

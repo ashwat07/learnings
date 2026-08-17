@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Long tasks &amp; yielding (INP)</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #list { font: 12px/1.7 var(--mono); max-height: 220px; overflow: auto; }
+    #list div { color: var(--muted); }
+    #list mark { background: #2b3f6b; color: #cdd6ff; border-radius: 2px; }
+    .inp-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 900px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Long tasks &amp; yielding (INP)</h1>
+    <p>A search box over 40,000 rows, filtered on every keystroke. It works fine. It also has an
+      INP of about a second, and every keystroke is a long task. Your job: keep the behaviour,
+      delete the long tasks, and get INP under 200ms — measured, not guessed.</p>
+    <p class="hint">INP = the worst (roughly p98) interaction latency on the page, measured from
+      the input event to the next paint that reflects it. It has three parts and you have to know
+      which one you're fixing.</p>
+  </div>
+
+  <div class="inp-cards">
+    <div class="card"><h3>INP (worst)</h3><div class="big" id="inp">–</div></div>
+    <div class="card"><h3>input delay</h3><div class="big" id="delay">–</div></div>
+    <div class="card"><h3>processing</h3><div class="big" id="proc">–</div></div>
+    <div class="card"><h3>presentation</h3><div class="big" id="present">–</div></div>
+  </div>
+
+  <div class="controls">
+    <label>mode
+      <select id="mode">
+        <option value="naive">A. naive — filter on every keystroke</option>
+        <option value="debounced">B. debounced (TODO)</option>
+        <option value="chunked">C. chunked + yield (TODO)</option>
+        <option value="paintFirst">D. paint first, then work (TODO)</option>
+      </select>
+    </label>
+    <label>rows <input id="rows" type="number" value="40000" min="1000" max="400000" step="1000"></label>
+    <button id="rebuild">rebuild</button>
+    <div class="sep"></div>
+    <label><input type="checkbox" id="pressure"> background pressure (200ms task every 400ms)</label>
+  </div>
+
+  <div class="controls">
+    <label>search <input id="q" type="search" placeholder="type here — fast" size="28" autocomplete="off"></label>
+    <button id="count">counter: 0</button>
+    <div class="sep"></div>
+    <button id="reset">reset metrics</button>
+  </div>
+
+  <div id="list" class="stage"></div>
+
+  <h2>interactions</h2>
+  <div id="log" class="log"></div>
+
+  <script src="/shared/perf-hud.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

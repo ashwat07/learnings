@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — IndexedDB performance</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — IndexedDB performance</h1>
+    <p>The same 100,000 records, written six different ways, with a 60× spread between the best
+      and the worst. Every one of these shapes appears in real code, and the slow ones look
+      more correct than the fast ones.</p>
+    <p class="hint">Watch the worst-frame counter too: IndexedDB is asynchronous, but the
+      structured-clone of your values happens on the calling thread.</p>
+  </div>
+
+  <div class="controls">
+    <label>records <input id="n" type="number" value="100000" min="1000" max="500000" step="10000"></label>
+    <label>indexes <input id="indexes" type="number" value="3" min="0" max="6"></label>
+    <button id="reset" data-variant="bad">recreate the database</button>
+    <span class="hint">worst frame: <b id="worst">–</b></span>
+  </div>
+
+  <h2>writes</h2>
+  <div class="controls">
+    <button id="w-await" data-variant="bad">A. await each put</button>
+    <button id="w-txPer" data-variant="bad">B. one transaction per put</button>
+    <button id="w-single" data-variant="good">C. one transaction, no awaits</button>
+    <button id="w-chunked" data-variant="good">D. chunked transactions (10k)</button>
+    <button id="w-worker">E. from a worker</button>
+  </div>
+
+  <h2>reads</h2>
+  <div class="controls">
+    <button id="r-getAll" data-variant="good">getAll()</button>
+    <button id="r-cursor">cursor over everything</button>
+    <button id="r-index">index seek</button>
+    <button id="r-scan" data-variant="bad">full scan + filter in JS</button>
+    <button id="r-count">count() vs getAll().length</button>
+    <button id="r-keys">getAllKeys (keys only)</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Recreate the database, then run the five write strategies with
+100,000 records.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

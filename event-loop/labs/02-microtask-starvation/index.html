@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Microtask starvation</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #heart {
+      width: 220px; height: 8px; border-radius: 4px; background: #1c1c28; overflow: hidden;
+      margin: 10px 0 14px;
+    }
+    #heart i { display: block; height: 100%; width: 30%; background: var(--accent); border-radius: 4px; }
+    #poke { min-width: 190px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Microtask starvation</h1>
+    <p>Three ways to keep the CPU busy for 2 seconds. One of them lets the browser paint and
+      handle your clicks. One of them doesn't. One of them can hang the tab so hard you have to
+      kill it. They all look equally "async" in the source.</p>
+    <p class="hint">The bar below is moved by a <code>requestAnimationFrame</code> loop, and the
+      button counts clicks it actually handled. Both are your liveness probes — mash the button
+      while each run is in flight.</p>
+  </div>
+
+  <div id="heart"><i></i></div>
+
+  <div class="controls">
+    <label>run for <input id="ms" type="number" value="2000" min="200" max="10000" step="200">ms</label>
+    <div class="sep"></div>
+    <button id="poke">poke me (0 clicks handled)</button>
+    <div class="sep"></div>
+    <button id="reset">reset table</button>
+  </div>
+
+  <div class="controls">
+    <button id="busy" data-variant="bad">A. plain busy loop</button>
+    <button id="micro" data-variant="bad">B. queueMicrotask chain</button>
+    <button id="await" data-variant="bad">C. await in a while loop</button>
+    <button id="task" data-variant="good">D. setTimeout chain</button>
+    <button id="raf" data-variant="good">E. rAF chain</button>
+    <div class="sep"></div>
+    <button id="fixed" data-variant="warn">F. your yielding version (TODO)</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run A through E. Then read the numbers, not the code.</p>
+
+  <div class="controls" style="border-color:#5c2b2b">
+    <span class="tag" style="color:#ffb3b3;border-color:#5c2b2b">danger</span>
+    <button id="forever" data-variant="bad">infinite microtask loop (hangs this tab permanently)</button>
+    <span class="hint">You will have to close the tab. Do it once — the feeling is the lesson.</span>
+  </div>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

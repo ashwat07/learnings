@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Cache first &amp; precaching</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Cache first &amp; precaching</h1>
+    <p>Cache-first is the fastest thing a browser can do: no network, no revalidation, no
+      round trip — even <em>offline</em>. It is also permanent staleness by construction, so it is
+      only ever correct for URLs whose bytes cannot change. Everything in this lab is about
+      keeping that invariant while still being able to deploy.</p>
+    <p class="hint">Turn ON "Update on reload" while experimenting, OFF when you want to watch the
+      versions fight.</p>
+  </div>
+
+  <div class="controls">
+    <button id="register" data-variant="good">register sw (v1)</button>
+    <button id="deploy2" data-variant="warn">deploy v2</button>
+    <button id="deploy3" data-variant="warn">deploy v3</button>
+    <div class="sep"></div>
+    <button id="inspect">inspect Cache Storage</button>
+    <button id="unregister" data-variant="bad">unregister + clear</button>
+  </div>
+
+  <div class="controls">
+    <button id="measure" data-variant="good">load the shell 3× and time it</button>
+    <button id="offline">test while offline (see hint)</button>
+    <button id="stale" data-variant="bad">the staleness trap</button>
+    <button id="clear">clear log</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Register the worker, then reload the page once so it takes control.</p>
+
+  <h2>cache storage</h2>
+  <div id="caches" class="log" style="max-height:200px"></div>
+
+  <h2>log</h2>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

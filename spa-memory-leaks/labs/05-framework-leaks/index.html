@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Framework leaks</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    nav { display: flex; gap: 8px; margin-bottom: 10px; }
+    #screen { min-height: 180px; }
+    #screen .row { font: 12px/1.6 var(--mono); color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Framework leaks</h1>
+    <p>A miniature SPA: a router, three routes, a global store, and components with effects. It
+      leaks in the four ways every real framework app leaks — and none of them are the framework's
+      fault, because all four are references handed to something the framework doesn't own.</p>
+    <p class="hint">The equivalent React code is in the README next to each one.</p>
+  </div>
+
+  <div class="controls">
+    <label>mode
+      <select id="mode">
+        <option value="leaky">leaky (as written by a competent, busy person)</option>
+        <option value="fixed">fixed (one lifecycle per component)</option>
+      </select>
+    </label>
+    <label>auto-navigate <input id="cycles" type="number" value="30" min="1" max="200"></label>
+    <button id="auto" data-variant="warn">navigate that many times</button>
+    <button id="measure">measure</button>
+    <button id="reload" data-variant="bad">reload the page</button>
+  </div>
+
+  <nav>
+    <button data-route="dashboard">dashboard</button>
+    <button data-route="list">list</button>
+    <button data-route="detail">detail</button>
+  </nav>
+
+  <div id="screen" class="stage"></div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Navigate a few times by hand, then run 30 auto-navigations in each
+mode and compare.</p>
+
+  <div id="log" class="log" style="max-height:200px"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

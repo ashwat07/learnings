@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Vary &amp; cache keys</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Vary &amp; cache keys</h1>
+    <p>A cache is a map. <code>Vary</code> is the part of the key you forgot to include. Get it
+      wrong in one direction and users see each other's content; get it wrong in the other and
+      your hit rate goes to zero. Both are shipped constantly.</p>
+    <p class="hint">The endpoint here returns a body that depends on the <code>x-lang</code>
+      request header — the classic "content negotiation" setup. Whether it also sends
+      <code>Vary: x-lang</code> is the variable.</p>
+  </div>
+
+  <div class="controls">
+    <button id="withVary" data-variant="good">1. body varies, Vary sent (correct)</button>
+    <button id="withoutVary" data-variant="bad">2. body varies, Vary missing (poisoned)</button>
+    <div class="sep"></div>
+    <button id="shatter" data-variant="warn">3. Vary: User-Agent — cache shattering</button>
+    <button id="cookies">4. Vary: Cookie</button>
+    <button id="keys">5. what else is in the cache key?</button>
+    <div class="sep"></div>
+    <button id="reset">new generation</button>
+    <span class="hint" id="gen"></span>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run 1 and 2 back to back and compare the "body received" column.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

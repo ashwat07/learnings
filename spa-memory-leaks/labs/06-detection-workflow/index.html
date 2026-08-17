@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 06 — The detection workflow</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 06 — The detection workflow</h1>
+    <p>Five scenarios. Four of them leak, one doesn't, and they are not labelled. Find the leaks
+      using the workflow — then build the detector that would have found them without you.</p>
+    <p class="hint">For <code>measureUserAgentSpecificMemory()</code>, open this page with
+      <a href="?isolate=1">?isolate=1</a> (the lab server adds the COOP/COEP headers).</p>
+  </div>
+
+  <div class="controls">
+    <label>cycles <input id="cycles" type="number" value="20" min="5" max="100"></label>
+    <button id="run" data-variant="good">measure the selected scenario</button>
+    <button id="runAll">measure all five</button>
+    <button id="reveal" data-variant="warn">reveal the answers</button>
+    <button id="reset" data-variant="bad">reset</button>
+  </div>
+
+  <div class="controls">
+    <label>scenario
+      <select id="scenario">
+        <option value="alpha">alpha</option>
+        <option value="bravo">bravo</option>
+        <option value="charlie">charlie</option>
+        <option value="delta">delta</option>
+        <option value="echo">echo</option>
+      </select>
+    </label>
+    <button id="memory">sample memory (TODO 3)</button>
+    <button id="listeners">listener report (TODO 1)</button>
+    <button id="suspicion">suspicion report (TODO 2)</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Measure each scenario and write down which ones leak, before
+revealing.</p>
+
+  <div id="stage" class="stage" style="max-height:120px;overflow:hidden"></div>
+
+  <div id="log" class="log" style="max-height:240px"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

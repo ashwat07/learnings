@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>02 — preconnect</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+
+  <!-- One line. The handshake to the other origin now happens WHILE the slow stylesheet is
+       still downloading, instead of after it.
+
+       Note the ordering: preconnect goes as early in the head as possible, before the things
+       that will consume the time. A preconnect placed after the slow stylesheet buys nothing. -->
+  <link rel="preconnect" href="http://localhost:8081">
+
+  <link rel="stylesheet" href="/api/style.css?name=slow-b&delay=700">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>02 — preconnect</h1>
+    <p>Identical page, one extra line in the head. The cross-origin script's row should now show
+      no DNS or connect segment at all — that work already happened, in parallel with the
+      stylesheet.</p>
+  </div>
+  <p class="hint">Caveat to remember: browsers keep an unused preconnected socket open for only
+    about ten seconds. Preconnecting to something you use much later is wasted; preconnecting to
+    six origins "just in case" costs six handshakes and can crowd out the ones that matter.</p>
+
+  <script src="http://localhost:8081/api/script.js?name=third-party-b&delay=200"></script>
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

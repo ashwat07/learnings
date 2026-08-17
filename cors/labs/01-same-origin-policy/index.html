@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Same-origin policy</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #quiz .q { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); font: 12px/1.5 var(--mono); }
+    #quiz .urls { flex: 1; }
+    #quiz .verdict { min-width: 220px; }
+    #canvasWrap { display: flex; gap: 14px; align-items: flex-start; }
+    #canvasWrap img, #canvasWrap canvas { border: 1px solid var(--line); border-radius: 6px; max-width: 240px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Same-origin policy</h1>
+    <p>Before any CORS header makes sense you have to be precise about two things: <strong>what
+      counts as an origin</strong>, and <strong>what the policy actually blocks</strong>. It is
+      not "cross-origin requests". It is reading cross-origin <em>responses</em> — and the
+      difference is why CSRF exists.</p>
+    <p class="hint">This page is served from <code id="here"></code>. The other origins available:
+      <code>http://localhost:8081</code> and <code>http://127.0.0.1:8080</code>.</p>
+  </div>
+
+  <h2>1. is it same-origin?</h2>
+  <div class="controls">
+    <button id="reveal">reveal answers</button>
+    <span class="hint">Decide for each pair first. Origin = scheme + host + port, all three exact.</span>
+  </div>
+  <div id="quiz"></div>
+
+  <h2>2. what is actually blocked</h2>
+  <div class="controls">
+    <button id="same" data-variant="good">fetch same-origin</button>
+    <button id="cross" data-variant="bad">fetch cross-origin, no CORS headers</button>
+    <button id="crossOk" data-variant="good">fetch cross-origin, with ACAO</button>
+    <div class="sep"></div>
+    <button id="proof" data-variant="warn">did the blocked request reach the server?</button>
+  </div>
+
+  <h2>3. the tags that were never restricted</h2>
+  <div class="controls">
+    <button id="tags">load a cross-origin image, script and stylesheet</button>
+    <button id="taint">read the image's pixels (canvas tainting)</button>
+    <button id="taintFixed">…with crossorigin="anonymous"</button>
+  </div>
+  <div id="canvasWrap"></div>
+
+  <h2>4. no-cors mode</h2>
+  <div class="controls">
+    <button id="nocors">fetch with mode: 'no-cors'</button>
+    <span class="hint">You get a response object. Look at what is in it.</span>
+  </div>
+
+  <p class="readout" id="out">Start with the quiz.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

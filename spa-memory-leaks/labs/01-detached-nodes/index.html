@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Detached DOM nodes</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .row { display: flex; gap: 8px; padding: 4px 6px; border-bottom: 1px solid var(--line); font-size: 12px; }
+    #view { max-height: 220px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Detached DOM nodes</h1>
+    <p>A DOM subtree removed from the document is only freed if <em>nothing in JavaScript</em>
+      still points at it. One reference to one node keeps the whole subtree — parents, siblings,
+      children, listeners and all — alive forever. This is the most common leak in single-page
+      apps and the easiest to see once you know where to look.</p>
+    <p class="hint">Open the Memory panel. Take a snapshot, run a leaky cycle 20 times, take
+      another, and filter the class list for <b>Detached</b>.</p>
+  </div>
+
+  <div class="controls">
+    <label>rows per render <input id="rows" type="number" value="500" min="50" max="5000" step="50"></label>
+    <label>cycles <input id="cycles" type="number" value="20" min="1" max="200"></label>
+    <div class="sep"></div>
+    <button id="stats">measure now</button>
+    <button id="gc">suggest a GC</button>
+  </div>
+
+  <div class="controls">
+    <button id="leak-array" data-variant="bad">A. leak: keep nodes in an array</button>
+    <button id="leak-cache" data-variant="bad">B. leak: cache a node by id</button>
+    <button id="leak-parent" data-variant="bad">C. leak: keep ONE child of a big tree</button>
+    <button id="leak-closure" data-variant="bad">D. leak: a closure over the container</button>
+    <div class="sep"></div>
+    <button id="clean" data-variant="good">E. the same thing, clean</button>
+    <button id="release" data-variant="good">release everything</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run "measure now" first for a baseline, then a leaky cycle, then
+measure again.</p>
+
+  <div id="view" class="stage"></div>
+
+  <div id="log" class="log" style="max-height:200px"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

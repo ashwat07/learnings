@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>03 — the next page</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>the next page</h1>
+    <p>This page needs a 300KB script and a 400KB hero image, each with a 600ms server delay. If
+      you arrived here after prefetching, both should come from the cache and this page should
+      paint almost immediately.</p>
+    <p class="hint">Check the waterfall: prefetched resources show a transfer size of 0 and a
+      duration of a few milliseconds. If they don't, the prefetch either hadn't finished or was
+      not cacheable.</p>
+  </div>
+
+  <img src="/api/image.svg?name=next-hero&delay=600&w=900&h=380&size=400000&label=next+page+hero&cc=max-age%3D300"
+       width="900" height="380">
+  <script src="/api/script.js?name=next-app&delay=600&size=300000&cc=max-age%3D300"></script>
+
+  <p><a href="03-prefetch.html">← back</a></p>
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

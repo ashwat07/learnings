@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — preload</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — preload</h1>
+    <p><code>preload</code> says "this page needs this resource, now, at this priority" — it moves
+      <em>discovery</em>, not download speed. It is the sharpest hint and the easiest to misuse:
+      every preload competes for bandwidth with everything else on the page, including the thing
+      you were trying to make faster.</p>
+    <p class="hint">Throttle to <strong>Fast 4G</strong>, hard-reload each page, and compare LCP.
+      Keep the console open — Chrome warns about wasted and duplicated preloads, and those
+      warnings are the point of page 03.</p>
+  </div>
+
+  <h2>the pages</h2>
+  <ul>
+    <li><a href="01-late-discovery.html">01-late-discovery.html</a> — the LCP image is a CSS
+      background and the app's data comes from a module. Both are discovered two hops in.</li>
+    <li><a href="02-preloaded.html">02-preloaded.html</a> — the same page with three preloads.
+      Compare LCP.</li>
+    <li><a href="03-traps.html">03-traps.html</a> — five ways a preload backfires. Read the
+      console.</li>
+    <li><a href="04-too-many.html">04-too-many.html</a> — preloading everything, which is the
+      same as prioritising nothing.</li>
+  </ul>
+
+  <h2>the syntax, with the parts people forget</h2>
+  <pre class="readout">&lt;link rel="preload" as="image" href="/hero.avif" fetchpriority="high"&gt;
+&lt;link rel="preload" as="font"  href="/inter.woff2" type="font/woff2" <b>crossorigin</b>&gt;
+&lt;link rel="preload" as="fetch" href="/api/me" <b>crossorigin</b>&gt;
+&lt;link rel="modulepreload"      href="/app.js"&gt;   &lt;!-- also preloads its imports --&gt;
+
+&lt;!-- responsive images: preload must match what the img would pick, or you download twice --&gt;
+&lt;link rel="preload" as="image" href="/hero-800.avif"
+      imagesrcset="/hero-400.avif 400w, /hero-800.avif 800w" imagesizes="100vw"&gt;</pre>
+
+  <ul class="hint">
+    <li><code>as</code> is not optional. It sets the priority, the Accept header, and the CSP
+      directive checked. Without it the browser fetches with the wrong priority and often can't
+      match the preload to the later request — so it downloads twice.</li>
+    <li><code>crossorigin</code> is mandatory for <code>as="font"</code> and
+      <code>as="fetch"</code>, <strong>even same-origin</strong>. Both are CORS-mode fetches, and
+      a non-CORS preload cannot be reused by a CORS request.</li>
+    <li>A preload that isn't used within a few seconds produces a console warning and has spent
+      bandwidth for nothing.</li>
+  </ul>
+
+  <script src="/shared/perf-hud.js"></script>
+</body>
+</html>

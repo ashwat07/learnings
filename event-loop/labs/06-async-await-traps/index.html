@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 06 — async/await traps</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 06 — async/await traps</h1>
+    <p><code>await</code> is sugar over <code>.then()</code>, and the sugar hides two things that
+      matter: <strong>how many microtask ticks</strong> a construct costs, and <strong>whether your
+      requests are running at the same time or one after another</strong>. The second one is worth
+      seconds of load time on real pages.</p>
+  </div>
+
+  <div class="controls">
+    <button id="puzzle" data-variant="good">1. the ordering puzzle</button>
+    <button id="ticks">2. count the microtask ticks</button>
+    <button id="foreach" data-variant="bad">3. the forEach trap</button>
+    <button id="errors">4. error propagation</button>
+    <div class="sep"></div>
+    <button id="clear">clear</button>
+  </div>
+
+  <div class="controls">
+    <label>items <input id="n" type="number" value="10" min="1" max="40"></label>
+    <label>server delay <input id="delay" type="number" value="200" min="0" max="2000" step="50">ms</label>
+    <div class="sep"></div>
+    <button id="sequential" data-variant="bad">5a. sequential await</button>
+    <button id="parallel" data-variant="good">5b. Promise.all</button>
+    <button id="pooled" data-variant="warn">5c. pooled, limit 3 (TODO)</button>
+    <button id="stream" data-variant="warn">5d. as-they-arrive (TODO)</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Do 1 without running it first. Write your answer down.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

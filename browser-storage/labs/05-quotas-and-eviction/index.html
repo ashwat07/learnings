@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Quotas &amp; eviction</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #bar { height: 22px; border-radius: 6px; background: #0a0a10; border: 1px solid var(--line);
+           overflow: hidden; max-width: 900px; margin: 10px 0 14px; position: relative; }
+    #bar i { display: block; height: 100%; background: linear-gradient(90deg, #3d5bbf, #7c9cff); width: 0; }
+    #bar b { position: absolute; left: 10px; top: 2px; font: 12px/1.4 var(--mono); color: #cdd6ff; font-weight: 400; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Quotas &amp; eviction</h1>
+    <p>Everything you store — IndexedDB, Cache Storage, localStorage, OPFS — shares one origin
+      quota. When the disk gets tight the browser evicts <strong>whole origins</strong>, not
+      individual entries. Your offline app comes back empty, and the user is logged out.</p>
+    <p class="hint">This lab writes real data to your disk. It cleans up after itself, but check
+      Application → Storage when you are done.</p>
+  </div>
+
+  <div id="bar"><i></i><b>–</b></div>
+
+  <div class="controls">
+    <button id="estimate" data-variant="good">navigator.storage.estimate()</button>
+    <button id="persist">request persistent storage</button>
+    <button id="persisted">is it persisted?</button>
+    <button id="buckets">what else affects the quota?</button>
+  </div>
+
+  <div class="controls">
+    <label>write <input id="mb" type="number" value="200" min="10" max="4000" step="50">MB</label>
+    <button id="fill" data-variant="bad">fill storage until it throws</button>
+    <button id="opaque" data-variant="warn">measure opaque-response padding</button>
+    <button id="cleanup" data-variant="good">delete everything this lab wrote</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start with estimate(), then read the eviction rules below before
+filling anything.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — stale-while-revalidate</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — stale-while-revalidate</h1>
+    <p>The usual caching trade is <em>fast but possibly stale</em> vs <em>fresh but slow</em>.
+      <code>stale-while-revalidate</code> refuses the trade: serve the stale copy instantly,
+      refresh it in the background, and the <em>next</em> request gets the new content. You buy
+      speed with one request's worth of staleness.</p>
+    <p class="hint">Each run polls the same URL every 800ms for ~12 seconds and bumps the server's
+      content halfway through. Watch two things: the latency bars, and how long the version number
+      takes to catch up.</p>
+  </div>
+
+  <div class="controls">
+    <label>server delay <input id="delay" type="number" value="600" min="0" max="3000" step="100">ms</label>
+    <label>polls <input id="polls" type="number" value="14" min="4" max="40"></label>
+    <button id="reset">new generation</button>
+    <span class="hint" id="gen"></span>
+  </div>
+
+  <div class="controls">
+    <button id="nostore" data-variant="bad">A. no-store</button>
+    <button id="maxage">B. max-age=3</button>
+    <button id="swr" data-variant="good">C. max-age=3, stale-while-revalidate=30</button>
+    <div class="sep"></div>
+    <button id="sie" data-variant="warn">D. stale-if-error (server returns 503)</button>
+    <button id="manual" data-variant="warn">E. your own SWR in JS (TODO)</button>
+  </div>
+
+  <h2>latency per poll</h2>
+  <div id="bars"></div>
+
+  <h2>summary</h2>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run A, then B, then C. Compare the bars.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

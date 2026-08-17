@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>02 — preloaded</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+
+  <!-- Three hints, placed before the stylesheet so they are discovered first.
+       Note that the hero URL must match the CSS's url() EXACTLY — byte for byte, including
+       the query string — or the browser treats them as two different resources and downloads
+       both. This is the single most common preload bug. -->
+  <link rel="preload" as="image" fetchpriority="high"
+        href="/api/image.svg?name=hero-pre&delay=500&w=1000&h=420&label=LCP">
+  <link rel="modulepreload" href="/api/script.js?name=pre-app&delay=400">
+  <link rel="preload" as="fetch" crossorigin
+        href="/api/asset?name=pre-user&type=json&delay=400">
+
+  <link rel="stylesheet"
+        href="/api/style.css?name=hero-css2&delay=500&img=%2Fapi%2Fimage.svg%3Fname%3Dhero-pre%26delay%3D500%26w%3D1000%26h%3D420%26label%3DLCP">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>02 — preloaded</h1>
+    <p>Same resources, same delays. Every one of them now starts at ~0ms instead of waiting for
+      the hop that would have revealed it.</p>
+    <p class="hint">In the waterfall, all five bars should start together. LCP should drop by
+      roughly one server delay — check it against page 01 before believing it.</p>
+  </div>
+
+  <div id="hero" class="stage" style="height:420px"></div>
+  <p class="readout" id="data">loading user data…</p>
+
+  <script type="module">
+    const t0 = performance.now();
+    await import('/api/script.js?name=pre-app&delay=400');
+    const user = await fetch('/api/asset?name=pre-user&type=json&delay=400').then((r) => r.json());
+    document.getElementById('data').textContent =
+      `user data arrived at ${Math.round(performance.now())}ms ` +
+      `(${Math.round(performance.now() - t0)}ms after the module started — the preload had it already)`;
+  </script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

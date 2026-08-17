@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — An RPC layer for workers</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — An RPC layer</h1>
+    <p>Raw <code>postMessage</code> forces every worker to grow a switch statement, an id
+      scheme, and a set of ad-hoc conventions. An RPC layer makes a worker look like a module:
+      <code>await api.search('ada')</code>. Forty lines gets you the happy path; the tests below
+      are the other 90%.</p>
+    <p class="hint">Read <code>rpc.js</code> first. Five TODOs, in the order the tests fail.</p>
+  </div>
+
+  <div class="controls">
+    <button id="load" data-variant="good">api.load(200k rows)</button>
+    <label>query <input id="q" type="search" value="ada" size="16"></label>
+    <button id="search">api.search(q)</button>
+    <div class="sep"></div>
+    <button id="runTests" data-variant="good">run the test suite</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Load the index first, then run the tests. Two pass; five are your
+TODOs.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Validators: ETag &amp; Last-Modified</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Validators: ETag &amp; Last-Modified</h1>
+    <p>A stale cache entry is not garbage — it's an asset you can revalidate. A successful
+      revalidation is a <strong>304 with no body</strong>: you pay one round trip and save the
+      whole payload. This lab measures exactly what that trade is worth, and shows the two ways
+      it goes wrong.</p>
+  </div>
+
+  <div class="controls">
+    <label>payload <input id="size" type="number" value="200000" min="1000" max="4000000" step="10000"> bytes</label>
+    <label>server delay <input id="delay" type="number" value="80" min="0" max="1000" step="20">ms</label>
+    <button id="fresh">new generation</button>
+    <span class="hint" id="gen"></span>
+  </div>
+
+  <div class="controls">
+    <button id="etag" data-variant="good">1. ETag revalidation (304)</button>
+    <button id="lastmod">2. Last-Modified revalidation</button>
+    <button id="novalidator" data-variant="bad">3. no validator at all</button>
+    <button id="weak">4. weak vs strong ETag</button>
+  </div>
+
+  <div class="controls">
+    <button id="changed">5. content changed → 200 with new body</button>
+    <button id="frozen" data-variant="bad">6. server lies: content changes, ETag doesn't</button>
+    <button id="storm">7. revalidation storm: 30 assets</button>
+    <div class="sep"></div>
+    <button id="refresh304">8. does a 304 refresh freshness?</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start with 1.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

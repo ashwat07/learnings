@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Listener leaks</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Listener leaks</h1>
+    <p>A listener on <code>window</code> or <code>document</code> outlives every component that
+      registered it. It keeps its closure alive, therefore the component, therefore its DOM. And
+      unlike a detached node, it keeps <strong>running</strong> — so a hundred dead components all
+      react to every scroll.</p>
+    <p class="hint">Select an element and run <code>getEventListeners($0)</code> in the console —
+      that is the fastest listener-leak check there is.</p>
+  </div>
+
+  <div class="controls">
+    <label>components <input id="n" type="number" value="50" min="1" max="500"></label>
+    <div class="sep"></div>
+    <button id="leak" data-variant="bad">A. mount + unmount, no cleanup</button>
+    <button id="manual" data-variant="warn">B. cleanup by hand (and get it wrong)</button>
+    <button id="abort" data-variant="good">C. AbortController</button>
+    <div class="sep"></div>
+    <button id="count">count listeners &amp; fire a scroll</button>
+    <button id="reset">reset</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run A with 50 components, then click "count listeners" and scroll
+the page.</p>
+
+  <h2>the patterns, side by side</h2>
+  <pre class="readout">// ✗ the leak: nothing ever removes this
+window.addEventListener('resize', () =&gt; this.recompute());
+
+// ~ manual: correct only if the reference is IDENTICAL and every path removes it
+const onResize = () =&gt; this.recompute();
+window.addEventListener('resize', onResize);
+// …later, in every unmount path, including error paths:
+window.removeEventListener('resize', onResize);
+
+// ✓ AbortController: one signal, any number of listeners, one call to clean up
+const ac = new AbortController();
+window.addEventListener('resize', () =&gt; this.recompute(), { signal: ac.signal });
+document.addEventListener('keydown', onKey, { signal: ac.signal });
+el.addEventListener('click', onClick, { signal: ac.signal });
+// …unmount:
+ac.abort();</pre>
+
+  <div id="log" class="log" style="max-height:220px"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

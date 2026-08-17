@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Message passing costs</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Message passing costs</h1>
+    <p><code>postMessage</code> does not send a reference. It performs a <strong>structured
+      clone</strong> — a full deep copy, serialised on the sender's thread and deserialised on the
+      receiver's. For a big payload that copy can cost more than the work you moved off the main
+      thread, which is how a worker ends up making things worse.</p>
+    <p class="hint">This page is currently <span id="isolated"></span>.
+      <a href="?isolate=1">Reload with cross-origin isolation</a> to enable
+      <code>SharedArrayBuffer</code> (needs COOP + COEP headers, which the lab server adds when
+      you ask for <code>?isolate=1</code>).</p>
+  </div>
+
+  <div class="controls">
+    <label>elements <input id="n" type="number" value="500000" min="10000" max="5000000" step="100000"></label>
+    <button id="baseline">round-trip latency (empty message)</button>
+    <div class="sep"></div>
+    <button id="objects" data-variant="bad">clone: array of objects</button>
+    <button id="typed" data-variant="warn">clone: Float64Array</button>
+    <button id="transfer" data-variant="good">transfer: ArrayBuffer</button>
+    <button id="shared" data-variant="good">share: SharedArrayBuffer</button>
+    <div class="sep"></div>
+    <button id="json">JSON.stringify + parse (for comparison)</button>
+    <button id="reset">reset</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run the baseline first, then the four payload types with the same
+element count.</p>
+
+  <div class="controls">
+    <button id="detached" data-variant="bad">what happens after you transfer?</button>
+    <button id="unclonable" data-variant="bad">try to send something unclonable</button>
+  </div>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

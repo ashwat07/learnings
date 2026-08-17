@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>01 — late discovery</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <!-- 500ms. Only after this parses does the browser learn about the hero image. -->
+  <link rel="stylesheet"
+        href="/api/style.css?name=hero-css&delay=500&img=%2Fapi%2Fimage.svg%3Fname%3Dhero-late%26delay%3D500%26w%3D1000%26h%3D420%26label%3DLCP">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>01 — late discovery</h1>
+    <p>Two chains, both two hops deep: the LCP image hides behind the stylesheet, and the user
+      data hides behind a module.</p>
+  </div>
+
+  <div id="hero" class="stage" style="height:420px"></div>
+  <p class="readout" id="data">loading user data…</p>
+
+  <script type="module">
+    const t0 = performance.now();
+    await import('/api/script.js?name=late-app&delay=400');
+    const user = await fetch('/api/asset?name=late-user&type=json&delay=400').then((r) => r.json());
+    document.getElementById('data').textContent =
+      `user data arrived at ${Math.round(performance.now())}ms ` +
+      `(${Math.round(performance.now() - t0)}ms after the module was discovered)`;
+  </script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

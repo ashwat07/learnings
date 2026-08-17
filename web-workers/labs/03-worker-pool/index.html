@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Worker pools &amp; cancellation</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #slots { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 14px; }
+    #slots div { width: 78px; height: 46px; border-radius: 8px; border: 1px solid var(--line);
+                 background: #0a0a10; font: 10px/1.4 var(--mono); color: var(--muted);
+                 display: flex; align-items: center; justify-content: center; text-align: center; }
+    #slots div.busy { border-color: var(--accent); color: var(--accent); background: #131a33; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Worker pools &amp; cancellation</h1>
+    <p>One worker is a queue. Spawning a worker per job is a fork bomb. A pool of
+      <code>hardwareConcurrency</code> workers is the answer — plus the two things every naive
+      pool lacks: <strong>cancellation that actually cancels</strong> and
+      <strong>backpressure</strong>.</p>
+    <p class="hint">hardwareConcurrency here: <b id="cores"></b>. Note it is a hint, is often
+      capped for privacy, and says nothing about how many of those cores you are allowed to use.</p>
+  </div>
+
+  <div id="slots"></div>
+
+  <div class="controls">
+    <label>pool size <input id="size" type="number" value="4" min="1" max="16"></label>
+    <label>jobs <input id="jobs" type="number" value="24" min="1" max="200"></label>
+    <label>ms each <input id="ms" type="number" value="300" min="50" max="3000" step="50"></label>
+    <button id="build">rebuild pool</button>
+  </div>
+
+  <div class="controls">
+    <button id="sequential" data-variant="bad">A. one worker, sequential</button>
+    <button id="perJob" data-variant="bad">B. one worker per job</button>
+    <button id="pool" data-variant="good">C. pool</button>
+    <div class="sep"></div>
+    <button id="cancel" data-variant="warn">cancel everything (TODO 1)</button>
+    <button id="priority">priority test (TODO 2)</button>
+    <button id="backpressure">backpressure test (TODO 3)</button>
+    <button id="recycle">crash a worker (TODO 4)</button>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run A, B and C with 24 jobs of 300ms and compare wall time and
+memory. Then work through the TODOs in pool.js.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

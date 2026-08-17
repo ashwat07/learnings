@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>04 — preload everything</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <script>
+    // Generate 25 high-priority preloads before the LCP image is even mentioned.
+    // Every one of these is a real resource the page really does use — this is not a strawman,
+    // it is what "we preloaded our critical assets" turns into after three sprints.
+    for (let i = 0; i < 25; i++) {
+      document.write(
+        `<link rel="preload" as="image" fetchpriority="high" ` +
+        `href="/api/image.svg?name=flood${i}&delay=200&w=300&h=120&size=200000">`);
+    }
+  </script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>04 — preload everything</h1>
+    <p>Twenty-five high-priority preloads, then the LCP image. Priority is a ranking, not a
+      speed setting: when everything is high priority, nothing is.</p>
+    <p class="hint">Compare this page's LCP with page 02's. Then delete the flood (comment out the
+      loop in the head) and reload to see what the same page does without it.</p>
+  </div>
+
+  <img id="lcp" src="/api/image.svg?name=flood-lcp&delay=200&w=1000&h=420&label=LCP+image+competing+with+25+preloads">
+
+  <div id="rest"></div>
+  <script>
+    for (let i = 0; i < 25; i++) {
+      const img = document.createElement('img');
+      img.src = `/api/image.svg?name=flood${i}&delay=200&w=300&h=120&size=200000`;
+      img.style.width = '150px';
+      document.getElementById('rest').append(img);
+    }
+  </script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>

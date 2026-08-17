@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Frame timing</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .track {
+      position: relative; height: 26px; background: #0a0a10; border: 1px solid var(--line);
+      border-radius: 6px; margin: 6px 0; overflow: hidden;
+    }
+    .track .dot {
+      position: absolute; top: 3px; left: 0; width: 18px; height: 18px; border-radius: 4px;
+      background: var(--accent); will-change: transform;
+    }
+    .track .name {
+      position: absolute; right: 8px; top: 5px; font: 11px/1.4 var(--mono); color: var(--muted);
+    }
+    .track[data-ref] .dot { background: var(--good); }
+    .track[data-bad] .dot { background: var(--bad); }
+    #tracks { max-width: 900px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Frame timing</h1>
+    <p>Six dots, all told to cross the track in exactly 3 seconds, all started at the same
+      instant. Watch them drift apart. The green one is ground truth (Web Animations, running on
+      the compositor); the rest are the ways people animate with JavaScript.</p>
+    <p class="hint">Then click <strong>block main thread</strong> and see which dot doesn't care.</p>
+  </div>
+
+  <div class="controls">
+    <button id="start" data-variant="good">start all</button>
+    <button id="stop">stop all</button>
+    <div class="sep"></div>
+    <button id="block" data-variant="bad">block main thread 800ms</button>
+    <label>every <input id="blockEvery" type="number" value="0" min="0" max="5000" step="200">ms</label>
+    <div class="sep"></div>
+    <button id="halfRate" data-variant="warn" aria-pressed="false">simulate half frame rate</button>
+  </div>
+
+  <div id="tracks"></div>
+
+  <h2>drift vs ground truth</h2>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Press start. Let it run 15 seconds, then read the table.</p>
+
+  <h2>frame log</h2>
+  <div id="log" class="log" style="max-height:220px"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

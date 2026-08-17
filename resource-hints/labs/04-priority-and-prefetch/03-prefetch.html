@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>03 — prefetch the next page</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <script>
+    // Only prefetch when asked, so you can compare the two navigations.
+    if (new URLSearchParams(location.search).has('prefetch')) {
+      for (const url of [
+        '/api/script.js?name=next-app&delay=600&size=300000&cc=max-age%3D300',
+        '/api/image.svg?name=next-hero&delay=600&w=900&h=380&size=400000&label=next+page+hero&cc=max-age%3D300',
+      ]) {
+        document.write(`<link rel="prefetch" href="${url}">`);
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>03 — prefetch the next page</h1>
+    <p><code>rel="prefetch"</code> downloads at the <em>lowest</em> priority, into the HTTP cache,
+      for a future navigation. It costs the user bandwidth on a bet that they will click.</p>
+  </div>
+
+  <div class="controls">
+    <a href="03-prefetch.html"><button>load this page WITHOUT prefetch</button></a>
+    <a href="03-prefetch.html?prefetch=1"><button data-variant="good">load WITH prefetch</button></a>
+    <div class="sep"></div>
+    <a href="03-next.html"><button data-variant="warn">→ go to the next page</button></a>
+  </div>
+
+  <p class="readout" id="state"></p>
+
+  <ul class="hint">
+    <li>Prefetch happens at idle priority, so it should not slow this page down. Confirm that in
+      the waterfall rather than assuming it.</li>
+    <li>The prefetched entry lives in the HTTP cache and obeys its caching headers. A response
+      with <code>no-store</code> cannot be prefetched usefully at all — a very common reason
+      prefetch "does nothing".</li>
+    <li>Chrome keeps unused prefetched resources for about five minutes.</li>
+    <li>The grown-up version of this is <code>Speculation Rules</code> (page 04), which can
+      prefetch or fully prerender a whole <em>document</em>, not just subresources.</li>
+  </ul>
+
+  <script>
+    document.getElementById('state').textContent =
+      new URLSearchParams(location.search).has('prefetch')
+        ? 'Prefetching two resources for the next page at idle priority. Wait for them to finish ' +
+          '(watch the waterfall), then click "go to the next page" and compare its LCP with the ' +
+          'no-prefetch run.'
+        : 'No prefetch. Click through to the next page and note its LCP — that is your baseline.';
+  </script>
+
+  <script src="/resource-hints/report.js"></script>
+</body>
+</html>
