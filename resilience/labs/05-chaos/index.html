@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Chaos</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Chaos</h1>
+    <p>You have written fallbacks. Do they work? The only way to know is to break things on purpose,
+      on a schedule, while you are watching — because the alternative is finding out at 3am while
+      you are not.</p>
+  </div>
+
+  <div class="controls">
+    <label>install a fault injector into fetch()</label>
+    <button id="off">off</button>
+    <button id="fail" data-variant="bad">10% of requests fail</button>
+    <button id="slow" data-variant="bad">every request +2s</button>
+    <button id="jitter" data-variant="bad">latency 0–3s, 5% fail</button>
+    <button id="offline" data-variant="bad">everything fails</button>
+  </div>
+  <div class="controls">
+    <button id="exercise" data-variant="good">run the page's requests</button>
+    <button id="checklist">the chaos checklist</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Install a fault, then exercise the page — and watch what your UI does.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — The outbox</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .composer textarea { width: 100%; max-width: 560px; height: 60px; font: 12px/1.5 var(--mono);
+      background: #0f0f16; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+    .pill { border-radius: 999px; padding: 1px 8px; font-size: 11px; }
+    .pill.pending { background: #3b2a10; } .pill.sent { background: #12301c; } .pill.failed { background: #3b1418; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — The outbox</h1>
+    <p>The user typed something and pressed save while the train was in a tunnel. Everything that
+      matters about offline is in what happens next — and the failure that loses their work is
+      completely silent.</p>
+  </div>
+
+  <div class="controls">
+    <label>network</label>
+    <button id="net-on" data-variant="good">online</button>
+    <button id="net-off" data-variant="bad">offline</button>
+    <button id="net-flaky" data-variant="bad">flaky (50%)</button>
+  </div>
+  <div class="controls">
+    <label>save strategy</label>
+    <button id="s-naive" data-variant="bad">fire and forget</button>
+    <button id="s-outbox" data-variant="good">durable outbox (IndexedDB)</button>
+  </div>
+  <div class="controls">
+    <button id="flush">flush the outbox now</button>
+    <button id="reload">reload the page (does the work survive?)</button>
+    <button id="design">the design</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div class="composer">
+    <textarea id="text" placeholder="type a note and press save">A note I do not want to lose.</textarea>
+    <button id="save" data-variant="good">Save</button>
+    <span class="stat">strategy <b id="strategy">fire and forget</b></span>
+    <span class="stat">network <b id="netstate">online</b></span>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Go offline, save a note, then reload the page.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

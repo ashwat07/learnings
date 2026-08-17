@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Formatting with Intl</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Formatting with Intl</h1>
+    <p>Every one of these formats is built into your browser, correct for 200+ locales, and free.
+      Most i18n formatting bugs are a hand-rolled version of something on this page.</p>
+  </div>
+
+  <div class="controls">
+    <label>locale</label>
+    <select id="locale">
+      <option value="en-US">en-US — United States</option>
+      <option value="en-GB">en-GB — United Kingdom</option>
+      <option value="de-DE">de-DE — Germany</option>
+      <option value="fr-FR">fr-FR — France</option>
+      <option value="hi-IN">hi-IN — India</option>
+      <option value="ar-EG">ar-EG — Egypt</option>
+      <option value="ja-JP">ja-JP — Japan</option>
+      <option value="pl-PL">pl-PL — Poland</option>
+    </select>
+    <button id="numbers">numbers &amp; currency</button>
+    <button id="dates">dates &amp; times</button>
+    <button id="relative">relative time &amp; lists</button>
+    <button id="collation" data-variant="good">sorting &amp; comparison</button>
+    <button id="traps" data-variant="bad">the traps</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Pick a locale and press a button. Then change the locale.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

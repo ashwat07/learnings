@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — CLS</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #stage { border: 1px dashed var(--line); border-radius: 10px; padding: 10px; margin: 12px 0; min-height: 320px; }
+    #stage p { max-width: 620px; }
+    .reserved { aspect-ratio: 620 / 220; width: 100%; max-width: 620px; background: #14141c; border-radius: 8px; }
+    /* Emulating FOUT without needing a real font file: two stacks with genuinely different
+       metrics, swapped after a delay. The reflow is the same one a real web font causes. */
+    .late-font { font: 28px/1.25 Arial, Helvetica, sans-serif; max-width: 620px; }
+    .late-font.swapped { font-family: Georgia, 'Times New Roman', serif; letter-spacing: .2px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — CLS</h1>
+    <p>Every layout shift is the same bug: <strong>content arrived and no space had been reserved
+      for it</strong>. The `layout-shift` entries name the nodes that moved — but the thing to fix
+      is whatever appeared <em>above</em> them.</p>
+  </div>
+
+  <div class="controls">
+    <label>break it</label>
+    <button id="c-img" data-variant="bad">image with no dimensions</button>
+    <button id="c-banner" data-variant="bad">injected banner</button>
+    <button id="c-ad" data-variant="bad">a slot that grows</button>
+    <button id="c-font" data-variant="bad">late font (FOUT)</button>
+    <button id="c-list" data-variant="bad">infinite scroll appending</button>
+  </div>
+  <div class="controls">
+    <label>fix it</label>
+    <button id="f-img" data-variant="good">aspect-ratio reserved</button>
+    <button id="f-banner" data-variant="good">banner in reserved space</button>
+    <button id="f-transform" data-variant="good">animate transform, not top</button>
+    <button id="causes">the five causes</button>
+    <button id="reset">reset</button>
+  </div>
+
+  <div id="stage"></div>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Break it first. Watch the CLS number and the source table.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

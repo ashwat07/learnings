@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Measuring the vitals</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .hero { width: 100%; max-width: 640px; height: 220px; object-fit: cover; border-radius: 10px; }
+    .metric { font: 700 20px/1.2 var(--mono); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Measuring the vitals</h1>
+    <p>Before you fix anything, know precisely what the number counts. This page measures itself
+      with <a href="/shared/vitals.js">/shared/vitals.js</a> — the same observers the real library
+      uses, written to be read.</p>
+  </div>
+
+  <img class="hero" id="hero" alt="the LCP candidate"
+       src="/api/image.svg?delay=600&w=640&h=220&label=LCP+candidate">
+
+  <div class="controls">
+    <button id="interact" data-variant="bad">click me (watch LCP freeze)</button>
+    <button id="shift" data-variant="bad">inject a banner (CLS)</button>
+    <button id="slow" data-variant="bad">a 300ms handler (INP)</button>
+    <button id="explain">what each number counts</button>
+    <button id="field">field vs lab</button>
+  </div>
+
+  <div id="results"></div>
+  <div id="detail"></div>
+
+  <p class="readout" id="out">Reload the page and read the scoreboard, bottom right.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

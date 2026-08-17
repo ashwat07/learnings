@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Scale &amp; backpressure</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #rows { height: 260px; overflow: auto; font: 11px/1.5 var(--mono); }
+    #rows div { border-bottom: 1px solid #1b1b24; padding: 1px 4px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Scale &amp; backpressure</h1>
+    <p>The stream is fine. Your <em>rendering</em> is not. A firehose into a naive UI produces a page
+      that is technically up to date and completely unusable.</p>
+    <p class="hint">Open the perf HUD and watch FPS while each strategy runs.</p>
+  </div>
+
+  <div class="controls">
+    <label>strategy</label>
+    <button id="s-naive" data-variant="bad">render every message</button>
+    <button id="s-raf" data-variant="good">coalesce per frame</button>
+    <button id="s-throttle" data-variant="good">throttle to 4/s</button>
+    <button id="s-latest" data-variant="good">keep only the latest</button>
+    <button id="stop">stop</button>
+  </div>
+  <div class="controls">
+    <label>rate</label>
+    <button id="r-slow">10/s</button>
+    <button id="r-fast" data-variant="bad">200/s</button>
+    <button id="r-flood" data-variant="bad">1000/s</button>
+    <button id="patterns">the patterns</button>
+  </div>
+
+  <p>
+    <span class="stat">received <b id="received">0</b></span>
+    <span class="stat">rendered <b id="rendered">0</b></span>
+    <span class="stat">dropped <b id="dropped">0</b></span>
+    <span class="stat">FPS <b id="fps">—</b></span>
+  </p>
+
+  <div id="rows"></div>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start at 200/s with “render every message”, then switch strategies.</p>
+  <div id="log" class="log"></div>
+
+  <script src="/shared/perf-hud.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

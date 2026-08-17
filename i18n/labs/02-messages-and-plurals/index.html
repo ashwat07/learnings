@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Messages &amp; plurals</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Messages &amp; plurals</h1>
+    <p>The single most damaging i18n mistake is building a sentence out of parts in code. Grammar is
+      not concatenation, and every language disagrees with yours about word order, agreement, and how
+      many plural forms exist.</p>
+  </div>
+
+  <div class="controls">
+    <label>locale</label>
+    <select id="locale">
+      <option value="en">en — English (2 forms)</option>
+      <option value="ja">ja — Japanese (1 form)</option>
+      <option value="pl">pl — Polish (4 forms)</option>
+      <option value="ar">ar — Arabic (6 forms)</option>
+      <option value="ru">ru — Russian (4 forms)</option>
+      <option value="cy">cy — Welsh (6 forms)</option>
+    </select>
+    <button id="plurals" data-variant="good">plural categories</button>
+    <button id="concat" data-variant="bad">the concatenation trap</button>
+    <button id="icu">ICU MessageFormat</button>
+    <button id="context">context, gender &amp; ordinals</button>
+    <button id="rules">the message rules</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Start with plural categories, and change the locale.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

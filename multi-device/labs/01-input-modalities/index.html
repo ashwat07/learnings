@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lab 01 — Input modalities</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 8px 0; position: relative; }
+    .card .actions { opacity: 0; transition: opacity .15s; }
+    /* The bug, and the fix, side by side. */
+    @media (hover: hover) and (pointer: fine) {
+      .card.hover-only:hover .actions { opacity: 1; }
+    }
+    .card.always .actions { opacity: 1; }
+    .card:focus-within .actions { opacity: 1; }
+    .target { display: inline-block; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Input modalities</h1>
+    <p>The same interface, driven by a mouse, a thumb, a keyboard and a remote. Most "mobile bugs"
+      are really <em>input</em> bugs that a mouse happened to hide.</p>
+    <p class="hint">Try this page with a mouse, then with touch (DevTools device toolbar), then with
+      the Tab key only.</p>
+  </div>
+
+  <div class="controls">
+    <button id="detect" data-variant="good">what can this device do?</button>
+    <button id="events">the event model</button>
+    <button id="targets">target size &amp; spacing</button>
+    <button id="rules">the rules</button>
+  </div>
+
+  <div class="card hover-only">
+    <strong>Actions revealed on hover only</strong>
+    <div class="actions"><button>Edit</button> <button>Delete</button></div>
+    <p class="hint">On a touch device these are unreachable — there is no hover. Tab to them: the
+      <code>:focus-within</code> rule saves the keyboard user.</p>
+  </div>
+  <div class="card always">
+    <strong>Actions always visible</strong>
+    <div class="actions"><button>Edit</button> <button>Delete</button></div>
+    <p class="hint">Boring, and it works for everyone.</p>
+  </div>
+
+  <p id="probe" class="readout">move, tap or press something…</p>
+  <div id="results"></div>
+  <p class="readout" id="out">Start with capability detection.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

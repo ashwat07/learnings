@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Degradation</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .page { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+    .widget { border: 1px solid var(--line); border-radius: 8px; padding: 10px; min-height: 90px; }
+    .widget.failed { border-color: #ff7b72; }
+    .widget.degraded { border-color: #e3b341; }
+    .widget h3 { margin: 0 0 6px; font: 700 12px/1.4 var(--mono); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Degradation</h1>
+    <p>A page is a set of independent promises to the user. When one breaks, the question is how
+      many of the others break with it — and that is a design decision you make in advance, not
+      something you discover in an incident.</p>
+  </div>
+
+  <div class="controls">
+    <button id="all-ok" data-variant="good">everything works</button>
+    <button id="fail-one" data-variant="bad">the recommendations service is down</button>
+    <button id="fail-critical" data-variant="bad">the product service is down</button>
+    <button id="slow" data-variant="bad">everything is slow</button>
+    <button id="tiers">the tier model</button>
+  </div>
+
+  <div class="page">
+    <div>
+      <div class="widget" id="w-product"><h3>product (critical)</h3><div class="body">—</div></div>
+      <div class="widget" id="w-reviews"><h3>reviews (important)</h3><div class="body">—</div></div>
+    </div>
+    <div>
+      <div class="widget" id="w-recs"><h3>recommendations (nice to have)</h3><div class="body">—</div></div>
+      <div class="widget" id="w-social"><h3>social proof (decorative)</h3><div class="body">—</div></div>
+    </div>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Load everything, then break one service at a time.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

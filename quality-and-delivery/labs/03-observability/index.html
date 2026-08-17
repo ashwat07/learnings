@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Observability</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Observability</h1>
+    <p>A user hit a bug twenty minutes ago. Do you know? Can you tell which release, which route,
+      which browser, and what they were doing? This lab builds the client half of the answer.</p>
+  </div>
+
+  <div class="controls">
+    <label>break something</label>
+    <button id="e-sync" data-variant="bad">a thrown error</button>
+    <button id="e-async" data-variant="bad">an unhandled rejection</button>
+    <button id="e-resource" data-variant="bad">a failed resource</button>
+    <button id="e-fetch" data-variant="bad">a failed API call</button>
+    <button id="e-csp">a CSP violation</button>
+  </div>
+  <div class="controls">
+    <button id="show" data-variant="good">what got captured</button>
+    <button id="fields">what a good report contains</button>
+    <button id="signals">the four signals</button>
+    <button id="sourcemaps">source maps &amp; releases</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Trigger each kind of failure, then look at what was captured.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

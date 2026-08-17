@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Content Security Policy</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    iframe { width: 100%; height: 120px; border: 1px solid var(--line); border-radius: 8px; background: #0a0a10; }
+    input#policy { width: 100%; font: 12px/1.5 var(--mono); background: #0f0f16; color: var(--text);
+                   border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Content Security Policy</h1>
+    <p>A policy is only real once you know what it <em>breaks</em>. This lab loads a probe page that
+      tries seven things a normal app does — inline script, external script, <code>eval</code>,
+      inline style, a cross-origin image, a cross-origin fetch — under whatever policy you choose,
+      and reports which survived.</p>
+  </div>
+
+  <div class="controls">
+    <label>policy</label>
+    <button id="p-none">no policy</button>
+    <button id="p-self">default-src 'self'</button>
+    <button id="p-unsafe">'self' + unsafe-inline</button>
+    <button id="p-nonce" data-variant="good">nonce-based</button>
+    <button id="p-strict" data-variant="good">strict-dynamic (recommended)</button>
+    <button id="p-lock">lock everything down</button>
+  </div>
+  <input id="policy" value="default-src 'self'">
+
+  <div class="controls">
+    <button id="run" data-variant="good">apply &amp; probe</button>
+    <button id="ro">the same policy, report-only</button>
+    <button id="reports">show collected reports</button>
+    <button id="rollout">the rollout recipe</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+  <div id="violations"></div>
+
+  <iframe id="frame" title="probe page"></iframe>
+
+  <p class="readout" id="out">Pick a policy and probe it.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

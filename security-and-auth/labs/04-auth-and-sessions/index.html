@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Client auth &amp; sessions</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .token { word-break: break-all; font: 11px/1.5 var(--mono); color: var(--muted); }
+    .token b { color: #79c0ff; } .token i { color: #d2a8ff; font-style: normal; }
+    .token u { color: #7ee787; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Client auth &amp; sessions</h1>
+    <p>Three questions decide a front-end auth design: <strong>where does the credential live</strong>,
+      <strong>how short is it valid</strong>, and <strong>how do you revoke it</strong>. This lab has a
+      real signed token endpoint with rotating refresh tokens and reuse detection, plus a simulated
+      XSS that shows you exactly what each storage choice hands an attacker.</p>
+  </div>
+
+  <div class="controls">
+    <label>1. log in, storing the access token in…</label>
+    <button id="s-local" data-variant="bad">localStorage</button>
+    <button id="s-session" data-variant="bad">sessionStorage</button>
+    <button id="s-memory" data-variant="good">memory (a module variable)</button>
+    <button id="s-cookie">a cookie the page can read</button>
+  </div>
+
+  <div class="controls">
+    <label>2. what an XSS gets</label>
+    <button id="xss" data-variant="bad">run the exfiltration script</button>
+    <button id="decode">decode the token</button>
+    <button id="tamper" data-variant="bad">tamper with the claims</button>
+  </div>
+
+  <div class="controls">
+    <label>3. lifetime &amp; revocation</label>
+    <button id="call">call /me</button>
+    <button id="expire">wait for expiry, then call /me</button>
+    <button id="refresh" data-variant="good">refresh (rotates)</button>
+    <button id="reuse" data-variant="bad">replay the previous refresh token</button>
+    <button id="sessions">what the server knows</button>
+    <button id="logout">log out everywhere</button>
+  </div>
+
+  <p class="token" id="tok">not logged in</p>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Log in with a storage choice, then run the exfiltration script.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

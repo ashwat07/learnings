@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Animation APIs</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #stage { position: relative; height: 200px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .ball { position: absolute; top: 80px; left: 10px; width: 40px; height: 40px; border-radius: 50%; background: #7ee787; }
+    .css-anim { animation: slide 1.6s ease-in-out infinite alternate; }
+    @keyframes slide { to { transform: translateX(620px); } }
+    #scroller { height: 140px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; margin-top: 10px; }
+    #scroller .tall { height: 600px; background: linear-gradient(#14141c, #1f3a52); }
+    #progress { height: 6px; background: #7ee787; width: 0; border-radius: 3px; }
+    @supports (animation-timeline: scroll()) {
+      #progress { width: 100%; transform-origin: left; animation: grow linear; animation-timeline: scroll(nearest); }
+      @keyframes grow { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+    }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Animation APIs</h1>
+    <p>Five ways to move the same ball. They differ in who owns the timeline, whether the main thread
+      is involved, and how much control you get back.</p>
+  </div>
+
+  <div class="controls">
+    <button id="a-css" data-variant="good">CSS animation</button>
+    <button id="a-waapi" data-variant="good">Web Animations API</button>
+    <button id="a-raf">requestAnimationFrame</button>
+    <button id="a-transition">CSS transition</button>
+    <button id="stop">stop</button>
+  </div>
+  <div class="controls">
+    <button id="vt">View Transitions</button>
+    <button id="scroll">scroll-driven animation</button>
+    <button id="compare">the comparison</button>
+  </div>
+
+  <div id="stage"><div class="ball" id="ball"></div></div>
+  <div id="progress"></div>
+  <div id="scroller"><div class="tall">scroll me — the bar above is driven by scroll position, on the compositor</div></div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Try each. Then open the Performance panel and compare the main-thread cost.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

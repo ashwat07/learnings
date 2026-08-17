@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — i18n architecture &amp; delivery</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Architecture &amp; delivery</h1>
+    <p>Where do translations live, when do they load, how does a locale get chosen, and what does
+      the URL look like? Four decisions that are cheap now and expensive in a year.</p>
+  </div>
+
+  <div class="controls">
+    <button id="detect" data-variant="good">how a locale gets chosen</button>
+    <button id="urls">URL strategies</button>
+    <button id="loading">bundle vs lazy-load</button>
+    <button id="workflow">the translation workflow</button>
+    <button id="measure">measure the cost</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Start with locale detection.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

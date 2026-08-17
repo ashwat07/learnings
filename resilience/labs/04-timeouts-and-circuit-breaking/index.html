@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Timeouts &amp; circuit breaking</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>.state { font: 700 20px/1.2 var(--mono); }
+    .closed { color: #7ee787 } .open { color: #ff7b72 } .half { color: #e3b341 }</style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Timeouts &amp; circuit breaking</h1>
+    <p>A timeout is a promise to the user, not a property of the network. A circuit breaker is the
+      recognition that when a dependency is down for <em>everyone</em>, the kindest thing you can do
+      is stop asking.</p>
+  </div>
+
+  <div class="controls">
+    <label>timeouts</label>
+    <button id="none" data-variant="bad">no timeout (3s endpoint)</button>
+    <button id="fixed" data-variant="good">1s timeout</button>
+    <button id="hedged" data-variant="good">hedged request</button>
+  </div>
+  <div class="controls">
+    <label>circuit breaker</label>
+    <button id="cb-fail" data-variant="bad">send 6 requests to a dead service</button>
+    <button id="cb-try">try again (breaker open)</button>
+    <button id="cb-recover" data-variant="good">the service comes back</button>
+    <button id="rules">the rules</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <p>breaker: <span class="state closed" id="state">CLOSED</span>
+    <span class="stat">failures <b id="fails">0</b></span>
+    <span class="stat">calls made <b id="calls">0</b></span>
+    <span class="stat">calls skipped <b id="skipped">0</b></span></p>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Start with “no timeout” and watch how long you wait.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

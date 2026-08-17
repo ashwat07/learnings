@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Reconnection</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>.dot { display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px }
+    .dot.up{background:#7ee787}.dot.down{background:#ff7b72}.dot.wait{background:#e3b341}</style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Reconnection</h1>
+    <p>The connection <em>will</em> drop: a tunnel, a sleeping laptop, a load balancer's 60-second
+      idle timeout, a deploy. What happens next is the whole engineering problem.</p>
+  </div>
+
+  <div class="controls">
+    <label>SSE — reconnection is the browser's job</label>
+    <button id="sse-start" data-variant="good">connect (drops after 4)</button>
+    <button id="sse-flaky" data-variant="bad">connect to a flaky endpoint</button>
+    <button id="sse-stop">close</button>
+  </div>
+  <div class="controls">
+    <label>WebSocket — reconnection is your job</label>
+    <button id="ws-naive" data-variant="bad">naive reconnect (no backoff)</button>
+    <button id="ws-good" data-variant="good">backoff + jitter + heartbeat</button>
+    <button id="ws-stop">close</button>
+  </div>
+  <div class="controls">
+    <button id="offline">simulate going offline</button>
+    <button id="recipe">the reconnection recipe</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <p><span class="dot down" id="dot"></span><span id="status">disconnected</span></p>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start with the SSE drop and watch the network panel.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

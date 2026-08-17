@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — XSS &amp; sanitization</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    iframe { width: 100%; height: 130px; border: 1px solid var(--line); border-radius: 8px; background: #0a0a10; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 1000px; }
+    textarea { width: 100%; height: 70px; font: 12px/1.5 var(--mono); background: #0f0f16;
+               color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — XSS &amp; sanitization</h1>
+    <p>Every XSS is the same bug: <strong>attacker-controlled data reached a place where the browser
+      expects code</strong>. This lab renders the same payload through five sinks and shows which
+      ones execute it — in a sandboxed iframe against a localhost endpoint that exists to be
+      vulnerable.</p>
+    <p class="hint">The payloads are yours to type. Nothing here leaves your machine, and the
+      vulnerable endpoint is bound to localhost.</p>
+  </div>
+
+  <div class="controls">
+    <label>payload</label>
+    <button id="p-img">&lt;img onerror&gt;</button>
+    <button id="p-svg">&lt;svg onload&gt;</button>
+    <button id="p-attr">attribute break-out</button>
+    <button id="p-js">javascript: URL</button>
+    <button id="p-rich">legitimate rich text</button>
+  </div>
+  <textarea id="payload">&lt;img src=x onerror="parent.postMessage('XSS EXECUTED','*')"&gt;</textarea>
+
+  <div class="controls">
+    <button id="run" data-variant="bad">render it five ways</button>
+    <button id="withCsp" data-variant="good">render again with a CSP</button>
+    <button id="sinks">the sink table</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+
+  <div class="grid2" id="frames"></div>
+
+  <p class="readout" id="out">Pick a payload and render it.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — TV &amp; the 10-foot UI</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #tv { width: 100%; max-width: 860px; aspect-ratio: 16/9; background: #07070c;
+          border: 1px solid var(--line); border-radius: 8px; position: relative; overflow: hidden; }
+    #safe { position: absolute; inset: 5%; border: 1px dashed #ff7b72; pointer-events: none; display: none; }
+    .rail { display: flex; gap: 12px; padding: 16px; overflow: hidden; }
+    .tile { flex: 0 0 140px; height: 90px; background: #1b1b26; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; font: 12px var(--mono); }
+    .tile:focus { outline: none; }
+    .tile.focused { background: #1f3a52; box-shadow: 0 0 0 4px #7ee787; transform: scale(1.06); }
+    #tv h2 { padding: 0 16px; margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — TV &amp; the 10-foot UI</h1>
+    <p>A TV is a 1920px screen viewed from three metres, driven by four arrow keys and an OK button,
+      running on a chipset slower than a 2016 phone. Every one of those facts changes the design.</p>
+    <p class="hint">Click into the panel and use the arrow keys. This is spatial navigation, written
+      by hand — because a TV has no Tab key.</p>
+  </div>
+
+  <div class="controls">
+    <button id="focus-first" data-variant="good">start navigating (arrow keys)</button>
+    <button id="overscan">show the safe area</button>
+    <button id="constraints">the constraints</button>
+    <button id="perf">performance on a TV</button>
+    <button id="rules">the rules</button>
+  </div>
+
+  <div id="tv">
+    <div id="safe"></div>
+    <h2>Continue watching</h2>
+    <div class="rail" data-row="0"></div>
+    <h2>Recommended</h2>
+    <div class="rail" data-row="1"></div>
+    <h2>Because you watched</h2>
+    <div class="rail" data-row="2"></div>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Press “start navigating”, then use the arrow keys.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

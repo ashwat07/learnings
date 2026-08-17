@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — INP</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 4px; margin: 12px 0; }
+    #grid div { background: #14141c; border-radius: 6px; padding: 6px; font: 11px/1.4 var(--mono); }
+    #grid div.on { background: #1f3a52; }
+    button.target { min-width: 120px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — INP</h1>
+    <p>INP is <strong>input delay + processing + presentation</strong>, measured to the next paint.
+      Each button below makes a different phase dominate. Read the breakdown before you decide what
+      to fix — most people optimise the middle one, which is often the smallest.</p>
+    <p class="hint">Turn on 4× CPU throttling in the Performance panel. Untrottled desktop hides
+      every one of these.</p>
+  </div>
+
+  <div class="controls">
+    <label>make a phase dominate</label>
+    <button class="target" id="t-delay" data-variant="bad">input delay</button>
+    <button class="target" id="t-processing" data-variant="bad">processing</button>
+    <button class="target" id="t-presentation" data-variant="bad">presentation</button>
+  </div>
+  <div class="controls">
+    <label>fix it</label>
+    <button class="target" id="f-yield" data-variant="good">yield after paint</button>
+    <button class="target" id="f-defer" data-variant="good">defer the non-visual work</button>
+    <button class="target" id="f-less" data-variant="good">smaller DOM update</button>
+    <button id="phases">what to fix, per phase</button>
+    <button id="reset">reset</button>
+  </div>
+
+  <div id="grid"></div>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Click each button once and read the phase breakdown.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

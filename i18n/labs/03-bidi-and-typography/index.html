@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Bidi &amp; typography</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #stage { border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin: 12px 0; }
+    #stage .card { border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+    /* Physical properties — these are the bug. */
+    .physical { margin-left: 24px; border-left: 3px solid #5b2f6d; padding-left: 10px; text-align: left; }
+    /* Logical properties — these follow the writing direction. */
+    .logical { margin-inline-start: 24px; border-inline-start: 3px solid #7ee787;
+               padding-inline-start: 10px; text-align: start; }
+    .btn-row { display: flex; gap: 8px; }
+    .fixed-width { width: 130px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+                   border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Bidi &amp; typography</h1>
+    <p>Right-to-left is not a translation problem, it is a <strong>layout</strong> problem — and
+      modern CSS solves almost all of it with one change of vocabulary.</p>
+  </div>
+
+  <div class="controls">
+    <button id="ltr">LTR (English)</button>
+    <button id="rtl" data-variant="good">RTL (Arabic)</button>
+    <button id="logical">physical vs logical properties</button>
+    <button id="length" data-variant="bad">text expansion</button>
+    <button id="fonts">fonts &amp; scripts</button>
+    <button id="mixed">mixed-direction text</button>
+  </div>
+
+  <div id="stage">
+    <div class="card physical" id="c1">
+      <strong>physical CSS</strong> — margin-left, border-left, text-align: left
+    </div>
+    <div class="card logical" id="c2">
+      <strong>logical CSS</strong> — margin-inline-start, border-inline-start, text-align: start
+    </div>
+    <div class="btn-row"><button>Cancel</button><button>Save</button></div>
+    <p class="fixed-width" id="fw">Save changes</p>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Switch to RTL and watch which card moves correctly.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -19,34 +19,64 @@ the same four questions every time:
 
 | Course | What it makes automatic | Labs |
 |---|---|---|
+| **Foundations** | | |
 | [Critical rendering path](critical-rendering-path/) | Parse → DOM/CSSOM → layout → paint → composite; what triggers layout thrash | 18 + 3 capstones |
 | [Event loop & scheduling](event-loop/) | Task vs microtask ordering, starvation, yielding, frame timing, INP | 7 |
+| **Network & caching** | | |
 | [HTTP caching](http-caching/) | `Cache-Control`, validators, `stale-while-revalidate`, a real header policy | 6 |
 | [CORS](cors/) | Same-origin policy, preflight, credentials, debugging a failure end to end | 6 |
 | [Resource hints](resource-hints/) | `preload` / `prefetch` / `preconnect` / `fetchpriority`, killing a waterfall | 5 |
 | [Service workers](service-workers/) | Lifecycle, cache-first vs network-first vs SWR, offline, the traps | 6 |
+| **Compute & memory** | | |
 | [Web workers](web-workers/) | Moving parse/transform off the main thread, transferables, pools, RPC | 5 |
 | [Browser storage](browser-storage/) | IndexedDB, Cache API, quotas, eviction, an offline-first data layer | 6 |
 | [SPA memory leaks](spa-memory-leaks/) | Detached nodes, dangling listeners, closures, the heap-snapshot workflow | 6 |
+| **Rendering & delivery** | | |
 | [Rendering strategies](rendering-strategies/) | CSR / SSR / SSG / ISR / streaming / RSC, chosen per route | 6 |
 | [Hydration strategies](hydration-strategies/) | The cost of hydration, islands, lazy triggers, resumability, mismatches | 5 |
 | [SEO for rendered content](seo-for-rendering/) | What crawlers see, metadata, structured data, crawlability | 5 |
 | [Asset optimization](asset-optimization/) | Images, fonts, compression, CDN/edge, budgets | 6 |
 | [Bundle strategy](bundle-strategy/) | Splitting, tree shaking, dynamic import, size gates (esbuild) | 5 |
 | [Next.js caching](nextjs-caching/) | Request memo, data cache, full route cache, router cache (real Next.js) | 5 |
+| **Architecture & state** | | |
+| [Architecture & state](architecture-and-state/) | Component boundaries, state strategy, BFF, sync, machines, design systems, micro-frontends | 7 |
+| [Real-time UI](realtime-ui/) | SSE vs WebSocket vs polling, reconnection, reconciliation, CRDTs, backpressure | 5 |
+| [Resilience](resilience/) | Error boundaries, retries & idempotency, degradation, circuit breaking, chaos | 5 |
+| [Offline & PWA](offline-and-pwa/) | Installability, the offline experience, a durable outbox, conflicts, updates | 5 |
+| **Performance & experience** | | |
+| [Core Web Vitals & React perf](web-vitals-and-react-perf/) | LCP / CLS / INP measured properly, React render cost, budgets | 6 |
+| [Animation, canvas & GPU](graphics-and-animation/) | The pipeline, animation APIs, frame budget, canvas 2D, WebGL | 6 |
+| [Accessibility](accessibility/) | Semantics, focus, ARIA & live regions, forms, contrast & motion, testing | 6 |
+| [Multi-device](multi-device/) | Input modalities, container queries, TV & the 10-foot UI, adaptive delivery | 4 |
+| [Internationalization](i18n/) | `Intl`, plurals & ICU messages, bidi & typography, delivery | 4 |
+| **Security & delivery** | | |
+| [Security & auth](security-and-auth/) | XSS, CSP, CSRF, tokens & sessions, supply chain | 5 |
+| [Quality & delivery](quality-and-delivery/) | Testing strategy, observability, build speed, release safety, the system | 6 |
 
 Order isn't enforced, but the dependencies are real: **event loop** underpins everything about
 jank and scheduling, **HTTP caching** underpins service workers, and **CORS** shows up inside
 resource hints (`crossorigin`) and service workers (opaque responses).
 
-Suggested run: `event-loop` → `http-caching` → `cors` → `resource-hints` → `service-workers` →
-`web-workers` → `browser-storage` → `spa-memory-leaks` → `rendering-strategies` →
-`hydration-strategies` → `seo-for-rendering` → `asset-optimization` → `bundle-strategy` →
-`nextjs-caching`.
+**A reasonable path:** work down the table. The groups are ordered so that each one uses the last —
+foundations explain the pipeline, network explains what arrives and when, rendering explains how the
+page is produced, architecture explains how it is organised, and the final groups are about keeping
+all of it correct while a team changes it.
 
-The last six form their own arc: **how a page is produced (rendering) → what the browser must do
-with it (hydration) → who else reads it (SEO) → what it weighs (assets, bundles) → how a framework
-caches all of it (Next.js)**.
+### Where topics overlap
+
+Several courses deliberately hand off to each other rather than repeating material. The
+cross-references are worth following:
+
+| If you are reading about | Also read |
+|---|---|
+| optimistic updates, conflicts | [architecture-and-state 04](architecture-and-state/labs/04-consistency-and-sync/) → [realtime-ui 04](realtime-ui/labs/04-collaboration/) → [offline-and-pwa 04](offline-and-pwa/labs/04-conflict-resolution/) |
+| retries and backoff | [resilience 02](resilience/labs/02-retries-and-idempotency/) → [realtime-ui 02](realtime-ui/labs/02-reconnection/) |
+| caching strategies | [http-caching](http-caching/) → [service-workers](service-workers/) → [nextjs-caching](nextjs-caching/) |
+| focus and keyboard | [accessibility 02](accessibility/labs/02-keyboard-and-focus/) → [multi-device 03](multi-device/labs/03-tv-and-10-foot/) |
+| layout, paint, composite | [critical-rendering-path 03–05](critical-rendering-path/) → [graphics-and-animation 01](graphics-and-animation/labs/01-the-pipeline/) → [web-vitals 03](web-vitals-and-react-perf/labs/03-cls/) |
+| version skew and deploys | [offline-and-pwa 05](offline-and-pwa/labs/05-updates/) → [quality-and-delivery 05](quality-and-delivery/labs/05-release-safety/) |
+| bundle size | [bundle-strategy](bundle-strategy/) → [web-vitals 06](web-vitals-and-react-perf/labs/06-profiling-and-budgets/) → [quality-and-delivery 04](quality-and-delivery/labs/04-build-and-tooling/) |
+| "facts, not deltas" | [realtime-ui 03](realtime-ui/labs/03-reconciliation/) → [resilience 02](resilience/labs/02-retries-and-idempotency/) → [offline-and-pwa 04](offline-and-pwa/labs/04-conflict-resolution/) |
 
 ---
 
@@ -87,6 +117,14 @@ these constantly; skim the table now and come back to it.
 | `/api/blob?mb=8` | Bulk bytes, for storage and quota labs. |
 | `/api/flaky?failEvery=2` | Fails on a schedule, for fallbacks and retries. |
 | `/api/redirect?n=3&to=…` | Redirect chains. |
+| `/api/events` | **Server-Sent Events**: `interval`, `dropAfter`, `retry`, `flaky`, and replay from `Last-Event-ID`. |
+| `ws://localhost:8080/ws` | A hand-rolled **WebSocket** (RFC 6455 handshake, masking, frames) — `interval`, `dropAfter`. Echoes and broadcasts. |
+| `/api/reflect` | Reflects input five ways (`raw\|attr\|escaped\|sanitized\|textnode`) — **deliberately vulnerable**, localhost only, for the XSS lab. |
+| `/api/csp-page`, `/api/csp-report` | A probe page that reports which of seven things a policy allowed, and a violation-report collector. |
+| `/api/csrf` | A toy bank with a switchable defence (`none\|token\|origin`) and a ledger — the CSRF lab. |
+| `/api/auth` | Signed access tokens, rotating refresh cookies, and **refresh-token reuse detection**. |
+| `/api/thirdparty.js` | A "vendor" script that changes under you at the same URL, with its SRI hash in a header. |
+| `/api/text`, `/api/edge` | Compression levels; a toy CDN with HIT/MISS and purge. |
 
 Example — a JS file that takes 800ms to arrive, then may be cached for a minute with an ETag:
 
@@ -125,6 +163,7 @@ live TTFB/FCP/LCP/CLS/TBT scoreboard.
 | [asset-optimization](asset-optimization/) | `node make-images.mjs`, `node make-fonts.mjs` | real image encoding and real font files; both gitignored, both have `--clean` |
 | [bundle-strategy](bundle-strategy/) | `npm install` (esbuild, ~10MB) | you cannot learn tree shaking from a description of tree shaking |
 | [nextjs-caching](nextjs-caching/) | `npm install` (next + react) | the four cache layers only exist in the framework |
+| [react-sandbox](react-sandbox/) | `npm install && npm run dev` | one Vite app shared by the React labs: `#state-strategy`, `#render-perf`, `#optimistic`, `#machine`, `#boundaries`. StrictMode is on deliberately |
 
 Everything else is zero-dependency and runs on `./serve.sh` alone.
 
@@ -133,6 +172,10 @@ Everything else is zero-dependency and runs on `./serve.sh` alone.
 - `/shared/lab.css` — the chrome. Cheap to paint on purpose.
 - `/shared/lab-ui.js` — `Log`, `renderTable`, `renderBars`, `busy(ms)`, `resourceInfo(url)`, `serverStats()`.
 - `/shared/perf-hud.js` — live FPS / worst-frame / long-task overlay (`PerfHUD.start()`).
+- `/shared/vitals.js` — a readable stand-in for the `web-vitals` library: LCP (with element), CLS
+  (with source nodes), INP (with phase breakdown), TTFB, FCP, plus `vitalsHud()`.
+- `/shared/lab.css` also ships the accessibility helpers the a11y course uses and you should steal:
+  `.skip`, `.visually-hidden`, a `:focus-visible` ring, and a `prefers-reduced-motion` reset.
 
 ---
 

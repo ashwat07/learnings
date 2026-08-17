@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Reconciliation</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>.big { font: 700 30px/1.2 var(--mono); } .wrong { color: #ff7b72; } .right { color: #7ee787; }</style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Reconciliation</h1>
+    <p>Reconnecting restores the <em>connection</em>. It does not restore the <em>state</em>. A UI
+      that missed forty messages and looks perfectly healthy is the worst failure mode in real-time
+      systems, because nothing tells you it is wrong.</p>
+  </div>
+
+  <div class="controls">
+    <button id="start" data-variant="good">connect and apply deltas</button>
+    <button id="drop" data-variant="bad">drop the connection for 4s (lose messages)</button>
+    <button id="resume" data-variant="good">reconnect WITH Last-Event-ID (replay)</button>
+    <button id="snapshot" data-variant="good">re-sync from a snapshot</button>
+    <button id="stop">stop</button>
+  </div>
+  <div class="controls">
+    <button id="strategies">the four strategies</button>
+    <button id="ordering">ordering &amp; duplicates</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <p>
+    <span class="stat">applied total <b class="big" id="total">0</b></span>
+    <span class="stat">truth <b class="big" id="truth">0</b></span>
+    <span class="stat">last id <b id="lastid">—</b></span>
+    <span class="stat">gaps <b id="gaps">0</b></span>
+  </p>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Connect, let it run, then drop the connection.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

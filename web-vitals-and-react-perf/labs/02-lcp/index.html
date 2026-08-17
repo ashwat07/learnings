@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — LCP</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #stage { min-height: 260px; border: 1px dashed var(--line); border-radius: 10px; padding: 10px; margin: 12px 0; }
+    #stage img { width: 100%; max-width: 620px; height: 220px; object-fit: cover; border-radius: 8px; }
+    #stage h2.big { font-size: 34px; line-height: 1.2; max-width: 620px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — LCP</h1>
+    <p>LCP is almost never slow because the image is big. It is slow because of <strong>when the
+      browser found out about it</strong>. Four phases, and the fix is different for each.</p>
+    <p class="hint">Each scenario reloads this page with a different query string, so the
+      measurement is a real navigation rather than a simulation.</p>
+  </div>
+
+  <div class="controls">
+    <label>scenario</label>
+    <button id="s-baseline">baseline</button>
+    <button id="s-css" data-variant="bad">discovered via CSS background</button>
+    <button id="s-js" data-variant="bad">injected by JavaScript</button>
+    <button id="s-lazy" data-variant="bad">loading="lazy" on the hero</button>
+    <button id="s-preload" data-variant="good">preload + fetchpriority=high</button>
+    <button id="s-text" data-variant="good">text LCP with a fast font</button>
+  </div>
+
+  <div class="controls">
+    <button id="phases">the four phases</button>
+    <button id="checklist">the fix list</button>
+  </div>
+
+  <div id="stage"></div>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Pick a scenario. The page reloads and measures itself.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

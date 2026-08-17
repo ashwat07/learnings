@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Semantics &amp; the accessibility tree</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .side { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .demo { border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+    .fake-button { background: #2b3a55; padding: 7px 12px; border-radius: 6px; display: inline-block; cursor: pointer; }
+    .fake-input { background: #0f0f16; border: 1px solid var(--line); border-radius: 6px; padding: 6px; display: inline-block; min-width: 160px; }
+    .tree { font: 11px/1.6 var(--mono); white-space: pre; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Semantics &amp; the accessibility tree</h1>
+    <p>The browser builds a second tree from your DOM — the <strong>accessibility tree</strong> —
+      and that is what a screen reader, a switch device and a voice-control user actually receive.
+      Elements decide what ends up in it.</p>
+    <p class="hint">Open DevTools → Elements → Accessibility pane, and select the elements below.
+      Also try: tab through this page with the mouse untouched.</p>
+  </div>
+
+  <div class="controls">
+    <button id="tabtest" data-variant="good">tab-order test</button>
+    <button id="tree">what the tree contains</button>
+    <button id="landmarks">landmarks &amp; headings</button>
+    <button id="cost">what a div costs</button>
+  </div>
+
+  <div class="side">
+    <div class="demo">
+      <h2>div soup</h2>
+      <div class="fake-button" id="divbtn" onclick="this.textContent='clicked'">Save</div>
+      <p><span class="fake-input" id="divinput" contenteditable="true">type here</span></p>
+      <div><span style="font-size:20px;font-weight:700">Section title</span></div>
+      <div><span onclick="alert('nav')" style="color:#79c0ff;cursor:pointer">Go to settings</span></div>
+      <div id="divlist">
+        <div>· first item</div><div>· second item</div><div>· third item</div>
+      </div>
+    </div>
+
+    <div class="demo">
+      <h2>the same thing, semantic</h2>
+      <button id="realbtn">Save</button>
+      <p><label for="realinput">Your name</label> <input id="realinput" placeholder="type here"></p>
+      <h3>Section title</h3>
+      <p><a href="#settings">Go to settings</a></p>
+      <ul><li>first item</li><li>second item</li><li>third item</li></ul>
+    </div>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Press “tab-order test”, then use the Tab key and see how far you get.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

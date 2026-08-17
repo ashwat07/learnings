@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Retries &amp; idempotency</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Retries &amp; idempotency</h1>
+    <p>A retry is a decision about the <strong>server</strong>, not about the client. "It failed,
+      try again" is only safe when the operation is idempotent — otherwise the retry <em>is</em> the
+      bug, and it is the kind that charges someone twice.</p>
+  </div>
+
+  <div class="controls">
+    <label>the flaky endpoint</label>
+    <button id="naive" data-variant="bad">retry naively (no key)</button>
+    <button id="keyed" data-variant="good">retry with an idempotency key</button>
+    <button id="backoff" data-variant="good">backoff + jitter + budget</button>
+    <button id="status" data-variant="bad">retry a 400 (watch it never succeed)</button>
+  </div>
+  <div class="controls">
+    <button id="matrix">what is safe to retry</button>
+    <button id="reset">reset the server ledger</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Start with the naive retry and read the ledger.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Collaboration</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .peers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .peer { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+    .peer textarea { width: 100%; height: 90px; font: 12px/1.5 var(--mono); background: #0f0f16;
+      color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+    .peer.offline { border-color: #ff7b72; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Collaboration</h1>
+    <p>Two people edit the same text. Both go offline, both keep typing, both come back. There is no
+      "correct" answer to hand out — only a policy you chose, and the question is whether you chose
+      it deliberately.</p>
+  </div>
+
+  <div class="controls">
+    <label>merge policy</label>
+    <button id="p-lww" data-variant="bad">last write wins</button>
+    <button id="p-reject">reject on conflict (If-Match)</button>
+    <button id="p-crdt" data-variant="good">CRDT (converges)</button>
+  </div>
+  <div class="controls">
+    <button id="sync" data-variant="good">bring both online &amp; sync</button>
+    <button id="presence">presence &amp; cursors</button>
+    <button id="reset">reset</button>
+  </div>
+
+  <div class="peers">
+    <div class="peer" id="peer-a">
+      <h3>Peer A <button data-peer="a" class="toggle">go offline</button></h3>
+      <textarea id="text-a"></textarea>
+      <div class="hint" id="ops-a"></div>
+    </div>
+    <div class="peer" id="peer-b">
+      <h3>Peer B <button data-peer="b" class="toggle">go offline</button></h3>
+      <textarea id="text-b"></textarea>
+      <div class="hint" id="ops-b"></div>
+    </div>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Pick a policy, take both peers offline, type in both, then sync.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

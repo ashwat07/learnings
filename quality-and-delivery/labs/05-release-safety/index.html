@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Release safety</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .cohort { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; max-width: 460px; margin: 10px 0; }
+    .cohort div { aspect-ratio: 1; border-radius: 3px; background: #1b1b26; }
+    .cohort div.new { background: #1f3a52; }
+    .cohort div.err { background: #ff7b72; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Release safety</h1>
+    <p>Shipping is not the risky part; <em>not being able to un-ship</em> is. This lab is a simulator
+      for the three mechanisms that make a Friday deploy boring.</p>
+  </div>
+
+  <div class="controls">
+    <label>rollout</label>
+    <button id="r-big" data-variant="bad">big bang (100%)</button>
+    <button id="r-canary" data-variant="good">canary (1% → 10% → 50% → 100%)</button>
+    <button id="r-flag" data-variant="good">feature flag</button>
+    <button id="kill" data-variant="good">kill switch</button>
+    <button id="reset">reset</button>
+  </div>
+  <div class="controls">
+    <button id="mechanisms">the mechanisms</button>
+    <button id="flags">flags, and their debt</button>
+    <button id="rollback">rollback vs roll-forward</button>
+  </div>
+
+  <p><span class="stat">on new version <b id="pct">0%</b></span>
+     <span class="stat">errors seen <b id="errs">0</b></span>
+     <span class="stat">users affected <b id="aff">0</b></span>
+     <span class="stat">state <b id="state">idle</b></span></p>
+
+  <div class="cohort" id="cohort"></div>
+  <div id="results"></div>
+  <p class="readout" id="out">Ship the broken release both ways and compare the blast radius.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

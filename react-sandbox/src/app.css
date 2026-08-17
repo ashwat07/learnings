@@ -1,0 +1,19 @@
+/* The sandbox's own styles. The shared lab.css supplies the palette. */
+#root { padding: 16px; max-width: 1100px; }
+.toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.panel { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--panel); margin-bottom: 12px; }
+.panel h2 { margin: 0 0 8px; font-size: 14px; letter-spacing: .04em; color: var(--muted); }
+.rows { border: 1px solid var(--line); border-radius: 10px; overflow: auto; max-height: 420px; background: #0a0a10; }
+.row { display: grid; grid-template-columns: 60px 1fr 90px 90px 110px; gap: 10px; padding: 6px 10px;
+       border-bottom: 1px solid var(--line); font: 12px/1.5 var(--mono); align-items: center; }
+.row.head { position: sticky; top: 0; background: #12121a; color: var(--muted); z-index: 1; }
+.row.selected { background: #16203a; }
+.row .flash { animation: flash 500ms ease-out; }
+@keyframes flash { from { background: #3d5bbf88; } to { background: transparent; } }
+.badge-count { font: 11px/1 var(--mono); border: 1px solid var(--line); border-radius: 999px; padding: 3px 7px; color: var(--muted); }
+.render-count { color: var(--warn); }
+.stat { display: inline-flex; gap: 6px; align-items: baseline; margin-right: 14px; font: 12px/1.6 var(--mono); }
+.stat b { font-size: 16px; color: var(--text); }
+.pending { opacity: .55; font-style: italic; }
+.failed { color: var(--bad); }
+input, select, button { font: inherit; }

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Transports</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .streams { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stream { border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+    .stream h3 { margin: 0 0 6px; font: 700 12px/1.4 var(--mono); }
+    .feed { height: 150px; overflow: auto; font: 11px/1.5 var(--mono); color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Transports</h1>
+    <p>Three transports, one server, the same tick stream. Watch the request count, the latency, and
+      what each one costs you in code.</p>
+  </div>
+
+  <div class="controls">
+    <button id="start" data-variant="good">start all three</button>
+    <button id="stop">stop</button>
+    <button id="send">send a message (client → server)</button>
+    <button id="compare">the comparison</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div class="streams">
+    <div class="stream"><h3>polling (2s)</h3><div class="feed" id="f-poll"></div></div>
+    <div class="stream"><h3>SSE</h3><div class="feed" id="f-sse"></div></div>
+    <div class="stream"><h3>WebSocket</h3><div class="feed" id="f-ws"></div></div>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start all three and watch for 30 seconds.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

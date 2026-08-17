@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Supply chain</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    iframe { width: 100%; height: 120px; border: 1px solid var(--line); border-radius: 8px; background: #0a0a10; }
+    code.hash { font-size: 11px; word-break: break-all; color: #79c0ff; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Supply chain</h1>
+    <p>You did not write most of the code you ship. A third-party <code>&lt;script&gt;</code> runs
+      with your origin's full authority — it can read your cookies, your storage, and what the user
+      is typing — and an npm dependency runs with your <em>build machine's</em> authority. This lab
+      measures both.</p>
+  </div>
+
+  <div class="controls">
+    <label>the vendor tag</label>
+    <button id="v1" data-variant="good">load v1 (the one you reviewed)</button>
+    <button id="v2" data-variant="bad">the vendor pushes v1.0.1 — same URL</button>
+    <button id="sri" data-variant="good">now pin it with SRI, and try again</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <div class="controls">
+    <label>your dependencies</label>
+    <button id="audit">what is in a real lockfile</button>
+    <button id="scripts">the install-script problem</button>
+    <button id="checklist">the policy</button>
+  </div>
+
+  <p class="hint">pinned hash: <code class="hash" id="hash">—</code></p>
+
+  <div id="results"></div>
+
+  <iframe id="frame" title="a page with a vendor tag" src="about:blank"></iframe>
+
+  <p class="readout" id="out">Load v1, then let the vendor "update".</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

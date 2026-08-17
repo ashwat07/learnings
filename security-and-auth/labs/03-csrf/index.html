@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — CSRF</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    iframe#evil { width: 100%; height: 150px; border: 1px solid #ff7b72; border-radius: 8px; }
+    .balance { font: 700 28px/1.2 var(--mono); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — CSRF</h1>
+    <p>There is no bug in the bank. The vulnerability is that <strong>the browser attaches your
+      cookies to a request another site caused</strong>. The attacker never reads a response and
+      never needs to — causing the write is the whole attack.</p>
+    <p class="hint">The "evil" page below is served from <code>127.0.0.1:8081</code>, which is a
+      different <em>site</em> from <code>localhost:8080</code> — so <code>SameSite</code> applies.
+      (Ports don't make a different site; hosts do.)</p>
+  </div>
+
+  <div class="controls">
+    <label>1. log in, choosing the cookie's SameSite</label>
+    <button id="login-lax" data-variant="good">SameSite=Lax (browser default)</button>
+    <button id="login-strict" data-variant="good">Strict</button>
+    <button id="login-none" data-variant="bad">None</button>
+    <button id="logout">log out</button>
+  </div>
+
+  <div class="controls">
+    <label>2. server-side defence</label>
+    <button id="def-none" data-variant="bad">none</button>
+    <button id="def-token" data-variant="good">CSRF token</button>
+    <button id="def-origin" data-variant="good">check Origin</button>
+  </div>
+
+  <div class="controls">
+    <label>3. attack</label>
+    <button id="atk-post" data-variant="bad">cross-site form POST</button>
+    <button id="atk-get" data-variant="bad">GET via &lt;img&gt;</button>
+    <button id="atk-fetch" data-variant="bad">credentialed fetch()</button>
+    <button id="atk-toplevel" data-variant="bad">top-level GET (new tab)</button>
+    <button id="legit">a legitimate transfer (this page)</button>
+  </div>
+
+  <div class="controls">
+    <button id="refresh">refresh state</button>
+    <button id="matrix">the defence matrix</button>
+    <button id="clear">clear</button>
+  </div>
+
+  <p>balance: <span class="balance" id="balance">—</span> <span class="stat" id="cfg"></span></p>
+
+  <div id="ledger"></div>
+
+  <iframe id="evil" title="the attacker's page" src="about:blank"></iframe>
+
+  <p class="readout" id="out">Log in, leave the defence on “none”, and run the form POST.</p>
+
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

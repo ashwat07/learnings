@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lab 02 — Viewports &amp; containers</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #resizer { resize: horizontal; overflow: auto; border: 1px solid var(--line); border-radius: 8px;
+               padding: 12px; width: 640px; min-width: 240px; max-width: 100%; }
+    .card { container-type: inline-size; border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 8px 0; }
+    .card .inner { display: block; }
+    .card .thumb { background: #1f3a52; border-radius: 6px; height: 60px; margin-bottom: 8px; }
+    /* Container queries: the card responds to ITS OWN width, not the viewport's. */
+    @container (min-width: 380px) {
+      .card .inner { display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; }
+      .card .thumb { height: 70px; margin: 0; }
+    }
+    .units { font: 12px/1.6 var(--mono); color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — Viewports &amp; containers</h1>
+    <p>Breakpoints answer "how wide is the window?". Almost every real layout question is "how much
+      room does <em>this component</em> have?" — which is a different question, and now has a
+      different answer.</p>
+    <p class="hint">Drag the bottom-right corner of the box below.</p>
+  </div>
+
+  <div class="controls">
+    <button id="units" data-variant="good">viewport units, and the mobile bar problem</button>
+    <button id="containers">container queries</button>
+    <button id="safe">safe areas &amp; notches</button>
+    <button id="fluid">fluid type &amp; space</button>
+  </div>
+
+  <div id="resizer">
+    <div class="card"><div class="inner"><div class="thumb"></div>
+      <div><strong>A card that responds to its container</strong>
+        <p class="hint">Narrow: stacked. Wide: side by side. The viewport never changed.</p></div>
+    </div></div>
+    <div class="card"><div class="inner"><div class="thumb"></div>
+      <div><strong>The same component, same rules</strong>
+        <p class="hint">Drop it in a sidebar and it just works.</p></div>
+    </div></div>
+  </div>
+
+  <p class="units" id="readout"></p>
+  <div id="results"></div>
+  <p class="readout" id="out">Drag the box wider and narrower.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

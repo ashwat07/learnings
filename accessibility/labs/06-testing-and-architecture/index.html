@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 06 — Testing &amp; architecture</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 06 — Testing &amp; architecture</h1>
+    <p>Automated tools find roughly a third of accessibility issues. This lab is about which third,
+      what covers the rest, and how to make the accessible path the <em>easy</em> path so it does not
+      decay.</p>
+  </div>
+
+  <div class="controls">
+    <button id="audit" data-variant="good">run the built-in audit on this page</button>
+    <button id="audit-bad">audit lab 01 (div soup)</button>
+    <button id="coverage">what tools can and cannot find</button>
+    <button id="pipeline">the pipeline</button>
+    <button id="architecture">making it structural</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Run the audit, then read what it cannot possibly check.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

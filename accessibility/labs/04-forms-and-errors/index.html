@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Forms &amp; errors</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    form { max-width: 460px; }
+    .field { margin: 10px 0; }
+    .field label { display: block; margin-bottom: 3px; }
+    .field input { width: 100%; padding: 7px; background: #0f0f16; color: var(--text);
+      border: 1px solid var(--line); border-radius: 6px; }
+    .field input[aria-invalid="true"] { border-color: #ff7b72; }
+    .err { color: #ff7b72; font-size: 12px; margin-top: 3px; }
+    .err::before { content: "✕ "; }
+    #summary { border: 1px solid #ff7b72; border-radius: 8px; padding: 10px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Forms &amp; errors</h1>
+    <p>Forms are where accessibility failures cost money — a person who cannot complete your checkout
+      does not complete it. The whole topic is three questions: <strong>what is this field</strong>,
+      <strong>what went wrong</strong>, and <strong>where do I go to fix it</strong>.</p>
+  </div>
+
+  <div class="controls">
+    <button id="mode-bad" data-variant="bad">the broken version</button>
+    <button id="mode-good" data-variant="good">the accessible version</button>
+    <button id="autocomplete">autocomplete &amp; input types</button>
+    <button id="checklist">the form checklist</button>
+  </div>
+
+  <div id="summary" hidden tabindex="-1" role="alert"></div>
+
+  <form id="form" novalidate>
+    <div class="field">
+      <label for="name" id="name-label">Full name</label>
+      <input id="name" name="name" autocomplete="name" aria-describedby="name-hint">
+      <div class="hint" id="name-hint">As it appears on your card</div>
+      <div class="err" id="name-err" hidden></div>
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email">
+      <div class="err" id="email-err" hidden></div>
+    </div>
+    <div class="field">
+      <label for="card">Card number</label>
+      <input id="card" name="card" inputmode="numeric" autocomplete="cc-number">
+      <div class="err" id="card-err" hidden></div>
+    </div>
+    <button type="submit">Pay</button>
+  </form>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Submit the empty form in each mode, with a screen reader on.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

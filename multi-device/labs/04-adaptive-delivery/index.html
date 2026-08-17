@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Adaptive delivery</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Adaptive delivery</h1>
+    <p>You cannot make a slow device fast. You can send it less — and the signals to decide with are
+      already in the browser.</p>
+  </div>
+
+  <div class="controls">
+    <button id="signals" data-variant="good">what this device tells you</button>
+    <button id="measure">measure it yourself</button>
+    <button id="strategies">what to adapt</button>
+    <button id="ethics">and what not to</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Start with the signals.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

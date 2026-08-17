@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Visual &amp; motion</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    .swatch { display: inline-block; padding: 8px 12px; border-radius: 6px; margin: 3px; font-weight: 600; }
+    .mover { width: 60px; height: 60px; border-radius: 10px; background: #5b2f6d;
+             animation: slide 1.2s ease-in-out infinite alternate; }
+    @keyframes slide { from { transform: translateX(0) } to { transform: translateX(220px) } }
+    .targets button { margin: 2px; }
+    .tiny { padding: 1px 3px; font-size: 10px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Visual &amp; motion</h1>
+    <p>The requirements that are checkable with a number: contrast, target size, reflow at 400% zoom,
+      and whether your animation respects a system setting that says "please stop".</p>
+  </div>
+
+  <div class="controls">
+    <button id="contrast" data-variant="good">measure contrast</button>
+    <button id="zoom">the 400% zoom test</button>
+    <button id="motion">motion &amp; prefers-reduced-motion</button>
+    <button id="targets">target size</button>
+    <button id="other">the other preferences</button>
+  </div>
+
+  <p>
+    <span class="swatch" id="s1" style="background:#0d1117;color:#8b949e">muted text on dark</span>
+    <span class="swatch" id="s2" style="background:#1f3a52;color:#ffffff">white on blue</span>
+    <span class="swatch" id="s3" style="background:#e3b341;color:#ffffff">white on amber</span>
+    <span class="swatch" id="s4" style="background:#0d1117;color:#7ee787">green on dark</span>
+  </p>
+
+  <div class="mover" id="mover"></div>
+
+  <p class="targets">
+    <button class="tiny">tiny</button>
+    <button>normal</button>
+    <button style="padding:12px 18px">generous</button>
+  </p>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Measure the contrast of the swatches above.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

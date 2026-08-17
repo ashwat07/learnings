@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — ARIA &amp; live regions</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — ARIA &amp; live regions</h1>
+    <p>Something changed on screen. How does a person who is not looking at it find out? That is the
+      entire job of a live region — and it is the piece of ARIA that has no native equivalent, so it
+      is the piece you genuinely have to write.</p>
+    <p class="hint">Turn a screen reader on for this lab. It is the only way to tell whether these
+      work.</p>
+  </div>
+
+  <div class="controls">
+    <label>announcements</label>
+    <button id="silent" data-variant="bad">update without announcing</button>
+    <button id="polite" data-variant="good">aria-live="polite"</button>
+    <button id="assertive" data-variant="bad">aria-live="assertive"</button>
+    <button id="status">role="status" (a toast)</button>
+    <button id="busy">a search that finishes</button>
+  </div>
+  <div class="controls">
+    <label>the rest of ARIA</label>
+    <button id="naming">accessible names</button>
+    <button id="state">state vs property</button>
+    <button id="rules">the five rules of ARIA</button>
+  </div>
+
+  <p>
+    <span class="stat">cart <b id="count">0</b> items</span>
+    <button id="add">Add to cart</button>
+  </p>
+
+  <!-- The live region itself. It must be IN THE DOM BEFORE the change, and empty. A region
+       inserted at the same moment as its text is usually not announced at all. -->
+  <div id="live-polite" aria-live="polite" aria-atomic="true" class="visually-hidden"></div>
+  <div id="live-assertive" aria-live="assertive" aria-atomic="true" class="visually-hidden"></div>
+  <div id="live-status" role="status" class="readout"></div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">With a screen reader running, press each button and listen.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

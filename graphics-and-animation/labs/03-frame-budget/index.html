@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Frame budget</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>#bar { height: 60px; display: flex; gap: 1px; align-items: flex-end; margin: 10px 0; }
+    #bar div { flex: 1; background: #7ee787; min-width: 1px; }
+    #bar div.slow { background: #e3b341 } #bar div.bad { background: #ff7b72 }</style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Frame budget</h1>
+    <p>16.7ms at 60Hz. 8.3ms at 120Hz, which most new phones and laptops now are. The budget is not
+      "how long my code takes" — it is everything between one paint and the next.</p>
+  </div>
+
+  <div class="controls">
+    <label>spend the budget</label>
+    <button id="clean" data-variant="good">a clean animation</button>
+    <button id="heavy" data-variant="bad">12ms of JS per frame</button>
+    <button id="thrash" data-variant="bad">layout thrashing</button>
+    <button id="longtask" data-variant="bad">one 300ms task</button>
+    <button id="stop">stop</button>
+  </div>
+  <div class="controls">
+    <button id="budget">what fits in a frame</button>
+    <button id="measure">how to measure</button>
+    <button id="rates">refresh rates &amp; timing</button>
+  </div>
+
+  <p><span class="stat">FPS <b id="fps">—</b></span>
+     <span class="stat">frame p50 <b id="p50">—</b></span>
+     <span class="stat">frame p95 <b id="p95">—</b></span>
+     <span class="stat">dropped <b id="dropped">0</b></span>
+     <span class="stat">display Hz <b id="hz">—</b></span></p>
+
+  <div id="bar"></div>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run the clean animation first to establish a baseline.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

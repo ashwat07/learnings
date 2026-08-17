@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — The pipeline</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #field { position: relative; height: 300px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .box { position: absolute; width: 26px; height: 26px; border-radius: 6px; background: #5b2f6d; }
+    .promoted { will-change: transform; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — The pipeline</h1>
+    <p>The same visual motion, driven four ways. Watch the FPS, and open the Performance panel to see
+      which stages appear in the flame chart.</p>
+    <p class="hint">4× CPU throttling. In DevTools: ⋮ → More tools → <b>Rendering</b> → check
+      <b>Paint flashing</b> and <b>Layer borders</b>.</p>
+  </div>
+
+  <div class="controls">
+    <label>animate via</label>
+    <button id="a-left" data-variant="bad">left (layout)</button>
+    <button id="a-margin" data-variant="bad">margin-left (layout)</button>
+    <button id="a-shadow" data-variant="bad">box-shadow (paint)</button>
+    <button id="a-transform" data-variant="good">transform (composite)</button>
+    <button id="stop">stop</button>
+  </div>
+  <div class="controls">
+    <label>count</label>
+    <button id="n-50">50</button>
+    <button id="n-300">300</button>
+    <button id="n-1000" data-variant="bad">1000</button>
+    <button id="layers">layers &amp; will-change</button>
+    <button id="table">the property table</button>
+  </div>
+
+  <p><span class="stat">FPS <b id="fps">—</b></span>
+     <span class="stat">worst frame <b id="worst">—</b></span>
+     <span class="stat">boxes <b id="count">300</b></span>
+     <span class="stat">mode <b id="mode">—</b></span></p>
+
+  <div id="field"></div>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Start with “left”, then switch to “transform”. Same motion.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

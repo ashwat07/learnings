@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>a page with a vendor tag on it</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>body { padding: 12px; font: 12px/1.6 var(--mono); }</style>
+</head>
+<body>
+  <p class="hint">your app — with one third-party &lt;script&gt; on it</p>
+  <!-- The loot: a session-looking cookie, a token in storage, and a form the user is filling in.
+       All of it is ordinary page content that a vendor tag can read, because a script tag runs
+       with the full authority of the origin that included it. -->
+  <input name="card" value="4242-4242-4242-4242" size="22">
+  <div id="status">loading vendor script…</div>
+
+  <script type="module">
+    document.cookie = 'app_session=looks-like-a-session; Path=/';
+    localStorage.setItem('app_token', 'eyJhbGciOi-not-a-real-token');
+
+    const q = new URLSearchParams(location.search);
+    const s = document.createElement('script');
+    s.src = `/api/thirdparty.js?v=${q.get('v') || '1'}`;
+    if (q.get('integrity')) {
+      // Subresource Integrity: the browser hashes the fetched bytes and refuses to execute
+      // if they do not match. It is a promise about CONTENT, made at a URL.
+      s.integrity = q.get('integrity');
+      s.crossOrigin = 'anonymous';
+    }
+    s.onerror = () => {
+      document.getElementById('status').textContent = 'script BLOCKED (integrity mismatch)';
+      parent.postMessage({ blocked: true }, '*');
+    };
+    s.onload = () => { document.getElementById('status').textContent = 'vendor script executed'; };
+    document.head.append(s);
+  </script>
+</body>
+</html>

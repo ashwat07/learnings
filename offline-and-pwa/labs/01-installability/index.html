@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lab 01 — Installability</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1f3a52">
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Installability</h1>
+    <p>An installed web app gets its own window, its own icon, its own task-switcher entry — and a
+      set of constraints most teams discover after shipping.</p>
+    <p class="hint">Chrome requires a registered service worker with a fetch handler before it will
+      offer installation. This lab registers a minimal one.</p>
+  </div>
+
+  <div class="controls">
+    <button id="check" data-variant="good">check installability</button>
+    <button id="install">install (if offered)</button>
+    <button id="mode">how am I being displayed?</button>
+    <button id="fields">what each manifest field does</button>
+    <button id="should">should you be a PWA at all?</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Press “check installability”.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

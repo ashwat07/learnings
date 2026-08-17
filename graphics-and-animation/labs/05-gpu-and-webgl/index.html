@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — GPU &amp; WebGL</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>canvas { border: 1px solid var(--line); border-radius: 8px; width: 100%; max-width: 760px; display: block; }</style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — GPU &amp; WebGL</h1>
+    <p>Canvas 2D draws shapes one at a time on the CPU. WebGL hands the GPU a buffer of vertices and
+      a program, and it draws them all at once. The crossover is somewhere around ten to fifty
+      thousand objects — this lab finds it, with a real shader.</p>
+  </div>
+
+  <div class="controls">
+    <button id="r-2d">canvas 2D</button>
+    <button id="r-gl" data-variant="good">WebGL (one draw call)</button>
+    <button id="stop">stop</button>
+    <label>points</label>
+    <button id="n-10k">10k</button>
+    <button id="n-100k" data-variant="bad">100k</button>
+    <button id="n-500k" data-variant="bad">500k</button>
+  </div>
+  <div class="controls">
+    <button id="model">the GPU model</button>
+    <button id="cost">what is actually expensive</button>
+    <button id="webgpu">WebGL vs WebGPU</button>
+    <button id="when">when NOT to</button>
+  </div>
+
+  <p><span class="stat">FPS <b id="fps">—</b></span>
+     <span class="stat">renderer <b id="mode">—</b></span>
+     <span class="stat">points <b id="count">10000</b></span>
+     <span class="stat">draw ms <b id="draw">—</b></span></p>
+
+  <!-- Two canvases: a canvas element can only ever have ONE context type, so switching
+       renderers means switching elements. -->
+  <canvas id="cv2d" width="760" height="300"></canvas>
+  <canvas id="cvgl" width="760" height="300" style="display:none"></canvas>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Run 2D at 100k, then WebGL at 500k.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

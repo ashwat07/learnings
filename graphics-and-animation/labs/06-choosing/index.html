@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 06 — Choosing</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 06 — Choosing</h1>
+    <p>DOM, SVG, canvas or WebGL. The wrong answer is usually not "too slow" — it is having thrown
+      away accessibility, text selection and debuggability for frames nobody needed.</p>
+  </div>
+
+  <div class="controls">
+    <button id="matrix" data-variant="good">the decision matrix</button>
+    <button id="counts">rough object budgets</button>
+    <button id="hybrid">hybrid approaches</button>
+    <button id="motion">and the motion question</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Start with the decision matrix.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

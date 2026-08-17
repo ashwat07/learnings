@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — Canvas 2D</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    canvas { border: 1px solid var(--line); border-radius: 8px; width: 100%; max-width: 760px; display: block; }
+    #domfield { position: relative; height: 300px; max-width: 760px; border: 1px solid var(--line);
+                border-radius: 8px; overflow: hidden; display: none; }
+    #domfield i { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #7ee787; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — Canvas 2D</h1>
+    <p>The DOM is a retained-mode scene graph with layout, styling and accessibility attached to
+      every node. Canvas is a bitmap you draw on. At some particle count the second one wins by an
+      enormous margin — this lab finds where.</p>
+  </div>
+
+  <div class="controls">
+    <label>renderer</label>
+    <button id="r-dom" data-variant="bad">DOM elements</button>
+    <button id="r-canvas" data-variant="good">canvas 2D</button>
+    <button id="stop">stop</button>
+  </div>
+  <div class="controls">
+    <label>particles</label>
+    <button id="n-500">500</button>
+    <button id="n-2000">2000</button>
+    <button id="n-10000" data-variant="bad">10000</button>
+  </div>
+  <div class="controls">
+    <button id="dpr" data-variant="good">device pixel ratio</button>
+    <button id="tips">canvas performance rules</button>
+    <button id="offscreen">OffscreenCanvas &amp; workers</button>
+    <button id="a11y">the accessibility cost</button>
+  </div>
+
+  <p><span class="stat">FPS <b id="fps">—</b></span>
+     <span class="stat">renderer <b id="mode">—</b></span>
+     <span class="stat">particles <b id="count">2000</b></span>
+     <span class="stat">draw ms/frame <b id="draw">—</b></span></p>
+
+  <canvas id="cv" width="760" height="300"></canvas>
+  <div id="domfield"></div>
+  <div id="results"></div>
+
+  <p class="readout" id="out">Try DOM at 2000, then canvas at 10000.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

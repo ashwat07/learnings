@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — Keyboard &amp; focus</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    dialog { background: #14141c; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+    dialog::backdrop { background: rgba(0,0,0,.6); }
+    .panel-fake { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 10px 0; }
+    .nofocus :focus { outline: none !important; }
+    .toolbar-demo [role="tab"] { padding: 6px 10px; border: 1px solid var(--line); background: #14141c;
+      color: var(--text); border-radius: 6px; }
+    .toolbar-demo [role="tab"][aria-selected="true"] { background: #1f3a52; }
+    #focuslog { font: 11px/1.5 var(--mono); color: var(--muted); }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip">Skip to content</a>
+  <div class="lab-header">
+    <h1>Lab 02 — Keyboard &amp; focus</h1>
+    <p>Focus is a single point of attention shared by keyboard users, screen readers, switch devices
+      and voice control. Every interaction either moves it deliberately or loses it — and losing it
+      is the most common serious accessibility bug in single-page apps.</p>
+  </div>
+
+  <main id="main">
+  <div class="controls">
+    <button id="open-bad" data-variant="bad">open a bad modal</button>
+    <button id="open-good" data-variant="good">open a good modal (&lt;dialog&gt;)</button>
+    <button id="hide-focus" data-variant="bad">toggle outline: none</button>
+    <button id="route">simulate an SPA route change</button>
+    <button id="rules">the focus rules</button>
+  </div>
+
+  <div class="panel-fake toolbar-demo">
+    <h3>roving tabindex — one tab stop, arrow keys inside</h3>
+    <div role="tablist" aria-label="Example tabs" id="tabs">
+      <button role="tab" aria-selected="true" tabindex="0">Overview</button>
+      <button role="tab" aria-selected="false" tabindex="-1">Details</button>
+      <button role="tab" aria-selected="false" tabindex="-1">History</button>
+    </div>
+    <p class="hint">Tab in, then use ← →. Tab again: you leave the whole group in one press.</p>
+  </div>
+
+  <div class="panel-fake">
+    <h3>focus log</h3>
+    <div id="focuslog">focus events appear here</div>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Open the bad modal, then press Tab repeatedly.</p>
+  <div id="log" class="log"></div>
+  </main>
+
+  <div id="bad-modal" hidden style="position:fixed;inset:20% 25%;background:#14141c;border:1px solid #ff7b72;border-radius:10px;padding:16px;z-index:10">
+    <h3>Bad modal</h3>
+    <p>Nothing was done about focus.</p>
+    <button id="bad-close">Close</button>
+  </div>
+
+  <dialog id="good-modal">
+    <h3>Good modal</h3>
+    <p>Focus moved here, is trapped, Escape closes, and focus returns to the button that opened it.</p>
+    <label>A field <input id="good-input"></label>
+    <button id="good-close">Close</button>
+  </dialog>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

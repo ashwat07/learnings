@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Updates</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>#banner { display:none; background:#1f3a52; padding:10px; border-radius:8px; margin:10px 0 }</style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Updates</h1>
+    <p>A user has had your tab open since Tuesday. Which version of your app are they running, which
+      version of your API does it expect, and what happens when you deploy on top of them?</p>
+    <p class="hint">This lab registers its own service worker at <code>./sw.js?v=</code> so you can
+      simulate a deploy. See also
+      <a href="/service-workers/labs/01-lifecycle/">service-workers lab 01</a>.</p>
+  </div>
+
+  <div id="banner">
+    A new version is available. <button id="reload-now">Reload</button>
+    <button id="later">Later</button>
+  </div>
+
+  <div class="controls">
+    <button id="register" data-variant="good">register the service worker</button>
+    <button id="deploy" data-variant="bad">simulate a deploy (new SW)</button>
+    <button id="check">check for updates now</button>
+    <button id="unregister">unregister &amp; clear caches</button>
+  </div>
+  <div class="controls">
+    <button id="states">the lifecycle states</button>
+    <button id="skew">version skew</button>
+    <button id="policy">the update policy</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Register, then simulate a deploy and watch the waiting worker.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

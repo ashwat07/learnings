@@ -1,0 +1,22 @@
+{
+  "name": "Offline Labs — a demonstration PWA",
+  "short_name": "Offline Labs",
+  "description": "The manifest for the installability lab. Every field here changes something observable.",
+  "start_url": "/offline-and-pwa/labs/01-installability/?source=installed",
+  "scope": "/offline-and-pwa/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0d0d14",
+  "theme_color": "#1f3a52",
+  "orientation": "any",
+  "icons": [
+    { "src": "/api/image.svg?w=192&h=192&label=PWA&delay=0", "sizes": "192x192", "type": "image/svg+xml" },
+    { "src": "/api/image.svg?w=512&h=512&label=PWA&delay=0", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/api/image.svg?w=512&h=512&label=PWA&delay=0", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "The outbox lab", "url": "/offline-and-pwa/labs/03-the-outbox/" },
+    { "name": "Updates lab", "url": "/offline-and-pwa/labs/05-updates/" }
+  ],
+  "categories": ["education", "developer"]
+}

@@ -125,3 +125,50 @@ table.data .meh { color: var(--warn); }
 .card h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .04em; color: var(--muted); }
 .big { font: 22px/1.2 var(--mono); font-variant-numeric: tabular-nums; }
 .big.ok { color: var(--good); } .big.no { color: var(--bad); } .big.meh { color: var(--warn); }
+
+/* ---------------------------------------------------------------------------
+   Accessibility helpers, used by the accessibility course (and worth stealing).
+   --------------------------------------------------------------------------- */
+
+/* A skip link: visually hidden until focused, then a real, visible control.
+   Note it is NOT display:none — that would remove it from the tab order entirely,
+   which defeats the point. */
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: #1f3a52;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 0 0 8px 0;
+  z-index: 100;
+}
+.skip:focus {
+  left: 0;
+}
+
+/* The canonical visually-hidden utility: available to assistive tech, invisible on screen.
+   The clip-path + 1px box is what keeps it out of layout without hiding it from the a11y tree. */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Focus, done properly: :focus-visible so mouse users do not see a ring, keyboard users always do. */
+:focus-visible {
+  outline: 2px solid #6cf;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
