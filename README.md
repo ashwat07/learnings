@@ -57,19 +57,139 @@ the same four questions every time:
 | [Security & auth](security-and-auth/) | XSS, CSP, CSRF, tokens & sessions, supply chain | 5 |
 | [Quality & delivery](quality-and-delivery/) | Testing strategy, observability, build speed, release safety, the system | 6 |
 
-Order isn't enforced, but the dependencies are real: **event loop** underpins everything about
-jank and scheduling, **HTTP caching** underpins service workers, and **CORS** shows up inside
-resource hints (`crossorigin`) and service workers (opaque responses).
+## The order to do them in
 
-**Start with the language courses if you want depth over breadth.** [javascript](javascript/),
-[typescript](typescript/) and [react](react/) are the "how does this actually work" tier — every lab
-produces a number or a compile error, and `react/labs/07-mini-react` implements enough React that the
-rest of the React material stops being folklore.
+**29 courses, 178 labs.** The order below is not arbitrary — each phase uses the mechanisms the
+previous one established, and doing it backwards means memorising things you could have derived.
 
-**A reasonable path:** work down the table. The groups are ordered so that each one uses the last —
-foundations explain the pipeline, network explains what arrives and when, rendering explains how the
-page is produced, architecture explains how it is organised, and the final groups are about keeping
-all of it correct while a team changes it.
+Work top to bottom. Inside a course, do the labs in number order; they build on each other.
+
+### Phase 1 — The language (do this first)
+
+Everything else is a consequence of these. Skipping ahead is why people plateau: you end up learning
+React's rules instead of the machine underneath them.
+
+| # | Course | Why here | Time |
+|---|---|---|---|
+| 1 | [javascript](javascript/) | closures, prototypes, coercion, promises, generators, Proxy, engine cliffs — the substrate for every other course | ~2 weeks |
+| 2 | [typescript](typescript/) | assignability, inference, exhaustiveness, type-level programming. Needs nothing but §1 | ~1 week |
+
+> **You can now answer:** what does a closure retain, why does `await` in a loop serialise, why is
+> `[] == false`, and how do you make a missing case a compile error?
+
+### Phase 2 — What the browser actually does
+
+| # | Course | Why here | Time |
+|---|---|---|---|
+| 3 | [event-loop](event-loop/) | tasks vs microtasks, starvation, yielding. **The single highest-leverage course in the repo** — it underpins jank, INP, hydration and scheduling | ~4 days |
+| 4 | [critical-rendering-path](critical-rendering-path/) | parse → layout → paint → composite, and what forces each. 18 labs; the biggest single course | ~2 weeks |
+
+> **Do these before any performance work.** Almost every "why is this slow" answer lives in one of
+> them, and every later performance course assumes you can name the stage.
+
+### Phase 3 — The network
+
+| # | Course | Why here | Time |
+|---|---|---|---|
+| 5 | [http-caching](http-caching/) | `Cache-Control`, validators, SWR. Prerequisite for service workers, Next.js caching and the CDN labs | ~4 days |
+| 6 | [cors](cors/) | the same-origin policy. Shows up inside resource hints (`crossorigin`), service workers (opaque responses) and security | ~4 days |
+| 7 | [resource-hints](resource-hints/) | preload scanner, `preconnect`, `fetchpriority`. Uses §5 and §6 | ~3 days |
+
+### Phase 4 — React, properly
+
+| # | Course | Why here | Time |
+|---|---|---|---|
+| 8 | [react](react/) | the core model, hooks, reconciliation, patterns, concurrency — and **[lab 07](react/labs/07-mini-react/), which implements React in 260 lines** | ~1.5 weeks |
+
+> Needs **§1** (closures decide what a hook captures), **§2** (for typing props, events and refs)
+> and **§3** (batching flushes on a microtask; interruptible rendering is a scheduling story).
+>
+> **Do lab 07 even if you think you know React.** Everything afterwards — memoisation, keys, the
+> rules of hooks, tearing — stops being folklore once you have written the renderer.
+
+### Phase 5 — Measure and fix
+
+Now that you know the machine, learn to point at the number.
+
+| # | Course | Why here | Time |
+|---|---|---|---|
+| 9 | [web-vitals-and-react-perf](web-vitals-and-react-perf/) | LCP / CLS / INP measured properly, then React render cost. Needs §3, §4 and §8 | ~1 week |
+| 10 | [spa-memory-leaks](spa-memory-leaks/) | detached nodes, retainer chains, the heap-snapshot workflow. Direct sequel to [javascript 01](javascript/labs/01-scope-and-closures/) | ~4 days |
+| 11 | [web-workers](web-workers/) | the other answer to "the main thread is busy". Needs §3 | ~4 days |
+| 12 | [graphics-and-animation](graphics-and-animation/) | the pipeline, frame budget, canvas, WebGL. Needs §4 and §3 | ~1 week |
+
+### Phase 6 — How a page is produced and delivered
+
+| # | Course | Why here | Time |
+|---|---|---|---|
+| 13 | [rendering-strategies](rendering-strategies/) | CSR / SSR / SSG / ISR / streaming / RSC from identical templates | ~5 days |
+| 14 | [hydration-strategies](hydration-strategies/) | what the browser must then do with it. Follows §13 directly | ~4 days |
+| 15 | [seo-for-rendering](seo-for-rendering/) | who else reads it. Follows §13 | ~3 days |
+| 16 | [bundle-strategy](bundle-strategy/) | what it weighs (real esbuild) | ~4 days |
+| 17 | [asset-optimization](asset-optimization/) | images, fonts, compression, CDN. Pairs with §9 | ~5 days |
+| 18 | [nextjs-caching](nextjs-caching/) | four cache layers in a real framework. Needs §5 and §13 | ~4 days |
+
+> These six are one arc: **produced → hydrated → indexed → weighed → delivered → cached by a
+> framework.** Do them together.
+
+### Phase 7 — Data, state and failure
+
+| # | Course | Why here | Time |
+|---|---|---|---|
+| 19 | [architecture-and-state](architecture-and-state/) | component boundaries, state strategy, BFF, sync, machines, design systems. Needs §8 | ~1.5 weeks |
+| 20 | [browser-storage](browser-storage/) | IndexedDB, Cache API, quotas | ~5 days |
+| 21 | [service-workers](service-workers/) | lifecycle and cache strategies. Needs §5 and §20 | ~5 days |
+| 22 | [offline-and-pwa](offline-and-pwa/) | the durable outbox, conflicts, updates. Needs §20 and §21 | ~4 days |
+| 23 | [realtime-ui](realtime-ui/) | SSE/WS, reconnection, reconciliation, CRDTs, backpressure. Needs §3 and §19 | ~1 week |
+| 24 | [resilience](resilience/) | error boundaries, retries, degradation, circuit breaking, chaos | ~5 days |
+
+> §22, §23 and §24 share one idea — **prefer facts over deltas, and make every operation
+> idempotent** — approached from three directions. Do them close together.
+
+### Phase 8 — The user, and the team
+
+Independent of each other. Do them in whatever order matches your work.
+
+| # | Course | Why here | Time |
+|---|---|---|---|
+| 25 | [accessibility](accessibility/) | semantics, focus, ARIA, forms, contrast. **The one most likely to change how you write everyday code** | ~1 week |
+| 26 | [security-and-auth](security-and-auth/) | XSS, CSP, CSRF, tokens, supply chain. Needs §6 | ~5 days |
+| 27 | [i18n](i18n/) | `Intl`, plurals, bidi, delivery | ~4 days |
+| 28 | [multi-device](multi-device/) | input modalities, container queries, TV, adaptive delivery. Needs §25 | ~4 days |
+| 29 | [quality-and-delivery](quality-and-delivery/) | testing strategy, observability, build speed, release safety. **Last on purpose** — it is about keeping everything above true while a team changes it | ~5 days |
+
+**Total, at a steady pace: about five months.** At one lab a day, about six.
+
+### If you don't have five months
+
+Three shorter routes, each internally consistent:
+
+| Goal | Order |
+|---|---|
+| **Interview in ~3 weeks** | [javascript](javascript/) 01–05, 08 → [typescript](typescript/) 01–04, 06 → [event-loop](event-loop/) → [react](react/) 02, 03, 06, **07** → [web-vitals-and-react-perf](web-vitals-and-react-perf/) 01–05 → [architecture-and-state](architecture-and-state/) 02, 04, 05 → [accessibility](accessibility/) 01, 02 |
+| **Fix a slow app at work** | [event-loop](event-loop/) 03–05 → [critical-rendering-path](critical-rendering-path/) 01, 03, 14, 15, 17, 18 → [web-vitals-and-react-perf](web-vitals-and-react-perf/) (all) → [bundle-strategy](bundle-strategy/) → [asset-optimization](asset-optimization/) → [spa-memory-leaks](spa-memory-leaks/) |
+| **React depth only** | [javascript](javascript/) 01, 05, 07 → [typescript](typescript/) 02–04 → [react](react/) (all, **07 last**) → [web-vitals-and-react-perf](web-vitals-and-react-perf/) 05 → [architecture-and-state](architecture-and-state/) → [resilience](resilience/) 01 |
+
+### The hard prerequisites
+
+Everything else is soft. These four will genuinely not make sense out of order:
+
+| Do this first | Before |
+|---|---|
+| [javascript 01](javascript/labs/01-scope-and-closures/) (closures) | [spa-memory-leaks](spa-memory-leaks/), [react 02](react/labs/02-hooks-in-depth/) |
+| [javascript 05](javascript/labs/05-promises-from-scratch/) + [event-loop](event-loop/) | [react 06](react/labs/06-concurrent/), any INP work |
+| [http-caching](http-caching/) | [service-workers](service-workers/), [nextjs-caching](nextjs-caching/) |
+| [cors](cors/) | [security-and-auth 03](security-and-auth/labs/03-csrf/), opaque responses in [service-workers](service-workers/) |
+
+### How to do a single lab
+
+1. Read the lab README's **goal** and **primary metric** — nothing else yet.
+2. Open the page and **break it first**. Reproduce the bad number before you read the explanation.
+3. Fix it, and **re-measure with the same throttle**. A fix you didn't measure is a guess.
+4. Answer the **interview questions out loud, without notes**. If you can't, redo the lab.
+5. Do the **🏗️ build challenge** against your own codebase — that's where it stops being a demo.
+
+Don't read a lab you haven't run. The numbers are the content.
 
 ### Where topics overlap
 
