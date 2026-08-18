@@ -1,0 +1,3 @@
+-- Which columns does the query need? Put the one it FILTERS on in the key, and the one it only
+-- READS in INCLUDE. (If Heap Fetches is non-zero the visibility map is stale — the runner
+-- vacuums for you, so it should not be.)

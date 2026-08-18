@@ -1,0 +1,3 @@
+-- The three queries filter on: (user_id), (user_id, status), and (user_id + ORDER BY created_at).
+-- One index can serve all three. Which columns, in which order?
+-- Name it starting with idx_.

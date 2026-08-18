@@ -1,0 +1,1 @@
+-- users_email_key already exists on (email). Why can the query not use it?

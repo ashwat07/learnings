@@ -1,0 +1,2 @@
+-- A full index on (status, created_at) would pass the buffer check and FAIL the size check.
+-- Name your index starting with idx_ so the size check can find it.

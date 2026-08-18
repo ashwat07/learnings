@@ -1,0 +1,4 @@
+-- ONE UPDATE statement. It runs after the transaction has already SELECTed the row, and two of
+-- them run concurrently. Use :id for the account id.
+--
+-- Hint: the bug is that the new value was computed in the application from a stale read.

@@ -1,0 +1,20 @@
+-- Two shapes pass. BATCHED (3 queries) — the DataLoader pattern:
+--
+--   const orders = await sql`SELECT id, user_id FROM orders ORDER BY created_at DESC, id DESC LIMIT 50`;
+--   const users  = await sql`SELECT id, name FROM users WHERE id = ANY(${[...new Set(orders.map(o => o.user_id))]})`;
+--   const items  = await sql`SELECT order_id, product_id, quantity FROM order_items
+--                            WHERE order_id = ANY(${orders.map(o => o.id)}) ORDER BY product_id`;
+--   ...then join them in memory with two Maps.
+--
+-- Or ONE query, letting the database assemble it:
+--
+--   SELECT o.id, u.name,
+--          coalesce(string_agg(oi.product_id || 'x' || oi.quantity, ',' ORDER BY oi.product_id), '') AS items
+--   FROM (SELECT id, user_id FROM orders ORDER BY created_at DESC, id DESC LIMIT 50) o
+--   JOIN users u ON u.id = o.user_id
+--   LEFT JOIN order_items oi ON oi.order_id = o.id
+--   GROUP BY o.id, u.name
+--
+-- = ANY($array) is the batching primitive: one round trip, one plan, no matter how many ids.
+-- The single-query form is fewer round trips; the batched form is easier to cache and to reuse.
+-- Both are right. 101 queries is not.

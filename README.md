@@ -53,6 +53,8 @@ the same four questions every time:
 | [Accessibility](accessibility/) | Semantics, focus, ARIA & live regions, forms, contrast & motion, testing | 6 |
 | [Multi-device](multi-device/) | Input modalities, container queries, TV & the 10-foot UI, adaptive delivery | 4 |
 | [Internationalization](i18n/) | `Intl`, plurals & ICU messages, bidi & typography, delivery | 4 |
+| **Backend** | | |
+| [Backend engineering](backend/) | Real Postgres + Redis. Plans, indexing, locking, N+1, caching, delivery guarantees, API craft, and security drills where **the runner plays the attacker** | 5 labs, **19 drills**, 25 API tests |
 | **Security & delivery** | | |
 | [Security & auth](security-and-auth/) | XSS, CSP, CSRF, tokens & sessions, supply chain | 5 |
 | [Quality & delivery](quality-and-delivery/) | Testing strategy, observability, build speed, release safety, the system | 6 |
@@ -145,6 +147,20 @@ Now that you know the machine, learn to point at the number.
 
 > §22, §23 and §24 share one idea — **prefer facts over deltas, and make every operation
 > idempotent** — approached from three directions. Do them close together.
+
+### Phase 7.5 — The other side of the API
+
+Optional, and parallel to everything above — start it whenever you like. It needs Docker rather than
+a browser, and it is the only part of this repo with **drills**: problems with machine-checked
+answers, not demonstrations.
+
+| # | Course | Why here | Time |
+|---|---|---|---|
+| — | [backend](backend/) | plans, indexing, locking, N+1, caching & delivery guarantees, API craft — against a real Postgres and Redis | ~2 weeks for what exists |
+
+> **Do the drills rather than reading the labs**, if you only do one — they fail until you solve
+> them, and the thresholds are set so a plausible-but-wrong answer still fails.
+> `npm run drills:pg` · `npm run drills:cache` · `npm run drills:sec` · `npm run test:api`
 
 ### Phase 8 — The user, and the team
 

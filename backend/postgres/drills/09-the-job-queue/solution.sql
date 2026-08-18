@@ -1,0 +1,5 @@
+-- Return 5 queued job ids, safely, with four workers doing this simultaneously.
+-- Table: drill_jobs (id, state, claimed_by, created_at). Queued rows have state = 'queued'.
+--
+-- A plain SELECT hands the same rows to all four workers.
+-- SELECT ... FOR UPDATE makes them queue up behind each other (the runner fails you on wait time).

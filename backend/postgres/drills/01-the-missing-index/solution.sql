@@ -1,0 +1,2 @@
+-- Write the DDL that fixes the query in meta.mjs.
+-- Then:  node postgres/drills/run.mjs 01

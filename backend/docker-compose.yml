@@ -1,0 +1,51 @@
+# The backend labs run against real infrastructure. Nothing here is mocked: a real Postgres, a real
+# Redis, a real broker. That is the point — you cannot learn EXPLAIN ANALYZE from a description of
+# EXPLAIN ANALYZE.
+#
+#   docker compose up -d          start
+#   docker compose down -v        stop and DELETE the data (the -v matters)
+#   docker compose logs -f pg     watch the database
+services:
+  pg:
+    image: postgres:17-alpine
+    container_name: labs-pg
+    environment:
+      POSTGRES_USER: labs
+      POSTGRES_PASSWORD: labs
+      POSTGRES_DB: labs
+    ports: ['5433:5432']            # 5433 so it cannot collide with a local Postgres
+    command:
+      # Deliberately modest settings: the labs are about plans and indexes, and a database with
+      # 8GB of shared_buffers hides the effects you are trying to see.
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - random_page_cost=1.1        # SSD-appropriate, and it changes which plans the planner picks
+      - -c
+      - log_min_duration_statement=200
+      - -c
+      - track_io_timing=on          # required for EXPLAIN (ANALYZE, BUFFERS) I/O timings
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U labs -d labs']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: labs-redis
+    ports: ['6380:6379']
+    command: ['redis-server', '--appendonly', 'no', '--maxmemory', '256mb', '--maxmemory-policy', 'allkeys-lru']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  pgdata:

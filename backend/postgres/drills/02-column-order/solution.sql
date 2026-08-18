@@ -1,0 +1,1 @@
+-- The existing index is (created_at DESC, user_id). Why does it not help, and what does?

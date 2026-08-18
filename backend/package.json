@@ -1,0 +1,23 @@
+{
+  "name": "backend-labs",
+  "private": true,
+  "type": "module",
+  "description": "The backend labs: a real Postgres, a real Redis, and services you can break on purpose.",
+  "scripts": {
+    "up": "docker compose up -d --wait",
+    "down": "docker compose down",
+    "reset": "docker compose down -v && docker compose up -d --wait && npm run seed",
+    "seed": "node db/seed.mjs",
+    "psql": "docker compose exec pg psql -U labs -d labs",
+    "test:api": "node --test api-craft/test/",
+    "drills:pg": "node postgres/drills/run.mjs",
+    "drills:cache": "node caching-and-queues/drills/run.mjs",
+    "drills:sec": "node auth-and-security/drills/run.mjs"
+  },
+  "dependencies": {
+    "fastify": "^5.12.1",
+    "ioredis": "^6.0.0",
+    "postgres": "^3.4.5",
+    "zod": "^4.4.3"
+  }
+}
