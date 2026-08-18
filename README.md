@@ -19,6 +19,10 @@ the same four questions every time:
 
 | Course | What it makes automatic | Labs |
 |---|---|---|
+| **Languages** | | |
+| [JavaScript](javascript/) | Closure retention, prototypes vs class fields, coercion algorithms, promises from scratch, generators, Proxy, engine cliffs | 8 |
+| [TypeScript](typescript/) | Assignability, inference, exhaustiveness, mapped/conditional types, type-level programming, branded types | 7 |
+| [React](react/) | The core model, hooks, reconciliation, patterns, concurrency — and **a working React in 260 lines** | 7 |
 | **Foundations** | | |
 | [Critical rendering path](critical-rendering-path/) | Parse → DOM/CSSOM → layout → paint → composite; what triggers layout thrash | 18 + 3 capstones |
 | [Event loop & scheduling](event-loop/) | Task vs microtask ordering, starvation, yielding, frame timing, INP | 7 |
@@ -57,6 +61,11 @@ Order isn't enforced, but the dependencies are real: **event loop** underpins ev
 jank and scheduling, **HTTP caching** underpins service workers, and **CORS** shows up inside
 resource hints (`crossorigin`) and service workers (opaque responses).
 
+**Start with the language courses if you want depth over breadth.** [javascript](javascript/),
+[typescript](typescript/) and [react](react/) are the "how does this actually work" tier — every lab
+produces a number or a compile error, and `react/labs/07-mini-react` implements enough React that the
+rest of the React material stops being folklore.
+
 **A reasonable path:** work down the table. The groups are ordered so that each one uses the last —
 foundations explain the pipeline, network explains what arrives and when, rendering explains how the
 page is produced, architecture explains how it is organised, and the final groups are about keeping
@@ -76,6 +85,10 @@ cross-references are worth following:
 | layout, paint, composite | [critical-rendering-path 03–05](critical-rendering-path/) → [graphics-and-animation 01](graphics-and-animation/labs/01-the-pipeline/) → [web-vitals 03](web-vitals-and-react-perf/labs/03-cls/) |
 | version skew and deploys | [offline-and-pwa 05](offline-and-pwa/labs/05-updates/) → [quality-and-delivery 05](quality-and-delivery/labs/05-release-safety/) |
 | bundle size | [bundle-strategy](bundle-strategy/) → [web-vitals 06](web-vitals-and-react-perf/labs/06-profiling-and-budgets/) → [quality-and-delivery 04](quality-and-delivery/labs/04-build-and-tooling/) |
+| closures & memory | [javascript 01](javascript/labs/01-scope-and-closures/) → [spa-memory-leaks 04](spa-memory-leaks/labs/04-closures-and-caches/) → [react 02](react/labs/02-hooks-in-depth/) |
+| why did this re-render | [react 03](react/labs/03-rendering-and-reconciliation/) → [react 07](react/labs/07-mini-react/) → [web-vitals 05](web-vitals-and-react-perf/labs/05-react-render-perf/) |
+| making illegal states impossible | [typescript 06](typescript/labs/06-branded-types-and-boundaries/) → [architecture-and-state 05](architecture-and-state/labs/05-state-machines/) |
+| microtasks & scheduling | [javascript 05](javascript/labs/05-promises-from-scratch/) → [event-loop](event-loop/) → [react 06](react/labs/06-concurrent/) |
 | "facts, not deltas" | [realtime-ui 03](realtime-ui/labs/03-reconciliation/) → [resilience 02](resilience/labs/02-retries-and-idempotency/) → [offline-and-pwa 04](offline-and-pwa/labs/04-conflict-resolution/) |
 
 ---
@@ -163,7 +176,11 @@ live TTFB/FCP/LCP/CLS/TBT scoreboard.
 | [asset-optimization](asset-optimization/) | `node make-images.mjs`, `node make-fonts.mjs` | real image encoding and real font files; both gitignored, both have `--clean` |
 | [bundle-strategy](bundle-strategy/) | `npm install` (esbuild, ~10MB) | you cannot learn tree shaking from a description of tree shaking |
 | [nextjs-caching](nextjs-caching/) | `npm install` (next + react) | the four cache layers only exist in the framework |
-| [react-sandbox](react-sandbox/) | `npm install && npm run dev` | one Vite app shared by the React labs: `#state-strategy`, `#render-perf`, `#optimistic`, `#machine`, `#boundaries`. StrictMode is on deliberately |
+| [react-sandbox](react-sandbox/) | `npm install && npm run dev` | one Vite app shared by every React lab: `#hooks`, `#state`, `#render`, `#patterns`, `#concurrent`, `#optimistic`, `#machine`, `#boundaries`. StrictMode is on deliberately |
+| [typescript](typescript/) | `npm install` (typescript only) | the labs are **compile-time assertions that currently fail**; `npm run check` is the whole feedback loop |
+
+`react/labs/07-mini-react` needs **nothing** — it implements React itself, and `node test.mjs` in that
+folder runs its test suite.
 
 Everything else is zero-dependency and runs on `./serve.sh` alone.
 

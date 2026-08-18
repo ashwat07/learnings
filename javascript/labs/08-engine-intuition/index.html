@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 08 — Engine intuition</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 08 — Engine intuition</h1>
+    <p>The same function, the same number of operations, <strong>10× the time</strong> — because of
+      the <em>shape</em> of the objects you passed it. This lab makes each of V8's optimisation
+      cliffs happen on demand.</p>
+    <p class="hint">Every measurement is warmed up first, so you are timing optimised code rather
+      than the interpreter. Numbers vary by machine; the RATIOS are the point.</p>
+  </div>
+
+  <div class="controls">
+    <button id="shapes" data-variant="good">hidden classes &amp; property order</button>
+    <button id="ic" data-variant="bad">monomorphic → polymorphic → megamorphic</button>
+    <button id="elements" data-variant="bad">array element kinds</button>
+    <button id="dictionary" data-variant="bad">delete, and dictionary mode</button>
+    <button id="deopt">deoptimisation triggers</button>
+    <button id="rules">what to actually do</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Start with hidden classes.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 01 — Scope &amp; closures</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 01 — Scope &amp; closures</h1>
+    <p>Everyone can explain what a closure is. The question that separates people is
+      <strong>what a closure keeps alive</strong> — and the answer is not "the variables it uses".</p>
+    <p class="hint">Open this page with <code>?isolate=1</code> to enable
+      <code>measureUserAgentSpecificMemory()</code> for exact heap numbers. Otherwise the lab falls
+      back to <code>performance.memory</code>, which is coarse but enough to see the effect.</p>
+  </div>
+
+  <div class="controls">
+    <label>the classic bugs</label>
+    <button id="loopvar" data-variant="bad">the loop variable</button>
+    <button id="tdz" data-variant="bad">the TDZ</button>
+    <button id="hoisting">hoisting, precisely</button>
+  </div>
+  <div class="controls">
+    <label>what a closure retains</label>
+    <button id="retain" data-variant="bad">measure the retained heap</button>
+    <button id="retain-fix" data-variant="good">the same code, scoped properly</button>
+    <button id="shared">two closures, one scope</button>
+    <button id="module">the module pattern &amp; private state</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Start with the loop variable — then measure what a closure keeps.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

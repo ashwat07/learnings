@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 06 — Iterators &amp; generators</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 06 — Iterators &amp; generators</h1>
+    <p>Generators are the only way to <strong>pause a function</strong> in JavaScript. That single
+      capability gives you lazy infinite sequences, cooperative scheduling, and backpressure — three
+      things that are awkward or impossible without them.</p>
+  </div>
+
+  <div class="controls">
+    <button id="protocol" data-variant="good">the iteration protocol, by hand</button>
+    <button id="lazy">lazy &amp; infinite sequences</button>
+    <button id="twoway">two-way communication</button>
+    <button id="scheduler" data-variant="good">a cooperative scheduler</button>
+    <button id="async">async iterators &amp; streaming</button>
+    <button id="backpressure">backpressure</button>
+  </div>
+
+  <p><span class="stat">FPS <b id="fps">—</b></span>
+     <span class="stat">progress <b id="progress">—</b></span></p>
+  <div id="results"></div>
+  <p class="readout" id="out">Start with the protocol.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

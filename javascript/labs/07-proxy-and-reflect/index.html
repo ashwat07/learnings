@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 07 — Proxy &amp; Reflect</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 07 — Proxy &amp; Reflect</h1>
+    <p>Build Vue's reactivity system in 40 lines, then measure what it costs. Proxies are how
+      several frameworks you use actually work — and the tax they charge is real and worth knowing
+      before you reach for one.</p>
+  </div>
+
+  <div class="controls">
+    <button id="traps" data-variant="good">the traps, fired live</button>
+    <button id="reactive" data-variant="good">build reactivity in 40 lines</button>
+    <button id="immer">build Immer's produce()</button>
+    <button id="cost" data-variant="bad">measure the tax</button>
+    <button id="uses">what Proxies are genuinely for</button>
+    <button id="limits">the limits &amp; invariants</button>
+  </div>
+
+  <p><span class="stat">count <b id="count">0</b></span>
+     <span class="stat">doubled <b id="doubled">0</b></span>
+     <span class="stat">effect runs <b id="runs">0</b></span>
+     <button id="inc">count++</button>
+     <button id="untracked">mutate an untracked field</button></p>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Start with the traps.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

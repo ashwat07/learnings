@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 05 — Promises from scratch</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 05 — Promises from scratch</h1>
+    <p>You do not understand promises until you have written one. This lab builds a
+      <strong>Promises/A+ compliant</strong> implementation in about 90 lines, runs a conformance
+      suite against it, and then desugars <code>async/await</code> into a generator driven by it.</p>
+  </div>
+
+  <div class="controls">
+    <button id="run" data-variant="good">run the conformance suite</button>
+    <button id="ordering">microtask ordering, proved</button>
+    <button id="thenable">the thenable-assimilation rule</button>
+    <button id="desugar" data-variant="good">desugar async/await</button>
+    <button id="combinators">all / allSettled / race / any</button>
+    <button id="traps" data-variant="bad">the traps</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Run the conformance suite first.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

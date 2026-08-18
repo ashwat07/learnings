@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 07 — Write a mini React</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+  <style>
+    #app { border: 1px solid var(--line); border-radius: 8px; padding: 14px; min-height: 220px; }
+    #app .todo { display: flex; gap: 8px; align-items: center; padding: 3px 0; }
+    #app .todo.done span { text-decoration: line-through; color: var(--muted); }
+    #app input[type=text] { background: #0f0f16; color: var(--text); border: 1px solid var(--line);
+      border-radius: 6px; padding: 6px; }
+  </style>
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 07 — Write a mini React</h1>
+    <p>Roughly 260 lines: <strong>createElement, a fiber tree, reconciliation with keys, a commit
+      phase, useState, useReducer, useEffect with cleanup, useRef and useMemo</strong> — and a
+      working todo app running on it. No React, no build step, no dependencies.</p>
+    <p class="hint">Read <a href="mini-react.js">mini-react.js</a> alongside this page. Every
+      mechanism you have been using is in there, and it is smaller than you expect.</p>
+  </div>
+
+  <div class="controls">
+    <button id="trace" data-variant="good">trace a render</button>
+    <button id="keys">prove reconciliation by key</button>
+    <button id="hooks">why hook ORDER matters</button>
+    <button id="effects">effect timing &amp; cleanup</button>
+    <button id="compare">what real React adds</button>
+    <button id="clear">clear log</button>
+  </div>
+
+  <div id="app"></div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">The todo app above is running on the mini React. Use it, then press “trace a render”.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

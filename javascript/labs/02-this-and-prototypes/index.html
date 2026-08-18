@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 02 — `this` &amp; prototypes</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 02 — <code>this</code> &amp; prototypes</h1>
+    <p>The <code>this</code> rules take ten minutes to learn. The interesting part is what the
+      prototype chain <em>costs</em> — and why a class written with arrow-function fields makes
+      100,000 instances several times larger.</p>
+  </div>
+
+  <div class="controls">
+    <label>this</label>
+    <button id="rules" data-variant="good">the four binding rules, resolved live</button>
+    <button id="lost" data-variant="bad">how `this` gets lost</button>
+    <button id="arrow">arrow functions</button>
+  </div>
+  <div class="controls">
+    <label>prototypes</label>
+    <button id="chain">the chain, walked</button>
+    <button id="cost" data-variant="bad">measure: class fields vs prototype methods</button>
+    <button id="lookup">measure: lookup depth</button>
+    <button id="descriptors">property descriptors</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Start with the binding rules.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

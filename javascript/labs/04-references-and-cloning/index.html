@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 04 — References &amp; cloning</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 04 — References &amp; cloning</h1>
+    <p>"Spread does a shallow copy" is where most explanations stop. This lab builds the
+      <strong>correctness matrix</strong> — which cloning method survives a <code>Date</code>, a
+      <code>Map</code>, a cycle, an <code>undefined</code>, a getter — and then the speed one.</p>
+  </div>
+
+  <div class="controls">
+    <button id="matrix" data-variant="good">the correctness matrix</button>
+    <button id="speed">the speed matrix</button>
+    <button id="shallow" data-variant="bad">what "shallow" actually costs you</button>
+    <button id="equality">structural equality</button>
+    <button id="immutable">immutability in practice</button>
+    <button id="sparse">the array traps</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Start with the correctness matrix — it is the one that changes decisions.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

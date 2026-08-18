@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 03 — Coercion &amp; equality</title>
+  <link rel="stylesheet" href="/shared/lab.css">
+</head>
+<body>
+  <div class="lab-header">
+    <h1>Lab 03 — Coercion &amp; equality</h1>
+    <p>Not a list of curiosities. This lab <strong>implements the specification algorithms</strong>
+      — <code>ToPrimitive</code>, abstract equality, addition — and traces them step by step, so the
+      surprising results stop being surprising.</p>
+  </div>
+
+  <div class="controls">
+    <button id="trace" data-variant="good">trace an == comparison</button>
+    <button id="plus">trace a + b</button>
+    <button id="matrix">the == matrix</button>
+    <button id="toprimitive">ToPrimitive &amp; Symbol.toPrimitive</button>
+    <button id="quiz" data-variant="bad">the quiz</button>
+    <button id="rules">what to actually do</button>
+  </div>
+
+  <div id="results"></div>
+  <p class="readout" id="out">Start by tracing a comparison.</p>
+  <div id="log" class="log"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

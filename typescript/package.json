@@ -1,0 +1,13 @@
+{
+  "name": "typescript-labs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node check.mjs",
+    "check:solutions": "node check.mjs --solutions",
+    "tsc": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
