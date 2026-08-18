@@ -1,0 +1,93 @@
+// Drill 01 — reference. (Rename to reference.go to compile it, but read it first.)
+
+package drill01
+
+import "slices"
+
+// Allocate. The src[:0] trick is real and it is right when — and only when — the caller has
+// handed over ownership. `filtered := Evens(s)` does not mean that, and nothing in the signature
+// says it does. If you want the no-allocation version, name it so the caller knows:
+// FilterInPlace(s) and document that s is destroyed.
+func Evens(src []int) []int {
+	out := make([]int, 0, len(src))
+	for _, v := range src {
+		if v%2 == 0 {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+// The broken version is `append(s[:i], v)`: s[:i] has the capacity of s, so the append writes v
+// straight over s[i]. The element you were inserting BEFORE is now gone, and the caller's slice
+// is corrupted. Build a new slice, or use slices.Insert (Go 1.21+), which handles the aliasing.
+func Insert(s []int, i int, v int) []int {
+	out := make([]int, 0, len(s)+1)
+	out = append(out, s[:i]...)
+	out = append(out, v)
+	out = append(out, s[i:]...)
+	return out
+}
+
+// The three-index slice expression s[low:high:max] caps the CAPACITY as well as the length.
+// s[:n:n] gives you a slice whose spare room is zero, so the next append is forced to allocate
+// instead of writing into whatever comes after it.
+//
+// This is the single most useful thing to know about slices, and the one most people never
+// learn. Any time you hand out a sub-slice of something you keep, cap it.
+func Split(s []int, n int) (head, tail []int) {
+	return s[:n:n], s[n:]
+}
+
+func Clone(src []int) []int {
+	return slices.Clone(src) // before 1.21: out := make([]int, len(src)); copy(out, src); return out
+}
+
+// The subtle one. s[len(s)-3:] is a 3-element slice whose pointer is INTO the original array, so
+// the garbage collector cannot free any of the other 999,997 elements. The GC frees allocations,
+// not parts of allocations. Copy out when you keep a small piece of something large.
+//
+// The same trap in string form: s[:3] on a 10MB string keeps the whole 10MB alive. And in bytes:
+// a small header parsed out of a large read buffer.
+func LastThree(s []int) []int {
+	return slices.Clone(s[len(s)-3:])
+}
+
+/*
+THE MODEL
+
+	type slice struct { ptr *T; len, cap int }
+
+Three words, passed BY VALUE. So:
+
+  · a function that appends to its parameter cannot be seen by the caller (the header is a copy)
+  · a function that writes s[i] = x CAN be seen by the caller (the pointer is shared)
+  · `append` returns a new header, which may or may not point at the same array — the whole
+    reason you must write `s = append(s, x)` and never just `append(s, x)`
+
+WHEN DOES append REALLOCATE?
+When len == cap. The growth factor is roughly 2x for small slices and ~1.25x above a few hundred
+elements (it has changed between releases; do not encode it in your head as a rule). Two
+consequences:
+
+  · make([]T, 0, n) when you know n. Not a micro-optimisation: growing from 0 to 10,000 is ~14
+    reallocations and ~20,000 element copies, and it shows up in drill 07's allocation counts.
+  · make([]T, n) gives you n ZERO elements, not room for n. `make([]int, 10)` then append gives
+    you a slice of length 11 starting with ten zeros. This typo is extremely common.
+
+THE AGE-OLD range GOTCHA — AND ITS EXPIRY DATE
+Before Go 1.22, the loop variable in `for i, v := range s` was ONE variable reused every
+iteration, so `go func(){ use(v) }()` and `append(ptrs, &v)` captured the same thing every time.
+Go 1.22 changed it: the variable is now per-iteration and the bug is gone. Two things follow:
+you will still meet it in older code and in every interview question written before 2024, and
+the behaviour now depends on the `go` directive in go.mod — which is a real reason to keep that
+line current.
+
+ALSO WORTH KNOWING
+  · `range s` copies each ELEMENT into v. For a big struct that is a real copy per iteration;
+    use `for i := range s` and index, or range over a slice of pointers.
+  · comparing slices with == is a compile error (except against nil). Use slices.Equal.
+  · a nil slice is perfectly usable: len 0, cap 0, append works, range works. `var s []int` is
+    the idiomatic empty slice, not `[]int{}` — and they are NOT identical to encoding/json,
+    which writes `null` for one and `[]` for the other (drill 06).
+*/

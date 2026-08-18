@@ -14,7 +14,9 @@
     "drills:cache": "node caching-and-queues/drills/run.mjs",
     "drills:sec": "node auth-and-security/drills/run.mjs",
     "drills:jobs": "node jobs-and-messaging/drills/run.mjs",
+    "drills:node": "node node-runtime/drills/run.mjs",
     "drills:go": "cd go-concurrency && go test -race ./...",
+    "drills:golang": "cd go-lang && go test ./...",
     "test:reliability": "node --test reliability/test/"
   },
   "dependencies": {

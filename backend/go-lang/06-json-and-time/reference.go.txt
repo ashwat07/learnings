@@ -1,0 +1,174 @@
+// Drill 06 — reference. (Rename to reference.go to compile it.)
+
+package drill06
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+)
+
+type Money int64
+
+type Product struct {
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description,omitempty"`
+	Price       Money     `json:"price"`
+	Discount    *int      `json:"discount,omitempty"`
+	Tags        []string  `json:"tags"`
+	Internal    string    `json:"-"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Stock       FlexInt   `json:"stock,omitempty"`
+}
+
+// The `,string` tag is ONE-WAY tolerant: it writes a number as a string and then REQUIRES a
+// string on the way back in. Feed it a bare 7 and you get
+//
+//	json: invalid use of ,string struct tag, trying to unmarshal unquoted value into int
+//
+// So "accept either" needs a type with its own UnmarshalJSON. This shape — try the strict form,
+// fall back to the lenient one — is how you absorb a client that cannot make up its mind
+// without loosening the rest of your schema.
+type FlexInt int
+
+func (f *FlexInt) UnmarshalJSON(b []byte) error {
+	var n int
+	if err := json.Unmarshal(b, &n); err == nil {
+		*f = FlexInt(n)
+		return nil
+	}
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return fmt.Errorf("stock %s: want a number or a numeric string", b)
+	}
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return fmt.Errorf("stock %q: %w", s, err)
+	}
+	*f = FlexInt(n)
+	return nil
+}
+
+// A value receiver on MarshalJSON so it works for both Money and *Money. If you put it on a
+// POINTER receiver, a Money field inside a struct marshals as a plain number and you will spend
+// an hour wondering why — json only takes the address of ADDRESSABLE values, and a struct field
+// reached through an interface is not always one.
+func (m Money) MarshalJSON() ([]byte, error) {
+	neg := ""
+	n := int64(m)
+	if n < 0 {
+		neg, n = "-", -n
+	}
+	return []byte(fmt.Sprintf(`"%s%d.%02d"`, neg, n/100, n%100)), nil
+}
+
+// UnmarshalJSON MUST be on a pointer receiver — it mutates.
+func (m *Money) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), `"`)
+	whole, frac, _ := strings.Cut(s, ".")
+	n, err := strconv.ParseInt(whole, 10, 64)
+	if err != nil {
+		return fmt.Errorf("money %q: %w", s, err)
+	}
+	cents := int64(0)
+	if frac != "" {
+		frac = (frac + "00")[:2]
+		if cents, err = strconv.ParseInt(frac, 10, 64); err != nil {
+			return fmt.Errorf("money %q: %w", s, err)
+		}
+	}
+	if strings.HasPrefix(whole, "-") {
+		*m = Money(n*100 - cents)
+	} else {
+		*m = Money(n*100 + cents)
+	}
+	return nil
+}
+
+func Normalise(p *Product) {
+	// A nil slice marshals to `null`; an empty non-nil slice marshals to `[]`. The distinction is
+	// invisible in Go and extremely visible to a JavaScript client calling .map().
+	if p.Tags == nil {
+		p.Tags = []string{}
+	}
+	// UTC() also STRIPS the monotonic reading, which is what makes the value safe to compare and
+	// to serialise. Store and transmit UTC; convert to a user's zone only for display.
+	p.CreatedAt = p.CreatedAt.UTC()
+}
+
+// Equal, never ==. time.Time is a struct of three fields (wall, ext, loc), so == compares the
+// LOCATION POINTER and the monotonic reading as well as the instant. Two values that describe
+// the same moment in different zones are not ==; a value from time.Now() is not == to its own
+// round trip through a database or a JSON encoder.
+//
+// The same applies to using time.Time as a map key or in a struct you compare with ==. If you
+// need that, store a Unix timestamp.
+func SameInstant(a, b time.Time) bool { return a.Equal(b) }
+
+func ParseFlexible(s string) (time.Time, error) {
+	for _, layout := range []string{time.RFC3339Nano, time.RFC3339} {
+		if t, err := time.Parse(layout, s); err == nil {
+			return t.UTC(), nil
+		}
+	}
+	if n, err := strconv.ParseInt(s, 10, 64); err == nil {
+		return time.Unix(n, 0).UTC(), nil
+	}
+	return time.Time{}, fmt.Errorf("unrecognised timestamp %q", s)
+}
+
+// DisallowUnknownFields turns a client typo from silent data loss into a 400. Without it,
+// {"nmae": "..."} decodes successfully into a Product with an empty Name, and the bug surfaces
+// three systems later.
+//
+// json.Decoder rather than json.Unmarshal is also how you stream: it reads from an io.Reader, so
+// a 200MB request body does not have to be in memory twice.
+func StrictDecode(data []byte, v any) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(v); err != nil {
+		return err
+	}
+	return nil
+}
+
+/*
+THE STRUCT TAG VOCABULARY
+
+	`json:"id"`               rename
+	`json:"-"`                never serialise. Note `json:"-,"` (trailing comma) means a field
+	                          literally named "-", which is a great way to lose an afternoon.
+	`json:"x,omitempty"`      omit when the value is the ZERO value: 0, "", false, nil, len 0.
+	                          It cannot omit a zero it should keep, which is why Discount is a
+	                          pointer.
+	`json:"x,string"`         encode a number as a JSON string, and REQUIRE a string on the way
+	                          back in. Exactly what you want for an int64 id: JavaScript's Number
+	                          loses precision above 2^53, so a large id round-trips WRONG through
+	                          every browser client. If you also need to accept a bare number, you
+	                          need a custom type — see FlexInt above.
+	`json:"x,omitzero"`       Go 1.24+: omit the zero value even for types where omitempty does
+	                          not apply — notably time.Time, whose zero value omitempty ignores.
+
+THE FOUR DEFAULTS THAT SURPRISE PEOPLE
+  1. unexported fields are invisible to encoding/json. Not an error, just absent.
+  2. unknown fields in the input are IGNORED by default. DisallowUnknownFields.
+  3. a nil slice or map is `null`, not `[]` or `{}`.
+  4. numbers decode into `any` as float64. Decoding {"id": 12345678901234567} into a
+     map[string]any and re-encoding it gives you 1.2345678901234568e+16. Use json.Number, or a
+     typed struct.
+
+TIME
+  · store UTC, always. Convert at the edges. A timestamp with a location is a display concern.
+  · time.Time comparison: Equal for instants, Before/After for ordering, never ==.
+  · Sub gives a Duration; Since(t) is Now().Sub(t). For measuring elapsed time, use a value from
+    time.Now() WITHOUT stripping the monotonic reading — that reading is what makes elapsed time
+    immune to NTP adjustments and daylight saving.
+  · the reference layout is "2006-01-02T15:04:05Z07:00" — a specific instant, not format codes.
+    Never invent your own; use the time.RFC3339 constants.
+  · a "date" with no time is not a time.Time. Model it as a string or a civil-date type, or you
+    will get midnight-in-some-zone bugs at the month boundary.
+*/

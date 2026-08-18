@@ -1,0 +1,124 @@
+// Drill 02 — reference. (Rename to reference.go to compile it.)
+
+package drill02
+
+import (
+	"errors"
+	"fmt"
+)
+
+var ErrNotFound = errors.New("not found")
+
+type ValidationError struct {
+	Field  string
+	Reason string
+}
+
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("invalid %s: %s", e.Field, e.Reason)
+}
+
+var users = map[int]string{1: "ada", 2: "grace"}
+
+func fetch(id int) (string, error) {
+	if id <= 0 {
+		return "", &ValidationError{Field: "id", Reason: "must be positive"}
+	}
+	name, ok := users[id]
+	if !ok {
+		return "", ErrNotFound
+	}
+	return name, nil
+}
+
+// %w, not %v. One character, and it is the difference between an error the caller can inspect
+// and a string the caller can only log. %w keeps the original error reachable through
+// errors.Is/As; %v flattens it into text and the value is gone forever.
+func LoadUser(id int) (string, error) {
+	name, err := fetch(id)
+	if err != nil {
+		return "", fmt.Errorf("load user %d: %w", id, err)
+	}
+	return name, nil
+}
+
+func Handler(id int) int {
+	_, err := LoadUser(id)
+	switch {
+	case err == nil:
+		return 200
+	// errors.Is unwraps the whole chain looking for this exact value. Never use == on a wrapped
+	// error: it compares only the outermost one, and the outermost one is your own fmt.Errorf.
+	case errors.Is(err, ErrNotFound):
+		return 404
+	// errors.As unwraps looking for something ASSIGNABLE to the target, and assigns it — which
+	// is how you get at the data (here, which field was wrong).
+	case errors.As(err, new(*ValidationError)):
+		return 400
+	default:
+		return 500
+	}
+}
+
+func FieldOf(err error) string {
+	var ve *ValidationError
+	if errors.As(err, &ve) {
+		return ve.Field
+	}
+	return ""
+}
+
+// errors.Join (Go 1.20+) builds an error that wraps SEVERAL others. errors.Is and errors.As
+// search all of them, so the caller can still ask "was there a validation problem?" and get a
+// straight answer. Before 1.20 this needed a custom multi-error type; now it does not.
+//
+// Note the shape: collect, then join once, and let Join return nil when the slice is empty. That
+// last part matters — `errors.Join()` with no non-nil arguments IS nil, so you do not need the
+// `if len(problems) == 0 { return nil }` guard people write out of habit.
+func CheckAll(name, email string) error {
+	var problems []error
+	if name == "" {
+		problems = append(problems, &ValidationError{Field: "name", Reason: "required"})
+	}
+	if email == "" {
+		problems = append(problems, &ValidationError{Field: "email", Reason: "required"})
+	}
+	return errors.Join(problems...)
+}
+
+/*
+THE THREE KINDS, AND HOW TO CHOOSE
+
+  sentinel   var ErrNotFound = errors.New("not found")
+             The caller only needs to know WHICH thing happened. Cheap, comparable with
+             errors.Is. Every sentinel you export is API you can never change.
+
+  typed      type ValidationError struct { Field, Reason string }
+             The caller needs DATA about the failure. Reach for it as soon as the answer to
+             "what would the caller do with this?" is more than one branch.
+
+  opaque     fmt.Errorf("...: %w", err)
+             The caller needs context for a human, and the underlying error for code. This is
+             the default and it should be most of your error handling.
+
+WHEN TO WRAP AND WHEN NOT TO
+
+Wrap when you are ADDING information the caller does not have: which id, which file, which
+attempt. Do not wrap just to say the function's own name — the stack already says that, and
+"load user: get user: fetch user: query: not found" is four layers of nothing.
+
+Do not wrap at all if you are going to handle it. And be aware that %w is API: once callers
+depend on errors.Is(err, ErrX) passing through your function, un-wrapping it is a breaking
+change that no compiler will catch.
+
+THE ONE-LINE RULES
+  · %w to wrap, %v to flatten. Choose deliberately, every time.
+  · errors.Is for sentinels, errors.As for types, == for neither.
+  · errors.As needs a POINTER to the target: errors.As(err, &ve), never errors.As(err, ve).
+  · Handle an error once. Logging it AND returning it means it appears twice in the logs, at two
+    different levels of context, and the second one is the useful one.
+  · An error message starts lowercase and has no trailing punctuation, because it will be
+    concatenated into a longer sentence by whoever wraps it.
+  · panic is for programmer error — a nil map write, an impossible switch case. Not for a failed
+    request. Drill 04.
+*/

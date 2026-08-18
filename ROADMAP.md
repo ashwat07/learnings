@@ -322,6 +322,83 @@ Still ⬜: Consensus in practice (Raft) · Event sourcing & CQRS end to end · Z
 (expand/contract, backfills, dual writes) · Chaos & correctness testing (fault injection,
 Jepsen-style checks, property-based tests)
 
+## 8.10 The Node runtime
+
+*Needs no containers at all — V8, libuv and the standard library.*
+
+| Item | Status | Where |
+|---|---|---|
+| **V8, libuv & the runtime** — what Node is; threaded I/O behind single-threaded JS | ✅ | [node lab 01 §1,4](backend/node-runtime/labs/01-runtime-and-loop/) |
+| **Event loop phases** — timers, pending, poll, check, close | ✅ | [node lab 01 §1,2](backend/node-runtime/labs/01-runtime-and-loop/) + [drill 01](backend/node-runtime/drills/01-event-loop-order/) |
+| **Microtasks & `process.nextTick`** — ordering, and starvation | ✅ | [drill 01](backend/node-runtime/drills/01-event-loop-order/) + [lab 01 §3](backend/node-runtime/labs/01-runtime-and-loop/) |
+| **Blocking vs non-blocking** — one sync call stalls everything | ✅ | [drill 02](backend/node-runtime/drills/02-do-not-block/) (335ms → 4ms lag) |
+| **Modules: CommonJS vs ESM** — interop, live bindings, cycles, dual packages | ✅ | [node lab 02](backend/node-runtime/labs/02-modules/) |
+| **EventEmitter** — custom events, `once`, max-listener leak warnings | ✅ | [drill 03](backend/node-runtime/drills/03-eventemitter/) (17 behaviours) |
+| **Buffers & binary data** — encodings, framing, when binary matters | ✅ | [drill 04](backend/node-runtime/drills/04-binary-framing/) |
+| **Streams end to end** — Transform, object mode, `pipeline` vs `.pipe` | ✅ | [drill 05](backend/node-runtime/drills/05-backpressure/) |
+| **Backpressure** — why it exists; handling it in pipelines and HTTP | ✅ | [drill 05](backend/node-runtime/drills/05-backpressure/) (99,999 → 63 buffered) |
+| **Error handling** — `AbortController`, cleanup, unhandled rejections | ✅ | [drill 06](backend/node-runtime/drills/06-cancellation/) (5,000-listener leak) |
+| **Concurrency control** — `Promise.all` vs a real limiter | ✅ | [drill 08](backend/node-runtime/drills/08-concurrency-limit/) |
+| **`worker_threads`** — CPU offload, message passing, transfer vs copy | ✅ | [drill 09](backend/node-runtime/drills/09-worker-threads/) |
+| **Production ops** — graceful shutdown, health checks, draining | ✅ | [drill 07](backend/node-runtime/drills/07-graceful-shutdown/) |
+| **Custom binary protocols** — framing over raw TCP, hostile length prefixes | ✅ | [drill 04](backend/node-runtime/drills/04-binary-framing/) |
+| **Structured logging, RED metrics, tracing** | ✅ | [reliability](backend/reliability/) (26 tests) |
+| **Callbacks → promises → async/await** — promisify, sequential vs parallel | ✅ | [javascript 05](javascript/labs/05-promises-from-scratch/) + [drill 08](backend/node-runtime/drills/08-concurrency-limit/) |
+| **fs, path, os & timers** — sync vs async, cross-platform paths | 🟡 | timer drift + sync-vs-async lag measured in [lab 01 §5,6](backend/node-runtime/labs/01-runtime-and-loop/); path/os ⬜ |
+| **HTTP module & frameworks** — raw `http`, then Express/Fastify/Nest | 🟡 | raw `http` in [drill 07](backend/node-runtime/drills/07-graceful-shutdown/); Fastify in [api-craft](backend/api-craft/); Nest ⬜ |
+| **Streaming responses & uploads** — multipart, streamed bodies | ⬜ | — |
+| **Performance & memory** — GC, heap snapshots, `--inspect`, clinic.js, autocannon | ⬜ | browser-side equivalent in [spa-memory-leaks](spa-memory-leaks/) |
+| **Clustering & scaling** — `cluster`, PM2, sticky sessions | ⬜ | — |
+| **Caching & pooling** — in-process vs Redis; DB connection pooling | 🟡 | Redis in [caching-and-queues](backend/caching-and-queues/); pooling ⬜ |
+| **TypeScript with Node** — tsx, tsconfig, build & run in prod | ⬜ | types themselves in [typescript](typescript/) |
+| **Packages & npm/pnpm** — semver, monorepos, publishing | ⬜ | — |
+| **Testing** — supertest, mocking, integration tests | 🟡 | `node --test` suites in [api-craft](backend/api-craft/) + [reliability](backend/reliability/); mocking/testcontainers ⬜ |
+| **Native addons & N-API** | ⬜ | — |
+| **Diagnostics deep** — `async_hooks`, `diagnostics_channel`, flame graphs | ⬜ | — |
+| **V8 performance internals** — hidden classes, ICs, deopts | ✅ | [javascript 08](javascript/labs/08-engine-intuition/) |
+| **True parallelism** — worker pools, `SharedArrayBuffer` + Atomics | 🟡 | pool ✅ [drill 09](backend/node-runtime/drills/09-worker-threads/); SAB/Atomics ⬜ |
+| **Zero-downtime reloads** — shared sockets, connection draining, handoff | 🟡 | draining ✅ [drill 07](backend/node-runtime/drills/07-graceful-shutdown/); cluster handoff ⬜ |
+
+## 8.11 Go, the language
+
+*Concurrency is 8.5; this is everything that decides correctness before a goroutine starts.*
+
+| Item | Status | Where |
+|---|---|---|
+| **Types, structs & methods** — value vs pointer receivers, zero values | ✅ | [go-lang 01](backend/go-lang/01-slices-and-aliasing/) + [07](backend/go-lang/07-allocations/) |
+| **Slices, maps & arrays** — internals, aliasing, copy semantics | ✅ | [go-lang 01](backend/go-lang/01-slices-and-aliasing/) |
+| **Pointers & value semantics** — when Go copies; escape to heap; nil | ✅ | [go-lang 01](backend/go-lang/01-slices-and-aliasing/) + [03](backend/go-lang/03-nil-interface/) + [07](backend/go-lang/07-allocations/) |
+| **Errors** — `error`, `%w`, `errors.Is/As`, sentinel vs typed | ✅ | [go-lang 02](backend/go-lang/02-errors/) |
+| **`defer`, `panic` & `recover`** — cleanup order, when to recover | ✅ | [go-lang 04](backend/go-lang/04-defer-panic-recover/) |
+| **Interfaces (implicit)** — satisfaction without declaration; the typed nil | ✅ | [go-lang 03](backend/go-lang/03-nil-interface/) |
+| **Generics** — type parameters, constraints, `~`, when they beat interfaces | ✅ | [go-lang 05](backend/go-lang/05-generics/) |
+| **Goroutines & the scheduler** — M:N, leaks | ✅ | [go-concurrency 03](backend/go-concurrency/03-context-cancellation/) |
+| **Channels** — buffered/unbuffered, closing, range | ✅ | [go-concurrency 02](backend/go-concurrency/02-worker-pool/) |
+| **`select`, `context` & timeouts** — multiplexing, deadlines | ✅ | [go-concurrency 03](backend/go-concurrency/03-context-cancellation/) + [go-lang 08](backend/go-lang/08-http-and-context/) |
+| **`sync` package** — Mutex, WaitGroup, atomic | ✅ | [go-concurrency 01](backend/go-concurrency/01-data-race/) |
+| **Concurrency patterns** — worker pools, fan-in/out, pipelines | ✅ | [go-concurrency 02](backend/go-concurrency/02-worker-pool/) |
+| **The race detector** — spotting and fixing data races | ✅ | [go-concurrency 01](backend/go-concurrency/01-data-race/) |
+| **`net/http` & routers** — handlers, middleware, context propagation | ✅ | [go-lang 08](backend/go-lang/08-http-and-context/) |
+| **`encoding/json` & time** — struct tags, custom marshalling, monotonic clocks | ✅ | [go-lang 06](backend/go-lang/06-json-and-time/) |
+| **Modules & testing** — table-driven tests, benchmarks | ✅ | every drill; benchmarks in [go-lang 07](backend/go-lang/07-allocations/) |
+| **Memory model** — stack vs heap, escape analysis, GC basics | ✅ | [go-lang 07](backend/go-lang/07-allocations/) |
+| **Performance** — `pprof`, benchmarking, cutting allocations | 🟡 | `AllocsPerRun` + `-benchmem` + `-gcflags=-m` ✅ [go-lang 07](backend/go-lang/07-allocations/); pprof ⬜ |
+| **Escape analysis & allocations** — reading `-gcflags=-m` | ✅ | [go-lang 07](backend/go-lang/07-allocations/) |
+| **Composition & embedding** — method promotion, no inheritance | ✅ | [go-lang 08](backend/go-lang/08-http-and-context/) (the `Recorder`) |
+| **Type assertions & type switches** | ✅ | [go-lang 02](backend/go-lang/02-errors/) + [04](backend/go-lang/04-defer-panic-recover/) |
+| **Constants & `iota`** | 🟡 | used in [go-lang 08](backend/go-lang/08-http-and-context/); no dedicated drill |
+| **Reflection basics** — when to avoid it | 🟡 | used in [go-lang 03](backend/go-lang/03-nil-interface/); no dedicated drill |
+| **`database/sql`, pgx & sqlc** — query, scan, transactions; codegen vs ORM | ⬜ | the SQL itself in [postgres](backend/postgres/) |
+| **Tooling** — `gofmt`, `vet`, staticcheck, cross-compile | 🟡 | `vet` + `-race` in CI-shaped commands; staticcheck ⬜ |
+| **Fuzzing & coverage** | ⬜ | — |
+| **Idiomatic Go** — project layout, error idioms, naming | 🟡 | idioms throughout the references; no layout lab |
+| **gRPC & services** — protobuf, streaming, interceptors, deadlines | ⬜ | tier 8.2 |
+| **Production** — `slog`, graceful shutdown, distroless Docker | 🟡 | shutdown discussed in [go-lang 08](backend/go-lang/08-http-and-context/); `slog`/Docker ⬜ |
+| **Runtime & scheduler (GMP)** — work-stealing, `GOMAXPROCS` | ⬜ | — |
+| **Memory model & happens-before** — correct lock-free atomics | 🟡 | atomics ✅ [go-concurrency 01](backend/go-concurrency/01-data-race/); the model itself ⬜ |
+| **Advanced concurrency** — `errgroup`, weighted semaphores | ⬜ | the hand-rolled equivalents in [go-concurrency 02](backend/go-concurrency/02-worker-pool/) |
+| **Profiling & GC tuning** — pprof CPU/heap/block/mutex, trace viewer, `GOGC` | ⬜ | — |
+
 ---
 
 # Tier 9 — Build & ship (portfolio-grade) — *all ⬜*
@@ -343,21 +420,27 @@ The point of these is that they're **not** exercises. Each is a repo you'd show 
 | | Built | Notes |
 |---|---|---|
 | **Frontend** | 29 courses, 144 runnable labs | tiers 0–5 essentially complete |
-| **Backend** | 5 labs, **26 drills**, 51 tests | tier 8 is ~55% by item count |
+| **Backend** | 7 labs, **43 drills**, 51 tests | tier 8: 8.5, 8.8, 8.10, 8.11 substantially done; 8.2, 8.3, 8.7 not started |
 | **Applied / system design / portfolio** | nothing | tiers 6, 7, 9 |
 
-**Overall: roughly 68% of this roadmap exists.** The frontend is close to done; the backend, applied
+**By item: 130 ✅ · 21 🟡 · 49 ⬜** across 200 items.
+
+**Overall: roughly 70% of this roadmap exists.** The frontend is close to done; the backend, applied
 design, and portfolio tiers are where the remaining work is.
 
 ## The order I'd actually do it in
 
 1. **Tiers 0–2** in order. They compound, and skipping them is why people plateau.
-2. **Tier 8.4 + 8.5 + 8.6** (Postgres, messaging, security) — the built backend drills, in parallel
+2. **Tier 8.10** (the Node runtime) as soon as tier 0 is done — it needs no containers, and every
+   later backend tier assumes the event loop, streams and cancellation are second nature.
+3. **Tier 8.4 + 8.5 + 8.6** (Postgres, messaging, security) — the built backend drills, in parallel
    with tier 3. They need Docker rather than a browser, so they interleave well.
-3. **Tiers 3–5** — delivery, architecture, the user.
-4. **Tier 6** — applied components, once you have the pieces.
-5. **Tier 7** — system design, as conversation practice, continuously.
-6. **Tier 9** — one portfolio project, built properly, at the end.
+4. **Tier 8.11 + 8.5's Go drills** whenever you want the second language — they stand alone, and
+   the race detector teaches things single-threaded JavaScript cannot.
+5. **Tiers 3–5** — delivery, architecture, the user.
+6. **Tier 6** — applied components, once you have the pieces.
+7. **Tier 7** — system design, as conversation practice, continuously.
+8. **Tier 9** — one portfolio project, built properly, at the end.
 
 Detailed sequencing for the built material is in the [README](README.md#the-order-to-do-them-in),
 including three shorter routes if you don't have five months.

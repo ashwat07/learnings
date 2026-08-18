@@ -1,0 +1,143 @@
+// Drill 07 — reference. (Rename to reference.go to compile it.)
+
+package drill07
+
+import "strings"
+
+type Item struct {
+	ID    int
+	Value int
+}
+
+// Two allocations: one for the Builder's buffer (sized exactly by Grow), one for the string
+// header when String() hands the bytes over. Often it measures as one, because Builder's
+// String() uses unsafe to reuse the buffer rather than copying it — which is the entire reason
+// strings.Builder exists rather than everyone using bytes.Buffer.
+//
+// The naive version allocates once per concatenation, because Go strings are IMMUTABLE: `s += p`
+// cannot extend s, it must allocate a new string and copy both halves. Eight parts is fourteen
+// allocations and a quadratic amount of copying. In a loop over ten thousand rows it is the
+// whole profile.
+func JoinWith(parts []string, sep string) string {
+	if len(parts) == 0 {
+		return ""
+	}
+	n := len(sep) * (len(parts) - 1)
+	for _, p := range parts {
+		n += len(p)
+	}
+
+	var b strings.Builder
+	b.Grow(n) // <- the important line. Without it the buffer doubles its way up, ~4 allocations.
+	for i, p := range parts {
+		if i > 0 {
+			b.WriteString(sep)
+		}
+		b.WriteString(p)
+	}
+	return b.String()
+	// (strings.Join does exactly this, and is what you should actually call. Writing it once is
+	// how you learn to recognise the shape everywhere else — see Index below.)
+}
+
+// make([]int, 0, n), not var s []int. Growing from nil to 1,000 elements is about a dozen
+// reallocations and ~2,000 element copies; knowing the size makes it one allocation and none.
+//
+// Note the 0 length with capacity n. `make([]int, n)` would give you n ZEROES and then append
+// 1,000 more after them.
+func Collect(n int) []int {
+	s := make([]int, 0, n)
+	for i := 0; i < n; i++ {
+		s = append(s, i)
+	}
+	return s
+}
+
+// strconv.Itoa allocates a string you immediately throw away. Arithmetic does not allocate at
+// all. The general shape: a conversion to string in the middle of a computation is almost always
+// an allocation you did not need — and the strconv.Append* family exists for the cases where you
+// really are building bytes (AppendInt writes into a buffer you already own).
+func SumOfDigits(n int) int {
+	if n < 0 {
+		n = -n
+	}
+	total := 0
+	for n > 0 {
+		total += n % 10
+		n /= 10
+	}
+	return total
+}
+
+// A NOTE ON THE ONE THAT IS NOT HERE
+//
+// The obvious fifth target — "return a Stats instead of a *Stats, because the pointer escapes" —
+// is not in this drill, because when I measured it, it did not. Escape analysis is smarter than
+// the rule of thumb: if the caller never lets the pointer escape, &Stats{} stays on the stack and
+// allocates nothing. Small maps and small slices that do not escape get the same treatment.
+//
+// That is the actual lesson of this file. The rules of thumb (return values, avoid pointers,
+// preallocate) are worth knowing, but the compiler has already applied most of them, and the only
+// way to know which ones are load-bearing in YOUR code is testing.AllocsPerRun and -gcflags='-m'.
+// An optimisation you did not measure is a guess you made harder to read.
+
+// Same idea as Collect: tell make how many buckets you need. A map that grows rehashes
+// everything each time it doubles, so 500 inserts into an unsized map is ~17 allocations and
+// several complete rehashes; sized, it is 4.
+func Index(items []Item) map[int]Item {
+	m := make(map[int]Item, len(items))
+	for _, it := range items {
+		m[it.ID] = it
+	}
+	return m
+}
+
+/*
+STACK OR HEAP: WHO DECIDES
+
+Not you. Go has no `new` vs stack distinction that you control — the compiler runs ESCAPE
+ANALYSIS and puts a value on the heap only if it can prove it must. `&x` on a local is perfectly
+fine and often allocates nothing.
+
+See the decisions for yourself:
+
+	go build -gcflags='-m' ./07-allocations/
+	go build -gcflags='-m -m' ./...    # with reasons
+
+	./solution.go:71:10: &Stats{} escapes to heap
+	./solution.go:44:2:  moved to heap: s
+
+What makes something escape:
+  · returning a pointer to it
+  · storing it in something that outlives the function (a global, a struct field, a channel)
+  · passing it to an interface method — an interface holds a pointer, so the value must be
+    somewhere stable. THIS is why fmt.Sprintf("%d", n) allocates: n is boxed into an `any`.
+  · a closure capturing it by reference and outliving the frame
+  · a slice or map whose size is not known at compile time
+
+MEASURING, IN ORDER OF EFFORT
+
+	testing.AllocsPerRun   an exact count, assertable in a unit test. Start here.
+	go test -benchmem      ns/op, B/op, allocs/op. The three numbers that matter.
+	-gcflags='-m'          why the compiler decided what it decided.
+	pprof                  go test -memprofile mem.out; go tool pprof -alloc_objects
+	                       Use -alloc_objects to find allocation COUNT (GC pressure) and
+	                       -inuse_space to find leaks. They point at different lines.
+	benchstat              compare two benchmark runs statistically. A single -bench number is
+	                       noise; benchstat tells you whether the difference is real.
+
+THE ONES WORTH REACHING FOR, IN ORDER
+  1. preallocate: make([]T, 0, n) and make(map[K]V, n). Free, always correct.
+  2. strings.Builder with Grow instead of +=.
+  3. return values, not pointers, for small structs.
+  4. avoid the interface boxing: strconv.Itoa over fmt.Sprintf, a typed logger method over a
+     ...any one.
+  5. reuse buffers with sync.Pool — but only after measuring. A Pool has real costs (per-P
+     caches, a GC that empties it, and the ever-present risk of handing out a buffer someone
+     still holds), and it is the optimisation most often applied to code that did not need it.
+
+AND THE WARNING
+None of this matters until you have measured. Go's allocator is fast; a service that allocates
+a few times per request is fine. Do this work when a profile puts you here, and keep the
+AllocsPerRun test afterwards so it does not regress.
+*/

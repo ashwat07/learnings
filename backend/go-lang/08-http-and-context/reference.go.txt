@@ -1,0 +1,261 @@
+// Drill 08 — reference. (Rename to reference.go to compile it.)
+
+package drill08
+
+import (
+	"context"
+	"net/http"
+	"sync"
+	"time"
+)
+
+// ---------------------------------------------------------------------------
+// Request-scoped values.
+
+// An UNEXPORTED type with an unexported value. No other package can construct this key, so no
+// other package can read your value or overwrite it — even if it uses the identical string
+// "requestID", because context compares keys by TYPE as well as value.
+//
+// The struct{} variant costs zero bytes and is the most common form:
+//
+//	type ctxKey struct{}
+//	ctx = context.WithValue(ctx, ctxKey{}, id)
+//
+// This is not paranoia. context.Value keys live in one global namespace shared with every
+// dependency in your build, and the failure mode — a middleware in some library silently
+// shadowing your user id — is invisible and untestable.
+type contextKey int
+
+const requestIDKey contextKey = iota
+
+// The exported surface is two FUNCTIONS, not the key. Callers never touch context.Value
+// directly: they cannot get the type wrong, and you can change the representation later.
+func WithRequestID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, requestIDKey, id)
+}
+
+func RequestID(ctx context.Context) string {
+	s, _ := ctx.Value(requestIDKey).(string)
+	return s
+}
+
+// ---------------------------------------------------------------------------
+// Middleware.
+
+type Middleware func(http.Handler) http.Handler
+
+// Wrap BACKWARDS so the first middleware listed is the outermost — i.e. it runs first on the way
+// in and last on the way out. Wrapping forwards compiles, runs, and gives you the reverse order,
+// which puts your recover middleware INSIDE the thing it was supposed to protect.
+func Chain(h http.Handler, mw ...Middleware) http.Handler {
+	for i := len(mw) - 1; i >= 0; i-- {
+		h = mw[i](h)
+	}
+	return h
+}
+
+// Embedding http.ResponseWriter gives you every method for free — including the ones you have
+// never heard of — and you override only what you need. That matters: a hand-written struct with
+// three methods silently breaks http.Flusher, http.Hijacker and io.ReaderFrom, which is how
+// wrapping a ResponseWriter kills server-sent events and WebSocket upgrades in real codebases.
+// (If you need those to survive, assert and forward them, or use the httpsnoop package.)
+type Recorder struct {
+	http.ResponseWriter
+	Status int
+	Bytes  int
+}
+
+func (r *Recorder) WriteHeader(code int) {
+	if r.Status == 0 {
+		r.Status = code // only the FIRST call counts, as with the real ResponseWriter
+	}
+	r.ResponseWriter.WriteHeader(code)
+}
+
+// Write has to be overridden too, and not only for the byte count: a handler that never calls
+// WriteHeader gets an implicit 200 on the first Write, and a Recorder that does not know this
+// reports 0.
+func (r *Recorder) Write(b []byte) (int, error) {
+	if r.Status == 0 {
+		r.Status = http.StatusOK
+	}
+	n, err := r.ResponseWriter.Write(b)
+	r.Bytes += n
+	return n, err
+}
+
+func RequestIDMiddleware(newID func() string) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// An incoming id WINS. That is what makes a trace span more than one service; if
+			// every hop generates its own, you have ids and no trace.
+			id := r.Header.Get("X-Request-Id")
+			if id == "" {
+				id = newID()
+			}
+			w.Header().Set("X-Request-Id", id)
+			// r.WithContext returns a SHALLOW COPY of the request. There is no way to mutate a
+			// request's context in place, deliberately: the handler you call must be given the
+			// new request, and forgetting that is why "my middleware set the value and the
+			// handler cannot see it".
+			next.ServeHTTP(w, r.WithContext(WithRequestID(r.Context(), id)))
+		})
+	}
+}
+
+func ObserveMiddleware(observe func(status int, bytes int)) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			rec := &Recorder{ResponseWriter: w}
+			// defer, so a panic further in is still observed — and so this works no matter how
+			// many return paths the handler has.
+			defer func() {
+				if rec.Status == 0 {
+					rec.Status = http.StatusOK
+				}
+				observe(rec.Status, rec.Bytes)
+			}()
+			next.ServeHTTP(rec, r)
+		})
+	}
+}
+
+func RecoverMiddleware(onPanic func(any)) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if v := recover(); v != nil {
+					onPanic(v)
+					// A generic message. The panic value can contain a query, a token, or a
+					// customer's data; it belongs in your logs, never in the response.
+					http.Error(w, "internal server error", http.StatusInternalServerError)
+				}
+			}()
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Cancellation.
+
+// The shape for calling something that does NOT honour its context. Run it in a goroutine, and
+// select on the context alongside the result.
+//
+// Note honestly what this does and does not achieve: the caller stops WAITING, but slow() keeps
+// running to completion in its goroutine. You have bounded your latency, not the load on the
+// dependency. That is why the buffered channel matters — with an unbuffered one, the abandoned
+// goroutine blocks on send forever and you have a goroutine leak on every timeout.
+//
+// The real fix is upstream: make slow() take the context and honour it. Everything in the
+// standard library does — database/sql, net/http, os/exec — and so should your code.
+func Fetch(ctx context.Context, slow func(context.Context) (string, error)) (string, error) {
+	type result struct {
+		v   string
+		err error
+	}
+	ch := make(chan result, 1) // BUFFERED: the sender must never block after we stop listening
+
+	go func() {
+		v, err := slow(ctx)
+		ch <- result{v, err}
+	}()
+
+	select {
+	case r := <-ch:
+		return r.v, r.err
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+}
+
+func FetchAll(ctx context.Context, ids []int, each time.Duration, fetch func(context.Context, int) (string, error)) ([]string, error) {
+	out := make([]string, len(ids)) // indexed by position: no locking needed, order preserved
+	errs := make([]error, len(ids))
+
+	var wg sync.WaitGroup
+	for i, id := range ids {
+		wg.Add(1)
+		go func(i, id int) {
+			defer wg.Done()
+			// A PER-CALL budget derived from the caller's context. The child inherits the
+			// parent's cancellation — so cancelling the request still stops everything — and
+			// adds its own, tighter deadline. One slow shard costs `each`, not the whole
+			// request's budget.
+			c, cancel := context.WithTimeout(ctx, each)
+			defer cancel() // ALWAYS. A WithTimeout you do not cancel leaks a timer and a
+			// goroutine until the deadline fires. `go vet` has a check for
+			// exactly this (lostcancel) — leave it on.
+			out[i], errs[i] = fetch(c, id)
+		}(i, id)
+	}
+	wg.Wait()
+
+	for _, err := range errs {
+		if err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
+/*
+CONTEXT: THE RULES, AND THE REASONS
+
+  1. FIRST PARAMETER, ALWAYS NAMED ctx. `func Do(ctx context.Context, ...)`. Not a struct field,
+     not an optional argument. The one exception people argue about is a long-lived struct that
+     represents a single operation — and it is still usually wrong.
+
+  2. NEVER STORE A CONTEXT IN A STRUCT. A context describes ONE call's deadline and cancellation.
+     Stored on a client struct, it makes every future call inherit the first call's deadline,
+     which is a bug that only appears after the first timeout.
+
+  3. VALUES ARE FOR REQUEST-SCOPED METADATA ONLY: request id, trace span, authenticated user,
+     locale. Not for a database handle, not for configuration, not for optional arguments. The
+     test is: would this be in a distributed trace's baggage? If not, it is a parameter.
+
+  4. CANCELLATION FLOWS DOWN THE TREE. Cancelling a parent cancels every child; cancelling a
+     child does not touch the parent. That is the whole design.
+
+  5. ALWAYS defer cancel(). Even when the context has a timeout that will fire anyway. `go vet`
+     flags the ones you miss.
+
+  6. ctx.Err() TELLS YOU WHICH: context.Canceled (someone gave up) or context.DeadlineExceeded
+     (time ran out). Map them differently — a canceled request is a client disconnect and should
+     not page anyone; a deadline exceeded is your dependency being slow, and should.
+
+  7. IN AN HTTP HANDLER, r.Context() IS ALREADY CANCELLED when the client disconnects. Pass it
+     into your database query and stop doing work for a browser tab that closed.
+
+THE SERVER SETTINGS THAT ARE NOT DEFAULTS AND SHOULD BE
+
+	srv := &http.Server{
+	    Addr:              ":8080",
+	    Handler:           mux,
+	    ReadHeaderTimeout: 5 * time.Second,   // without this, Slowloris keeps a socket forever
+	    ReadTimeout:       15 * time.Second,
+	    WriteTimeout:      30 * time.Second,
+	    IdleTimeout:       120 * time.Second,
+	    MaxHeaderBytes:    1 << 20,
+	}
+
+http.ListenAndServe(":8080", mux) has NO timeouts at all. Every one of those fields defaults to
+zero, meaning "no limit", and a public server without ReadHeaderTimeout can be held open by a
+client that sends one header byte a minute.
+
+And the counterpart to Node's drill 07:
+
+	srv.Shutdown(ctx)   // stop accepting, drain in-flight, give up when ctx expires
+
+Shutdown does NOT close hijacked connections (WebSockets) or active long-polls — track those
+yourself. RegisterOnShutdown is the hook for telling them to stop.
+
+ROUTING
+Since Go 1.22, net/http's own ServeMux does method matching and path wildcards:
+
+	mux.HandleFunc("GET /users/{id}", h)   //  r.PathValue("id")
+
+which removes the main reason to reach for chi or gorilla/mux. What third-party routers still
+give you is grouped middleware and a few conveniences — worth it for a large service, not worth
+a dependency for a small one.
+*/

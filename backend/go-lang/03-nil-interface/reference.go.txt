@@ -1,0 +1,105 @@
+// Drill 03 — reference. (Rename to reference.go to compile it.)
+
+package drill03
+
+import (
+	"fmt"
+	"reflect"
+)
+
+type NotFoundError struct{ ID int }
+
+func (e *NotFoundError) Error() string { return fmt.Sprintf("id %d not found", e.ID) }
+
+var store = map[int]string{1: "ada"}
+
+// The fix is one word: declare the variable as `error`, not as the concrete type. Then the
+// success path leaves it as a genuine nil interface — both words zero — and `err != nil` is
+// false, which is what the caller means.
+//
+// The rule that prevents this entirely: NEVER declare a local variable, a struct field, or a
+// return type as a concrete error type. Only ever `error`.
+func Lookup(id int) (string, error) {
+	name, ok := store[id]
+	if !ok {
+		return "", &NotFoundError{ID: id}
+	}
+	return name, nil
+}
+
+func Process(id int) string {
+	name, err := Lookup(id)
+	if err != nil {
+		return "error: " + err.Error()
+	}
+	return "ok: " + name
+}
+
+func FirstError(errs []error) error {
+	for _, e := range errs {
+		if !IsReallyNil(e) {
+			return e
+		}
+	}
+	return nil
+}
+
+// Defensive, and reflection is genuinely the only way to ask this question. Use it at a
+// BOUNDARY — where errors arrive from code you do not control — not everywhere. The real fix is
+// upstream: return `error`, never a concrete pointer type.
+func IsReallyNil(err error) bool {
+	if err == nil {
+		return true
+	}
+	v := reflect.ValueOf(err)
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Map, reflect.Slice, reflect.Chan, reflect.Func, reflect.Interface, reflect.UnsafePointer:
+		return v.IsNil()
+	default:
+		return false
+	}
+}
+
+/*
+WHY AN INTERFACE IS TWO WORDS
+
+	type iface struct { tab *itab; data unsafe.Pointer }
+
+`tab` says what concrete type is in there (and where its methods live); `data` points at the
+value. `i == nil` is true only when both are zero. Assigning a nil *T fills in `tab` and leaves
+`data` nil — a non-nil interface holding a nil pointer.
+
+Three ways this reaches production:
+
+  1. The one above: a concrete-typed local returned as error.
+
+  2. A struct field:
+        type Result struct { Err *MyError }
+        func (r Result) Error() error { return r.Err }     // always non-nil interface
+
+  3. The really nasty one — a nil-returning helper used in a call:
+        func maybeErr() *MyError { return nil }
+        var err error = maybeErr()                          // not nil
+
+WHY THE COMPILER CANNOT HELP
+The conversion from *NotFoundError to error is legal and correct. There is nothing to warn
+about; the surprise is in the semantics of comparison, not in the types. `go vet` has a check for
+some of these shapes (nilness in the staticcheck family: SA4023) — worth turning on, and it will
+not catch every case.
+
+IT IS NOT JUST ERRORS
+The same trap hits any interface: io.Writer, http.Handler, a logger interface, your own
+Repository interface. `var w io.Writer = (*bytes.Buffer)(nil)` is non-nil and panics on first
+use. Errors are just where you meet it most, because errors are the interface Go code returns
+most.
+
+THE HABITS THAT MAKE IT IMPOSSIBLE
+  · return an error type as `error`, always
+  · return nil literally on the success path — `return x, nil`, not a variable
+  · a method on a pointer receiver should tolerate a nil receiver if it can be called on one:
+      func (e *NotFoundError) Error() string {
+          if e == nil { return "<nil>" }
+          ...
+      }
+    That turns a panic into a bad log line, which is the better failure.
+*/

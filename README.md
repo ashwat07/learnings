@@ -54,7 +54,9 @@ the same four questions every time:
 | [Multi-device](multi-device/) | Input modalities, container queries, TV & the 10-foot UI, adaptive delivery | 4 |
 | [Internationalization](i18n/) | `Intl`, plurals & ICU messages, bidi & typography, delivery | 4 |
 | **Backend** | | |
-| [Backend engineering](backend/) | Real Postgres + Redis. Plans, indexing, locking, N+1, caching, delivery guarantees, API craft, and security drills where **the runner plays the attacker** | 5 labs, **19 drills**, 25 API tests |
+| [Backend engineering](backend/) | Real Postgres + Redis. Plans, indexing, locking, N+1, caching, delivery guarantees, API craft, and security drills where **the runner plays the attacker** | 5 labs, **26 drills**, 51 tests |
+| [The Node runtime](backend/node-runtime/) | The event loop, streams & backpressure, binary framing, cancellation, graceful shutdown, worker threads — **needs no containers** | 2 labs, **9 drills** |
+| [Go](backend/go-lang/) · [Go concurrency](backend/go-concurrency/) | Slices, errors, the nil interface, defer, generics, allocations, `net/http` — plus data races under **`-race`** | **11 drills** |
 | **Security & delivery** | | |
 | [Security & auth](security-and-auth/) | XSS, CSP, CSRF, tokens & sessions, supply chain | 5 |
 | [Quality & delivery](quality-and-delivery/) | Testing strategy, observability, build speed, release safety, the system | 6 |
@@ -155,17 +157,23 @@ Now that you know the machine, learn to point at the number.
 
 ### Phase 7.5 — The other side of the API
 
-Optional, and parallel to everything above — start it whenever you like. It needs Docker rather than
-a browser, and it is the only part of this repo with **drills**: problems with machine-checked
-answers, not demonstrations.
+Optional, and parallel to everything above — start it whenever you like. It is the part of this repo
+with **drills**: problems with machine-checked answers, not demonstrations.
 
 | # | Course | Why here | Time |
 |---|---|---|---|
-| — | [backend](backend/) | plans, indexing, locking, N+1, caching & delivery guarantees, API craft — against a real Postgres and Redis | ~2 weeks for what exists |
+| — | [node-runtime](backend/node-runtime/) | the event loop, streams, framing, cancellation, shutdown, workers — **no Docker**, so start here | ~1 week |
+| — | [backend](backend/) | plans, indexing, locking, N+1, caching & delivery guarantees, API craft, security — against a real Postgres and Redis | ~3 weeks for what exists |
+| — | [go-lang](backend/go-lang/) + [go-concurrency](backend/go-concurrency/) | a second language, and the race detector teaches what single-threaded JavaScript cannot | ~1 week |
 
 > **Do the drills rather than reading the labs**, if you only do one — they fail until you solve
 > them, and the thresholds are set so a plausible-but-wrong answer still fails.
-> `npm run drills:pg` · `npm run drills:cache` · `npm run drills:sec` · `npm run test:api`
+> `npm run drills:node` · `npm run drills:pg` · `npm run drills:cache` · `npm run drills:sec`
+> · `npm run drills:jobs` · `npm run drills:golang` · `npm run drills:go` · `npm run test:api`
+> · `npm run test:reliability`
+
+> The Node runtime drills need **nothing but `node`** — no Docker, no database. If you have been
+> putting the backend off because of the setup, start with those.
 
 ### Phase 8 — The user, and the team
 

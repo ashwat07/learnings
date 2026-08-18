@@ -1,0 +1,152 @@
+// Drill 04 — reference. (Rename to reference.go to compile it.)
+
+package drill04
+
+import (
+	"errors"
+	"fmt"
+)
+
+type Closer struct {
+	Name   string
+	closed *[]string
+}
+
+func (c Closer) Close() { *c.closed = append(*c.closed, c.Name) }
+
+// The point of the idiom is that acquisition and release sit on ADJACENT LINES, so you cannot
+// add a return path that skips the cleanup. LIFO order falls out for free and is what you want:
+// c may depend on b, which may depend on a.
+// Note the NAMED return. Without it, `return closed` copies the (still empty) slice header
+// before any deferred Close runs, and the caller gets nothing — the third defer fact, biting in
+// the other direction.
+func CloseOrder() (closed []string) {
+	a := Closer{"a", &closed}
+	defer a.Close()
+	b := Closer{"b", &closed}
+	defer b.Close()
+	c := Closer{"c", &closed}
+	defer c.Close()
+	return
+}
+
+// NAMED RETURN VALUES are what make this work. `result` and `err` are real variables that exist
+// for the whole call, so the deferred closure can still assign to them after the return statement
+// has run. With unnamed returns there is nothing to assign to, and recover() would swallow the
+// panic while the caller received the zero value and a nil error — worse than crashing.
+func SafeDivide(a, b int) (result int, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			result = 0
+			err = fmt.Errorf("safe divide: %v", r)
+		}
+	}()
+	return a / b, nil
+}
+
+func LogValue() (logged int) {
+	x := 1
+	defer func() { logged = x }() // a CLOSURE: reads x at exit -> 2
+	x = 2
+	return 0 // ...and overwrites the returned 0
+}
+
+// Two ways to fix a defer-in-a-loop, and they are not equivalent:
+//
+//  1. an inner function (below), so "function exit" happens once per iteration
+//  2. no defer at all — call release() explicitly at the end of the body
+//
+// Use (1) when the body has multiple exits or can panic; use (2) when it is three lines and
+// obviously linear. What you must not do is leave the defer in the loop and hope n stays small.
+func SumWithCleanup(n int, open func(int) func()) int {
+	total := 0
+	for i := 0; i < n; i++ {
+		func() {
+			release := open(i)
+			defer release()
+			total += i
+		}()
+	}
+	return total
+}
+
+// recover() returns `any`, because panic takes `any`. Preserve an error if you were given one —
+// %w keeps errors.Is working through the panic, which turns a crash into an ordinary error the
+// caller can branch on.
+func Guard(fn func()) (err error) {
+	defer func() {
+		switch r := recover().(type) {
+		case nil:
+		case error:
+			err = fmt.Errorf("recovered: %w", r)
+		default:
+			err = fmt.Errorf("recovered: %v", r)
+		}
+	}()
+	fn()
+	return nil
+}
+
+var ErrExpected = errors.New("expected failure")
+
+func Retry(attempts int, fn func(attempt int) error) error {
+	var last error
+	for i := 0; i < attempts; i++ {
+		// Each attempt gets its own recover scope. Without the wrapper, a panic on attempt 1
+		// unwinds out of Retry entirely and there is no attempt 2.
+		var attemptErr error
+		if panicErr := Guard(func() { attemptErr = fn(i) }); panicErr != nil {
+			last = panicErr
+		} else {
+			last = attemptErr
+		}
+		if last == nil {
+			return nil
+		}
+	}
+	return fmt.Errorf("all %d attempts failed: %w", attempts, last)
+}
+
+/*
+THE THREE defer FACTS
+
+  1. ARGUMENTS ARE EVALUATED AT THE defer STATEMENT.
+        defer fmt.Println(i)        // prints i as it was HERE
+        defer func(){ fmt.Println(i) }()   // prints i as it is at EXIT
+     Both are useful. `defer trace(time.Now())` relies on the first; a cleanup that has to see
+     the final state relies on the second.
+
+  2. IT RUNS AT FUNCTION EXIT, NOT BLOCK EXIT. Hence the loop problem.
+
+  3. IT CAN MODIFY NAMED RETURN VALUES. That is the entire mechanism behind recover-to-error, and
+     also behind the wrapping idiom:
+        defer func() { if err != nil { err = fmt.Errorf("saving user: %w", err) } }()
+
+DEFERRED ERRORS ARE STILL ERRORS
+`defer f.Close()` discards Close's error. For a file you WROTE, that error may be the one that
+tells you the data never reached the disk. The correct form:
+
+	defer func() {
+	    if cerr := f.Close(); cerr != nil && err == nil { err = cerr }
+	}()
+
+For a file you only read, `defer f.Close()` is fine.
+
+WHERE recover ACTUALLY WORKS
+Only in a function called DIRECTLY by defer, in the panicking goroutine. Not:
+  · one call deeper (`defer cleanup()` where cleanup calls recover — returns nil)
+  · in a different goroutine. A panic in a goroutine you started kills the WHOLE PROCESS, and no
+    recover anywhere else can stop it. Every goroutine that runs untrusted or fallible work needs
+    its own deferred recover, at its own top.
+
+WHEN TO PANIC AT ALL
+  panic     a bug: an impossible switch branch, a nil map write, a broken invariant in a
+            constructor's arguments. Something that means the program is wrong, not the input.
+  error     anything the caller might reasonably want to handle. Which is almost everything.
+
+And recover at BOUNDARIES only: the HTTP middleware, the worker loop, the plugin call site — one
+per goroutine, at the top. net/http already does this per request, which is why a panic in a
+handler returns 500 instead of killing your server. That is also why a panic in a goroutine your
+handler spawned DOES kill the server: it is a different goroutine, and http's recover is not on
+its stack.
+*/

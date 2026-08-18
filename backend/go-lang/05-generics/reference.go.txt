@@ -1,0 +1,164 @@
+// Drill 05 — reference. (Rename to reference.go to compile it.)
+
+package drill05
+
+import "cmp"
+
+// The TILDE is the whole lesson. `int | float64` is a type set containing exactly those two
+// types. `~int | ~float64` is the set of all types whose UNDERLYING type is one of them — which
+// includes `type Celsius float64`, `type UserID int`, and every unit type anyone has ever
+// defined. Without ~, your generic function rejects precisely the types that most needed it.
+type Number interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+		~float32 | ~float64
+}
+
+// Two independent type parameters. THIS is what generics buy you over interfaces: with
+// []interface{} the output element type is erased and the caller has to type-assert every item.
+// Note that U cannot be inferred from the slice — it comes from fn's return type, which is why
+// Map(s, strconv.Itoa) works with no explicit instantiation.
+func Map[T any, U any](s []T, fn func(T) U) []U {
+	out := make([]U, len(s)) // exact size known: one allocation, no growth (drill 07)
+	for i, v := range s {
+		out[i] = fn(v)
+	}
+	return out
+}
+
+func Filter[T any](s []T, keep func(T) bool) []T {
+	out := make([]T, 0, len(s))
+	for _, v := range s {
+		if keep(v) {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+func Reduce[T any, A any](s []T, init A, fn func(A, T) A) A {
+	acc := init
+	for _, v := range s {
+		acc = fn(acc, v)
+	}
+	return acc
+}
+
+func Sum[T Number](s []T) T {
+	var total T
+	for _, v := range s {
+		total += v
+	}
+	return total
+}
+
+// cmp.Ordered (Go 1.21+) is the standard constraint for "supports < and >": every numeric type
+// plus string. It already includes the ~, so named types work. Prefer the standard constraints
+// over hand-rolled ones — `cmp.Ordered`, `comparable`, and the golang.org/x/exp/constraints set
+// before it moved into the standard library.
+func MaxOf[T cmp.Ordered](s []T) T {
+	var best T
+	if len(s) == 0 {
+		return best
+	}
+	best = s[0]
+	for _, v := range s[1:] {
+		if v > best {
+			best = v
+		}
+	}
+	return best
+}
+
+// `comparable` is a constraint the LANGUAGE defines: types usable with == and as map keys. It
+// excludes slices, maps and funcs. Note it is not the same as cmp.Ordered — you can compare two
+// structs for equality but you cannot ask which is larger.
+func Keys[K comparable, V any](m map[K]V) []K {
+	out := make([]K, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
+}
+
+type Set[T comparable] struct {
+	items map[T]struct{}
+}
+
+func NewSet[T comparable](items ...T) *Set[T] {
+	s := &Set[T]{items: make(map[T]struct{}, len(items))}
+	for _, v := range items {
+		s.Add(v)
+	}
+	return s
+}
+
+// Lazily create the map so the ZERO VALUE is usable. `var s Set[string]; s.Add("x")` should
+// work — Go's own sync.Mutex, bytes.Buffer and strings.Builder all follow this rule, and a type
+// that requires a constructor is a type people will forget to construct.
+func (s *Set[T]) Add(v T) {
+	if s.items == nil {
+		s.items = make(map[T]struct{})
+	}
+	s.items[v] = struct{}{}
+}
+
+// struct{}{} is the zero-width value: a map[T]struct{} stores no value bytes at all, where
+// map[T]bool stores one byte per entry. For a set of ten million ids that is ten megabytes.
+func (s *Set[T]) Has(v T) bool { _, ok := s.items[v]; return ok }
+func (s *Set[T]) Len() int     { return len(s.items) }
+
+func (s *Set[T]) Union(o *Set[T]) *Set[T] {
+	out := &Set[T]{items: make(map[T]struct{}, len(s.items)+len(o.items))}
+	for v := range s.items {
+		out.Add(v)
+	}
+	for v := range o.items {
+		out.Add(v)
+	}
+	return out
+}
+
+func Ptr[T any](v T) *T { return &v }
+
+func Coalesce[T comparable](vals ...T) T {
+	var zero T
+	for _, v := range vals {
+		if v != zero {
+			return v
+		}
+	}
+	return zero
+}
+
+/*
+WHEN GENERICS ARE THE WRONG ANSWER
+
+The Go proverb is "a little copying is better than a little dependency", and it has a generics
+corollary: a type parameter you add speculatively makes every call site harder to read for no
+benefit. Reach for generics when you would otherwise write the SAME function twice, or write it
+once with interface{} and type assertions.
+
+Do not use generics for:
+  · behaviour. If you are constraining on a method set, you wanted an interface — that is what
+    interfaces are, and a plain interface parameter is simpler at every call site.
+  · one implementation. `func Process[T Order](o T)` with exactly one T is an obfuscated
+    `func Process(o Order)`.
+  · avoiding an interface you should have defined. `[T any]` that then type-switches on T is
+    strictly worse than `any`.
+
+WHAT YOU STILL CANNOT DO (as of Go 1.22)
+  · methods cannot have their own type parameters. `func (s *Set[T]) MapTo[U any]()` does not
+    compile — that is why Map is a free function, and why Go's generic libraries are packages of
+    functions rather than fluent chains.
+  · no specialisation, no variance, no operator constraints beyond the built-in type sets.
+  · a struct field cannot be constrained to "has a field X" — only method sets and type sets.
+
+THE PERFORMANCE FOOTNOTE
+Go compiles generics with GC SHAPE STENCILING: one instantiation per pointer-shaped type, plus
+one per distinct non-pointer layout, with a dictionary passed at runtime for the rest. So it is
+not C++ monomorphisation (no code-size explosion) and not Java erasure (no boxing of ints). In
+practice a generic function over a pointer type may be marginally slower than a hand-written
+one, and a generic function over int is usually identical. Measure before you care — drill 07
+shows you how.
+*/
