@@ -59,6 +59,11 @@ the same four questions every time:
 | [Security & auth](security-and-auth/) | XSS, CSP, CSRF, tokens & sessions, supply chain | 5 |
 | [Quality & delivery](quality-and-delivery/) | Testing strategy, observability, build speed, release safety, the system | 6 |
 
+> **Looking for the whole picture?** [ROADMAP.md](ROADMAP.md) maps **every** topic — including the
+> backend, applied component design, product-scale system design and the portfolio tier — into ten
+> tiers, with an honest ✅/🟡/⬜ status for each item and a definition of "done" per tier. This
+> README sequences what is *built*; the roadmap covers what mastery *requires*.
+
 ## The order to do them in
 
 **29 courses, 178 labs.** The order below is not arbitrary — each phase uses the mechanisms the

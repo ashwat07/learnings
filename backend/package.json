@@ -12,7 +12,10 @@
     "test:api": "node --test api-craft/test/",
     "drills:pg": "node postgres/drills/run.mjs",
     "drills:cache": "node caching-and-queues/drills/run.mjs",
-    "drills:sec": "node auth-and-security/drills/run.mjs"
+    "drills:sec": "node auth-and-security/drills/run.mjs",
+    "drills:jobs": "node jobs-and-messaging/drills/run.mjs",
+    "drills:go": "cd go-concurrency && go test -race ./...",
+    "test:reliability": "node --test reliability/test/"
   },
   "dependencies": {
     "fastify": "^5.12.1",

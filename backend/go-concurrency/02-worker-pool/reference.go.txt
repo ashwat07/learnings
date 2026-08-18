@@ -1,0 +1,56 @@
+// The canonical Go worker pool: N goroutines reading from one channel.
+//
+//	func Process(jobs []int, maxConcurrent int, do func(int) (int, error)) ([]int, error) {
+//	    type item struct{ idx, job int }
+//	    in := make(chan item)
+//	    results := make([]int, len(jobs))
+//
+//	    var (
+//	        wg       sync.WaitGroup
+//	        mu       sync.Mutex          // guards firstErr
+//	        firstErr error
+//	    )
+//
+//	    for w := 0; w < maxConcurrent; w++ {
+//	        wg.Add(1)
+//	        go func() {
+//	            defer wg.Done()
+//	            for it := range in {           // ranges until `in` is CLOSED
+//	                r, err := do(it.job)
+//	                if err != nil {
+//	                    mu.Lock()
+//	                    if firstErr == nil {
+//	                        firstErr = err
+//	                    }
+//	                    mu.Unlock()
+//	                    continue
+//	                }
+//	                results[it.idx] = r        // distinct indices: no lock needed
+//	            }
+//	        }()
+//	    }
+//
+//	    for i, j := range jobs {
+//	        in <- item{i, j}
+//	    }
+//	    close(in)                              // THIS is what ends the workers
+//	    wg.Wait()
+//	    return results, firstErr
+//	}
+//
+// Three things worth internalising:
+//
+//  1. THE POOL IS N GOROUTINES OVER ONE CHANNEL, not a goroutine per job with a semaphore. It is
+//     simpler, it allocates less, and the concurrency limit is structural rather than enforced.
+//
+//  2. `for x := range ch` EXITS WHEN THE CHANNEL IS CLOSED. Forgetting `close(in)` is a deadlock:
+//     wg.Wait() waits for workers that are waiting for work that will never come. Closing is the
+//     SENDER's job, always — closing from a receiver panics the next send.
+//
+//  3. WRITING TO DISTINCT INDICES OF A SLICE FROM MULTIPLE GOROUTINES IS SAFE. The slice header is
+//     never written, and no two workers touch the same element. Sharing `firstErr` is NOT safe,
+//     which is why it needs the mutex — and why the starting code fails `-race` even though the
+//     results are correct.
+//
+// In production, reach for golang.org/x/sync/errgroup with SetLimit: it is this, plus context
+// cancellation on first error.

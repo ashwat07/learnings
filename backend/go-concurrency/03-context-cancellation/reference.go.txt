@@ -1,0 +1,55 @@
+// The shape that gets all three properties: concurrent, cancellable, and leak-free.
+//
+//	func FetchAll(ctx context.Context) ([]string, error) {
+//	    backends := []struct {
+//	        name string
+//	        d    time.Duration
+//	    }{{"users", 60 * time.Millisecond}, {"orders", 80 * time.Millisecond}, {"prefs", 70 * time.Millisecond}}
+//
+//	    // BUFFERED, with room for every result. With an unbuffered channel, a goroutine whose
+//	    // result nobody reads (because we returned early on cancellation) blocks forever — and
+//	    // that is the goroutine leak the test is looking for.
+//	    type result struct {
+//	        s   string
+//	        err error
+//	    }
+//	    ch := make(chan result, len(backends))
+//
+//	    for _, b := range backends {
+//	        go func(name string, d time.Duration) {
+//	            s, err := Fetch(ctx, name, d)     // pass ctx DOWN, so the work itself stops
+//	            ch <- result{s, err}
+//	        }(b.name, b.d)
+//	    }
+//
+//	    out := make([]string, 0, len(backends))
+//	    for range backends {
+//	        select {
+//	        case r := <-ch:
+//	            if r.err != nil {
+//	                return nil, r.err
+//	            }
+//	            out = append(out, r.s)
+//	        case <-ctx.Done():
+//	            return nil, ctx.Err()             // return immediately; the goroutines see ctx too
+//	        }
+//	    }
+//	    return out, nil
+//	}
+//
+// THE THREE RULES:
+//
+//  1. ctx IS THE FIRST PARAMETER, AND YOU PASS IT DOWN. A function that takes a ctx and then calls
+//     context.Background() has broken the chain for everything beneath it. This is the single most
+//     common context bug in Go.
+//
+//  2. EVERY GOROUTINE MUST HAVE A WAY TO EXIT. Sending on a channel nobody will read is a leak, and
+//     a leak in Go is not collected — the goroutine, its stack and everything it references stay
+//     alive for the life of the process. A buffered channel or a `select` with `<-ctx.Done()` on
+//     the send is the fix.
+//
+//  3. CANCELLATION IS ADVISORY. ctx.Done() closing does not stop anything by itself; it is a signal
+//     that cooperating code checks. Code that does not check it keeps running.
+//
+// And errgroup.WithContext does all of this for you, including cancelling siblings on the first
+// error. Write it by hand once, then use the library.

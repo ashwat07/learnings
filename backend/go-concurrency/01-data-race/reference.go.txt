@@ -1,0 +1,27 @@
+// Three correct answers, and they are NOT interchangeable.
+//
+// 1. sync/atomic — the right choice for a single counter. No lock, no contention, one instruction.
+//    It does not compose: you cannot atomically update two fields.
+//
+//        type Counter struct{ value atomic.Int64 }
+//        func (c *Counter) Inc()       { c.value.Add(1) }
+//        func (c *Counter) Value() int { return int(c.value.Load()) }
+//
+// 2. sync.Mutex — the right choice as soon as the invariant spans more than one word. Slower under
+//    contention, and it composes: everything between Lock and Unlock is one atomic step.
+//
+//        type Counter struct {
+//            mu    sync.Mutex
+//            value int
+//        }
+//        func (c *Counter) Inc()       { c.mu.Lock(); c.value++; c.mu.Unlock() }
+//        func (c *Counter) Value() int { c.mu.Lock(); defer c.mu.Unlock(); return c.value }
+//
+//    Note Value() must lock TOO. A racy read is still a race, and the detector will say so.
+//
+// 3. A channel and one owner goroutine — "do not communicate by sharing memory; share memory by
+//    communicating". Idiomatic, and the most expensive of the three. Use it when the state is a
+//    whole subsystem rather than a number.
+//
+// THE RULE FOR CHOOSING: atomic for one value, mutex for one struct, channel for one owner.
+// Reaching for a channel to protect an int is the most common piece of Go cargo-culting there is.
