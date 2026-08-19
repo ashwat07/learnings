@@ -1,0 +1,33 @@
+-- Drill 11 — widen amount_cents to a bigint without taking the table down.
+--
+-- The one-liner below is what everybody writes, and it is the whole problem:
+--
+--     ALTER TABLE drill_accounts ALTER COLUMN amount_cents TYPE bigint;
+--
+-- integer -> bigint changes the on-disk width, so Postgres REWRITES every row, holding
+-- ACCESS EXCLUSIVE the entire time. Nothing reads, nothing writes, nothing health-checks.
+--
+-- EXPAND / MIGRATE / CONTRACT is the shape that replaces it:
+--
+--   EXPAND    add the new thing alongside the old one. Cheap and non-blocking.
+--   MIGRATE   keep them in sync for NEW writes, and backfill the OLD rows in batches.
+--   CONTRACT  once nothing reads the old thing, drop it. In a LATER deploy.
+--
+-- Four facts you need:
+--
+--   ADD COLUMN with no default (or a constant default, since PG11) rewrites nothing — it is a
+--   catalogue change, milliseconds on any table size.
+--
+--   The rows written WHILE you backfill are the ones a plain UPDATE misses. A trigger, installed
+--   BEFORE the backfill starts, is what covers them.
+--
+--   UPDATE drill_accounts SET ... with no WHERE takes a row lock on all 800,000 rows and holds
+--   it until the transaction ends. Batch it.
+--
+--   CREATE INDEX takes a lock that blocks writes for the whole build. CREATE INDEX CONCURRENTLY
+--   does not — and cannot run inside a transaction block, which is why your migration tool needs
+--   a way to opt out of its BEGIN.
+--
+-- Write the statements below, separated by semicolons. They run one at a time, outside any
+-- transaction, while an application writes to the table.
+

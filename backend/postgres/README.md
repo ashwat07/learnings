@@ -32,6 +32,17 @@ a previous lab's work), applies your DDL, and asserts things you cannot fake —
 *buffers ≤ N*, *Heap Fetches = 0*, *row estimate within 1.5×*, *index under 512 kB*, *exactly one
 new index*, *and these two other queries must also avoid a Seq Scan*.
 
+### The drills
+
+| | | The starting state |
+|---|---|---|
+| 01–07 | indexing | missing, unusable, over-wide and over-many indexes |
+| 08–10 | concurrency & N+1 | lost updates, a queue that serialises, 101 queries |
+| **11** | **Zero-downtime migration** | the one-liner blocks writes for **1,310ms** and loses **249 rows** written during it |
+| **12** | **JSONB at speed** | **26,748 buffers** per session lookup → 19 |
+| **13** | **Search that scales** | full text **17,740 → 102 buffers**; fuzzy 16,668 → 4,905 |
+| **14** | **Advanced SQL** | the report is five round trips and a loop in JavaScript |
+
 **Do the drills before the labs** if you like being thrown in. Do the labs first if you'd rather
 see the mechanism named before you're asked to use it.
 
@@ -53,11 +64,11 @@ you which if you ask it properly:
 
 | # | Lab | Question it answers | ⭐ |
 |---|---|---|---|
-| 01 | Schema & migrations *(planned)* | What shape, and how do I change it with no downtime? | ⭐⭐⭐⭐⭐ |
+| 01 | Schema & migrations — **[drill 11](drills/11-zero-downtime-migration/)** | What shape, and how do I change it with no downtime? | ⭐⭐⭐⭐⭐ |
 | 02 | [EXPLAIN ANALYZE](labs/02-explain-analyze/) | How do I *read* a plan? | ⭐⭐⭐⭐⭐⭐ |
 | 03 | [Indexing](labs/03-indexing/) | Which index, which column order, and when does one hurt? | ⭐⭐⭐⭐⭐⭐ |
-| 04 | Advanced SQL *(planned)* | CTEs, window functions, lateral joins, upserts | ⭐⭐⭐⭐⭐ |
-| 05 | JSONB & full-text search *(planned)* | Do I need Elasticsearch? | ⭐⭐⭐⭐ |
+| 04 | Advanced SQL — **[drill 14](drills/14-advanced-sql/)** | CTEs, window functions, lateral joins, upserts | ⭐⭐⭐⭐⭐ |
+| 05 | JSONB & search — **[drill 12](drills/12-jsonb-at-speed/)** + **[13](drills/13-search-that-scales/)** | Do I need Elasticsearch? | ⭐⭐⭐⭐ |
 | 06 | [Transactions & locking](labs/06-transactions-and-locking/) | Isolation levels, deadlocks, and the lost update | ⭐⭐⭐⭐⭐⭐ |
 | 07 | Partitioning & LISTEN/NOTIFY *(planned)* | Big tables, and push instead of poll | ⭐⭐⭐⭐ |
 | 08 | [N+1 & ORM traps](labs/08-n-plus-1-and-orms/) | Why 500 fast queries beat one slow one — and lose | ⭐⭐⭐⭐⭐⭐ |

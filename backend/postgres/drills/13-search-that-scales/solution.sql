@@ -1,0 +1,20 @@
+-- Drill 13 — make both searches indexable.
+--
+-- FULL TEXT
+--   to_tsvector(config, text) turns prose into a sorted list of normalised LEXEMES with their
+--   positions: 'quantum resonance' becomes 'quantum':5 'reson':6 — stemmed, lowercased, with the
+--   stop words thrown away. `@@` asks whether a tsquery matches that list.
+--
+--   The predicate in the query is an EXPRESSION, so the index has to be on the same expression.
+--   And it has to match EXACTLY — including the 'english' configuration. Index
+--   to_tsvector(body) and query to_tsvector('english', body) and Postgres will quietly ignore
+--   your index, because the first form depends on a session setting and is not immutable.
+--
+-- FUZZY
+--   ILIKE '%zenith qua%' has a leading wildcard, so a B-tree is useless: a B-tree can only skip
+--   to a prefix. pg_trgm breaks the text into three-character sequences ("zen", "eni", "nit"...)
+--   and indexes those, so a substring becomes a set of trigrams to look up. The extension is
+--   already installed.
+--
+-- Two CREATE INDEX statements.
+

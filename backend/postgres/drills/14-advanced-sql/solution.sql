@@ -1,0 +1,26 @@
+-- Drill 14 — the whole report, in one statement.
+--
+-- Columns: country, country_rank, name, spend, pct_of_country, user_rank
+-- Ordered by country_rank, then user_rank. Five countries, three customers each, 15 rows.
+--
+-- The three tools, and what each is for:
+--
+--   WITH name AS (...)   a CTE. Names a step. Since PG12 it is INLINED by default, so it is a
+--                        readability device and not an optimisation fence — unless you write
+--                        `WITH x AS MATERIALIZED (...)`, which forces it to run once and is
+--                        genuinely useful when a CTE is expensive and referenced twice.
+--
+--   rank() OVER (...)    a WINDOW function. It computes a value per row using a frame of other
+--                        rows, WITHOUT collapsing them the way GROUP BY does. That is the whole
+--                        difference: GROUP BY gives you one row per group; a window function
+--                        gives you every row, each knowing something about its group.
+--                        Also: row_number(), dense_rank(), lag(), lead(), first_value(),
+--                        sum(...) OVER (PARTITION BY ... ORDER BY ...) for running totals.
+--
+--   LATERAL              a subquery in FROM that may reference columns from the tables to its
+--                        LEFT. Without it a subquery in FROM is evaluated independently and
+--                        cannot see the outer row, which is why "top N per group" seems to need
+--                        a procedural loop. It does not.
+--
+-- Write one statement. No semicolons in the middle.
+

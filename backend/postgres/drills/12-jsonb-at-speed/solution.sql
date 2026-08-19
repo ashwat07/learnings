@@ -1,0 +1,15 @@
+-- Drill 12 — make a JSONB containment query fast.
+--
+--     WHERE payload @> '{"session":"s730688"}'
+--
+-- A B-tree cannot help: it indexes a whole VALUE, and you are asking about a fragment of one.
+-- The index type that can is GIN — an INVERTED index, the same structure a search engine uses.
+-- Instead of one entry per row, it stores one entry per KEY-VALUE PAIR INSIDE the document,
+-- each pointing at the rows that contain it.
+--
+-- That is why GIN is slower to write and larger to store than a B-tree, and why it answers
+-- "which rows contain this?" in microseconds.
+--
+-- There are two operator classes and they are not interchangeable. Find out which one you want
+-- before you write the line.
+

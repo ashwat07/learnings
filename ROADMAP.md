@@ -245,9 +245,9 @@ conversation. These want a **framework + worked reference designs + a rubric**.*
 | **Indexing** — composite order, partial, covering, unusable, write cost | ✅ | [lab 03](backend/postgres/labs/03-indexing/) + 7 drills |
 | **Transactions, isolation & locking**, deadlocks, `SKIP LOCKED` | ✅ | [lab 06](backend/postgres/labs/06-transactions-and-locking/) + 2 drills |
 | **N+1 & ORM traps**, keyset pagination | ✅ | [lab 08](backend/postgres/labs/08-n-plus-1-and-orms/) + 1 drill |
-| Schema design & **zero-downtime migrations** | ⬜ | — |
-| Advanced SQL — CTEs, window functions, lateral joins, upserts | 🟡 | used in lab 08; not taught |
-| JSONB & full-text search, GIN/trigram | ⬜ | — |
+| Schema design & **zero-downtime migrations** — expand/contract, batched backfills, `CONCURRENTLY`, `lock_timeout` | ✅ | [pg drill 11](backend/postgres/drills/11-zero-downtime-migration/) — 1,310ms of blocked writes → 80ms |
+| Advanced SQL — CTEs, window functions, `LATERAL`, upserts, `DISTINCT ON`, `FILTER`, recursive | ✅ | [pg drill 14](backend/postgres/drills/14-advanced-sql/) |
+| JSONB & full-text search, GIN/trigram | ✅ | [pg drill 12](backend/postgres/drills/12-jsonb-at-speed/) (26,748 → 19 buffers) + [13](backend/postgres/drills/13-search-that-scales/) (17,740 → 102) |
 | Partitioning, matviews, LISTEN/NOTIFY | ⬜ | — |
 | ORMs & query builders — tradeoffs and escape hatches | 🟡 | covered as traps in lab 08 |
 | Connection pooling, PgBouncer, read replicas & lag | ⬜ | — |
@@ -423,14 +423,21 @@ The point of these is that they're **not** exercises. Each is a repo you'd show 
 | | Built | Notes |
 |---|---|---|
 | **Frontend** | 29 courses, 144 runnable labs | tiers 0–5 essentially complete |
-| **Backend** | 11 labs, **60 drills**, 51 tests | tier 8: 8.2, 8.3, 8.5, 8.8, 8.10, 8.11 essentially complete; 8.7 not started |
+| **Backend** | 11 labs, **64 drills**, 51 tests | tier 8: 8.2, 8.3, 8.5, 8.8, 8.10, 8.11 essentially complete; 8.4 at 7/10; 8.7 not started |
 | **Applied / system design / portfolio** | nothing | tiers 6, 7, 9 |
 
-**By item: 158 ✅ · 20 🟡 · 38 ⬜** across 216 items.
+**By item: 161 ✅ · 19 🟡 · 36 ⬜** across 216 items.
 
-**Overall: roughly 78% of this roadmap exists.** What is left, in the order I would build it:
+**Overall: roughly 79% of this roadmap exists.**
 
-1. **8.4 Postgres, the second half** — schema design & zero-downtime migrations, JSONB/FTS, partitioning, replicas
+**A gap worth naming: every backend SERVICE course is Node.** Go has 15 language drills and one
+profiling lab, and nothing on Postgres, caching, jobs, auth, webhooks or reliability. The fix is
+not to duplicate 60 drills — it is one **Go service course** (`net/http` + pgx + `slog` + graceful
+shutdown + testcontainers) that carries the same lessons in the other language.
+
+What is left, in the order I would build it:
+
+1. **8.4 remainder** — partitioning/matviews/`LISTEN NOTIFY`, PgBouncer & read-replica lag
 2. **Tier 6 applied components** — six failing specs; the biggest frontend gap
 3. **8.6 auth, the second half** — OAuth2/OIDC/PKCE, RBAC/ABAC, secrets & PII
 4. **8.7 common subsystems** — media, search, payments, notifications, geospatial

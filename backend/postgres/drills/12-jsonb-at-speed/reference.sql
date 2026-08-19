@@ -1,0 +1,60 @@
+-- Drill 12 — reference.
+
+CREATE INDEX idx_events_payload ON events USING gin (payload jsonb_path_ops);
+
+-- THE TWO OPERATOR CLASSES, AND WHY THE DEFAULT IS USUALLY THE WRONG ONE
+--
+--   jsonb_ops (the default)     indexes every KEY and every VALUE separately.
+--                               Supports  @>  ?  ?|  ?&  @?  @@
+--                               Bigger, and slower for containment, because a query for
+--                               {"session":"s730688"} has to intersect the posting list for the
+--                               key "session" with the one for the value "s730688" — and the key
+--                               appears in all 400,000 rows.
+--
+--   jsonb_path_ops              indexes a HASH of each complete key->value PATH.
+--                               Supports  @>  @?  @@   — and NOT the key-existence operators.
+--                               Smaller (often 2-3x) and faster for containment, because
+--                               {"session":"s730688"} is ONE hash lookup, not an intersection.
+--
+-- So: jsonb_path_ops if you only ever ask "does it contain this?", which is the overwhelmingly
+-- common case. jsonb_ops if you genuinely need `?` — "does this key exist at the top level?"
+--
+-- WHAT NEITHER OF THEM DOES
+-- Neither supports  payload->>'value' > 100 , range queries, or ORDER BY on an extracted field.
+-- GIN answers set membership, not order. For those, use an EXPRESSION INDEX on the extracted
+-- value, which is an ordinary B-tree and behaves like one:
+--
+--     CREATE INDEX ON events (((payload->>'value')::int));
+--     CREATE INDEX ON events ((payload->>'source'), occurred_at DESC);
+--
+-- The expression in the query must match the index EXACTLY — (payload->>'value')::int is not the
+-- same index entry as (payload->'value')::int, and Postgres will silently ignore the index rather
+-- than tell you. `EXPLAIN` is the only feedback you get.
+--
+-- THE COSTS, WHICH ARE REAL
+--   · GIN writes are expensive: every key-value pair in the document is a separate index entry.
+--     Postgres softens this with a "pending list" (fastupdate, on by default) that buffers new
+--     entries and merges them in bulk — which means an occasional INSERT pays a large, surprising
+--     latency spike when it triggers the merge. `SET (fastupdate = off)` trades throughput for
+--     predictability; a latency-sensitive write path usually wants that.
+--   · GIN indexes are large. Index a 2KB document and you index everything in it, whether or not
+--     anyone queries it.
+--   · A partial GIN is often the right answer: `WHERE kind = 'purchase'` if that is all you search.
+--
+-- AND THE DESIGN QUESTION UNDERNEATH
+-- If you are querying a JSONB field on every request, filtering on it, sorting by it and joining
+-- on it — it is a COLUMN. JSONB is for data whose shape you genuinely do not control or do not
+-- know: third-party webhook payloads, user-defined fields, event envelopes, a settings blob. It
+-- is not a way to avoid writing a migration, and used that way it costs you type checking, foreign
+-- keys, constraints, planner statistics (a JSONB column has one set of stats for the whole
+-- document) and index efficiency all at once.
+--
+-- The pattern that keeps both: store the document, and PROMOTE the two or three fields you
+-- actually query into real generated columns.
+--
+--     ALTER TABLE events ADD COLUMN session_id text
+--       GENERATED ALWAYS AS (payload->>'session') STORED;
+--     CREATE INDEX ON events (session_id);
+--
+-- Now the planner has real statistics, the index is a small B-tree, and the document is still
+-- there for everything you did not anticipate.
