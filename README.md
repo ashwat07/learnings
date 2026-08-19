@@ -54,9 +54,11 @@ the same four questions every time:
 | [Multi-device](multi-device/) | Input modalities, container queries, TV & the 10-foot UI, adaptive delivery | 4 |
 | [Internationalization](i18n/) | `Intl`, plurals & ICU messages, bidi & typography, delivery | 4 |
 | **Backend** | | |
+| [API styles & protocols](backend/api-styles/) | GraphQL resolvers & error masking, **DataLoader**, cursor pagination & query cost, the protobuf wire format — plus REST vs GraphQL vs gRPC vs tRPC, measured | 1 lab, **4 drills** |
+| [Real-time & webhooks](backend/realtime/) | WebSocket framing, rooms & fan-out across instances, **webhook signing with the runner as attacker**, delivery with retries and a DLQ, SSE resume | **5 drills** |
 | [Backend engineering](backend/) | Real Postgres + Redis. Plans, indexing, locking, N+1, caching, delivery guarantees, API craft, and security drills where **the runner plays the attacker** | 5 labs, **26 drills**, 51 tests |
-| [The Node runtime](backend/node-runtime/) | The event loop, streams & backpressure, binary framing, cancellation, graceful shutdown, worker threads — **needs no containers** | 2 labs, **9 drills** |
-| [Go](backend/go-lang/) · [Go concurrency](backend/go-concurrency/) | Slices, errors, the nil interface, defer, generics, allocations, `net/http` — plus data races under **`-race`** | **11 drills** |
+| [The Node runtime](backend/node-runtime/) | The event loop, streams & backpressure, binary framing, cancellation, shutdown, workers, request context, streaming HTTP, pooling, leak hunting — **needs no containers** | 4 labs, **13 drills** |
+| [Go](backend/go-lang/) · [Go concurrency](backend/go-concurrency/) | Slices, errors, the nil interface, defer, generics, JSON & time, allocations, `net/http`, iota, errgroup, the memory model, fuzzing — under **`-race`** | 1 lab, **15 drills** |
 | **Security & delivery** | | |
 | [Security & auth](security-and-auth/) | XSS, CSP, CSRF, tokens & sessions, supply chain | 5 |
 | [Quality & delivery](quality-and-delivery/) | Testing strategy, observability, build speed, release safety, the system | 6 |
@@ -162,9 +164,9 @@ with **drills**: problems with machine-checked answers, not demonstrations.
 
 | # | Course | Why here | Time |
 |---|---|---|---|
-| — | [node-runtime](backend/node-runtime/) | the event loop, streams, framing, cancellation, shutdown, workers — **no Docker**, so start here | ~1 week |
+| — | [node-runtime](backend/node-runtime/) | the event loop, streams, framing, cancellation, shutdown, workers, context, pooling, leaks — **no Docker**, so start here | ~2 weeks |
 | — | [backend](backend/) | plans, indexing, locking, N+1, caching & delivery guarantees, API craft, security — against a real Postgres and Redis | ~3 weeks for what exists |
-| — | [go-lang](backend/go-lang/) + [go-concurrency](backend/go-concurrency/) | a second language, and the race detector teaches what single-threaded JavaScript cannot | ~1 week |
+| — | [go-lang](backend/go-lang/) + [go-concurrency](backend/go-concurrency/) | a second language, and the race detector teaches what single-threaded JavaScript cannot | ~2 weeks |
 
 > **Do the drills rather than reading the labs**, if you only do one — they fail until you solve
 > them, and the thresholds are set so a plausible-but-wrong answer still fails.

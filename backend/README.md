@@ -64,12 +64,12 @@ other isn't a queue.
 | **[API craft](api-craft/)** | **failing test suite** | **25 tests** — validation, keyset pagination, idempotency, error envelope, readiness |
 | **[Auth, security & compliance](auth-and-security/)** | drills | **5 drills** — password storage, timing oracles, IDOR, SSRF, token rotation |
 | **[Jobs, brokers & backpressure](jobs-and-messaging/)** | drills | **4 drills** — retries & DLQ, consumer groups, Node backpressure, sagas |
-| **[The Node runtime](node-runtime/)** | labs + drills, **no Docker** | 2 labs, **9 drills** — the event loop, streams, framing, cancellation, shutdown, workers |
+| **[The Node runtime](node-runtime/)** | labs + drills, **no Docker** | 4 labs, **13 drills** — the event loop, streams, framing, cancellation, shutdown, workers, request context, streaming HTTP, pooling, leaks |
 | **[Go concurrency](go-concurrency/)** | drills, run under **`-race`** | **3 drills** — data races, worker pools, context cancellation |
-| **[Go, the language](go-lang/)** | drills | **8 drills** — slices, errors, the nil interface, defer, generics, JSON & time, allocations, net/http |
+| **[Go, the language](go-lang/)** | drills + lab | 1 lab, **12 drills** — slices, errors, the nil interface, defer, generics, JSON & time, allocations, net/http, iota, errgroup, the memory model, fuzzing |
 | **[Reliability & observability](reliability/)** | **failing test suite** | **26 tests** — timeouts, retries, breakers, structured logs, RED metrics, tracing |
-| API styles & protocols (GraphQL, gRPC, tRPC) | drills | planned |
-| Real-time, webhooks & streaming | drills | planned |
+| **[API styles & protocols](api-styles/)** | labs + drills, **no Docker** | 1 lab, **4 drills** — GraphQL resolvers & error masking, DataLoader, cursor pagination & cost limits, the protobuf wire format |
+| **[Real-time & webhooks](realtime/)** | drills, **no Docker** | **5 drills** — WebSocket framing, rooms & fan-out, webhook signing, webhook delivery, SSE resume |
 | Common subsystems & integrations | test suite | planned |
 | Distributed systems, hard mode | drills | planned |
 
@@ -85,9 +85,12 @@ npm run drills:pg        # 10 Postgres drills
 npm run drills:cache     # 4 caching/queue drills
 npm run drills:sec       # 5 security drills — the runner plays the attacker
 npm run drills:jobs      # 4 jobs/broker/backpressure drills
-npm run drills:node      # 9 Node runtime drills — needs no containers at all
+npm run drills:api       # 4 API-style drills — GraphQL, DataLoader, cursors, protobuf
+npm run drills:rt        # 5 real-time & webhook drills
+npm run drills:node      # 13 Node runtime drills — needs no containers at all
 npm run drills:go        # 3 Go concurrency drills, under the race detector
-npm run drills:golang    # 8 Go language drills
+npm run drills:golang    # 12 Go language drills, under the race detector
+npm run lab:go-profiling # measured GC, GOGC, sync.Pool, escape analysis, pprof
 npm run test:reliability # 26 reliability & observability tests
 npm run test:api         # 25 API contract tests
 ```

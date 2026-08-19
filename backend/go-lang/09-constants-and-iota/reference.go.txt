@@ -1,0 +1,162 @@
+// Drill 09 — reference. (Rename to reference.go to compile it.)
+
+package drill09
+
+import (
+	"encoding/json"
+	"fmt"
+)
+
+type Status int
+
+// iota counts from 0 in each const block, so the FIRST constant is the zero value. Making that
+// StatusUnknown is the whole trick: every uninitialised struct field, every value that failed to
+// decode, every map miss gives you a status that announces it was never set. If you start at
+// `StatusPending Status = iota` instead, an empty struct is silently "pending" and you will
+// eventually ship an order nobody placed.
+const (
+	StatusUnknown Status = iota
+	StatusPending
+	StatusActive
+	StatusClosed
+)
+
+// One table, used by String, ParseStatus and Valid, so the three can never disagree. The real
+// tool for this is `go generate` + stringer:
+//
+//	//go:generate stringer -type=Status -linecomment
+//
+// which writes the String() method for you. Use it for large enums; a map is clearer for small
+// ones because it is also the parse table.
+var statusNames = map[Status]string{
+	StatusPending: "pending",
+	StatusActive:  "active",
+	StatusClosed:  "closed",
+}
+
+func (s Status) String() string {
+	if s == StatusUnknown {
+		return "unknown"
+	}
+	if name, ok := statusNames[s]; ok {
+		return name
+	}
+	// Never return "" for an unrecognised value — a log line with an empty field is a mystery,
+	// and this format is what stringer produces too.
+	return fmt.Sprintf("Status(%d)", int(s))
+}
+
+func ParseStatus(name string) (Status, error) {
+	for s, n := range statusNames {
+		if n == name {
+			return s, nil
+		}
+	}
+	return StatusUnknown, fmt.Errorf("unknown status %q", name)
+}
+
+func (s Status) Valid() bool { _, ok := statusNames[s]; return ok }
+
+// Marshal the NAME. Marshalling the integer means inserting a constant in the middle of the
+// block silently changes the meaning of every number already stored in your database and every
+// payload already in flight. The name is stable; the number is an implementation detail.
+func (s Status) MarshalJSON() ([]byte, error) {
+	if !s.Valid() {
+		return nil, fmt.Errorf("cannot marshal %v", s)
+	}
+	return json.Marshal(s.String())
+}
+
+// Pointer receiver — it mutates. And it VALIDATES: a decoder that accepts "banana" hands your
+// business logic a value that satisfies no branch of any switch.
+func (s *Status) UnmarshalJSON(b []byte) error {
+	var name string
+	if err := json.Unmarshal(b, &name); err != nil {
+		return err
+	}
+	parsed, err := ParseStatus(name)
+	if err != nil {
+		return err
+	}
+	*s = parsed
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+
+type Perm uint8
+
+// `1 << iota` is the idiom for flags: 1, 2, 4, 8... Each constant owns one BIT, so they compose
+// with | and test with &. Getting this wrong (1, 2, 3) means Read|Write == Execute, and the bug
+// is a permission check that passes for the wrong reason.
+const (
+	PermRead Perm = 1 << iota
+	PermWrite
+	PermExecute
+)
+
+func (p Perm) Has(q Perm) bool { return p&q == q }   // q may be several bits; ALL must be present
+func (p Perm) Add(q Perm) Perm { return p | q }
+func (p Perm) Sub(q Perm) Perm { return p &^ q }     // AND NOT — Go's bit-clear operator
+
+func (p Perm) String() string {
+	out := []byte("---")
+	if p.Has(PermRead) {
+		out[0] = 'r'
+	}
+	if p.Has(PermWrite) {
+		out[1] = 'w'
+	}
+	if p.Has(PermExecute) {
+		out[2] = 'x'
+	}
+	return string(out)
+}
+
+// ---------------------------------------------------------------------------
+
+// UNTYPED constants. Drop the `int` and these become arbitrary-precision values that take the
+// type of wherever they are used — int, int64, uint, float64, a named type — with no conversion
+// and no overflow at any intermediate step.
+//
+// Untyped constants are evaluated at arbitrary precision at COMPILE time, so
+//
+//	const big = 1 << 62 / (1 << 20)
+//
+// is exact even though the intermediate would overflow an int32. The flip side: a constant that
+// cannot fit its destination is a COMPILE ERROR, not a silent wrap. `var x int8 = 300` does not
+// build. That is a feature — it is the one class of overflow Go catches for you.
+const (
+	KB = 1 << (10 * (iota + 1)) // 1 << 10
+	MB                          // 1 << 20
+	GB                          // 1 << 30
+	TB                          // 1 << 40
+)
+
+/*
+THE ENUM CHECKLIST
+
+  · a NAMED TYPE, not a bare int. `func Update(s Status)` cannot be called with a count.
+  · the zero value is Unknown/Invalid, and it is first in the iota block
+  · String() so logs are readable, with a fallback for unrecognised values
+  · Valid() and a Parse function, sharing one table
+  · MarshalJSON/UnmarshalJSON by NAME, and UnmarshalJSON rejects what it does not know
+  · validate at the BOUNDARY — decode, then check Valid(), and everything downstream can switch
+    exhaustively without a default that panics
+
+WHAT GO STILL WILL NOT DO FOR YOU
+`Status(47)` compiles. There is no exhaustiveness check on a switch over an enum either — which
+is why the linters (`exhaustive` in golangci-lint) exist and are worth turning on. Compare with
+TypeScript's discriminated unions plus `never`-checking (typescript lab 03), which the compiler
+genuinely does verify. Go trades that for simplicity, and the price is the checklist above.
+
+TYPED VS UNTYPED, THE SHORT VERSION
+
+	const A = 1           // untyped: becomes whatever it is assigned to
+	const B int = 1       // typed: an int, and only an int
+
+Default to untyped for numbers and strings; use typed for enum members, where the whole point is
+that the type is part of the meaning. And note the asymmetry that makes untyped worth knowing:
+`time.Sleep(2 * time.Second)` works because 2 is untyped and adopts time.Duration. `var n = 2;
+time.Sleep(n * time.Second)` does not compile.
+*/

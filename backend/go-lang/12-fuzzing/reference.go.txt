@@ -1,0 +1,134 @@
+// Drill 12 — reference. (Rename to reference.go to compile it.)
+
+package drill12
+
+import (
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+	"unicode/utf8"
+)
+
+// Two bugs in one line of `return s[:n]`:
+//
+//	n > len(s)   panics. `s[:10]` on a 2-byte string is a runtime panic, not a short string.
+//	n < 0        panics.
+//	a rune split the slice is bytes, and UTF-8 characters are 1-4 of them.
+//
+// The last one is the interesting failure because it does not crash: it returns a string that
+// looks fine in a terminal, renders as a replacement character in a browser, breaks JSON
+// encoding, and is rejected by Postgres with "invalid byte sequence for encoding UTF8". A
+// truncation for display becomes a write failure three services away.
+func Truncate(s string, n int) string {
+	if n <= 0 {
+		return ""
+	}
+	if n >= len(s) {
+		return s
+	}
+	// Walk BACK from the cut point until we are on a rune boundary. RuneStart reports whether a
+	// byte is the first byte of a rune: continuation bytes are 10xxxxxx, so this steps back at
+	// most 3 times.
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
+	// The equivalent using the standard library, if you prefer it:
+	//   for i := range s { if i > n { return s[:i-1] } }   // range over a string yields RUNE indices
+}
+
+var ErrBadRange = errors.New("bad range")
+
+// The original discards both Atoi errors, so "abc" parses as 0 and "3-abc" as 3..0. A discarded
+// error is not a shortcut; it is a decision to return wrong data instead of an error, made
+// silently, in one character.
+func ParseRange(s string) (lo, hi int, err error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return 0, 0, fmt.Errorf("%w: empty", ErrBadRange)
+	}
+
+	// Cut, not Split: Split on "3-9-12" gives three parts and the naive code silently uses two of
+	// them. Cut gives you "before, after, found" and makes the extra separator visible.
+	before, after, found := strings.Cut(s, "-")
+	if !found {
+		n, err := strconv.Atoi(strings.TrimSpace(before))
+		if err != nil {
+			return 0, 0, fmt.Errorf("%w: %q: %w", ErrBadRange, s, err)
+		}
+		return n, n, nil
+	}
+	if strings.Contains(after, "-") {
+		return 0, 0, fmt.Errorf("%w: %q has too many separators", ErrBadRange, s)
+	}
+
+	lo, err = strconv.Atoi(strings.TrimSpace(before))
+	if err != nil {
+		return 0, 0, fmt.Errorf("%w: low bound of %q: %w", ErrBadRange, s, err)
+	}
+	hi, err = strconv.Atoi(strings.TrimSpace(after))
+	if err != nil {
+		return 0, 0, fmt.Errorf("%w: high bound of %q: %w", ErrBadRange, s, err)
+	}
+	// The INVARIANT, checked at the boundary. Without it, every caller has to remember — and one
+	// of them will not, and will loop `for i := lo; i <= hi; i++` zero times and report success.
+	if lo > hi {
+		return 0, 0, fmt.Errorf("%w: %d > %d", ErrBadRange, lo, hi)
+	}
+	return lo, hi, nil
+}
+
+/*
+FUZZING, IN PRACTICE
+
+	go test -fuzz=FuzzTruncate -fuzztime=30s ./12-fuzzing/
+
+It runs the seed corpus, then generates mutations, keeping any input that reaches new code
+(coverage-guided, like libFuzzer and AFL). On a failure it MINIMISES the input — shrinking it to
+the smallest thing that still fails — and writes it to
+
+	testdata/fuzz/FuzzTruncate/<hash>
+
+Commit that file. From then on, plain `go test` replays it, so the regression test writes itself
+and reproduces without the fuzzer.
+
+CHOOSING PROPERTIES, WHICH IS THE ONLY HARD PART
+A fuzz test cannot know the right answer for a generated input, so you assert invariants:
+
+	it does not panic                the free one. Worth it on its own for any parser.
+	a round trip is the identity     Decode(Encode(x)) == x — the strongest and most useful
+	it agrees with a slow version    compare an optimised implementation to an obvious one
+	the output stays well-formed     valid UTF-8, valid JSON, sorted, within bounds
+	it is idempotent                 f(f(x)) == f(x) for normalisers and sanitisers
+
+WHAT TO FUZZ
+Anything that parses input you did not write: protocol decoders (node-runtime drill 04 is a
+perfect fuzz target), text parsers, deserialisers, path and URL handling, anything doing byte
+arithmetic. Go's own standard library found dozens of bugs this way when fuzzing landed in 1.18.
+
+WHAT NOT TO FUZZ
+Business logic with no invariants. If you cannot write down a property, a fuzzer has nothing to
+check and you are just burning CPU.
+
+THE REST OF THE TESTING VOCABULARY
+
+	table-driven tests    the Go convention. One slice, subtests via t.Run, so a failure names
+	                      itself and -run can select one case.
+	t.Helper()            makes failures report the CALLER's line, not the helper's. Put it in
+	                      every assertion helper you write.
+	t.Cleanup(fn)         runs at the end of this test or subtest — better than defer because it
+	                      composes through helpers and works with t.Parallel().
+	t.Parallel()          runs subtests concurrently. Combine with -race and it doubles as a
+	                      concurrency test of the code under test.
+	t.TempDir()           a directory removed automatically. Never write to a fixed path.
+	testing.Short()       guard slow tests with `if testing.Short() { t.Skip() }`, run
+	                      `go test -short` in the pre-commit hook and the full suite in CI.
+	go test -cover        coverage. Use it to find code with NO test, not as a target — a team
+	                      chasing 90% writes tests for getters and none for the parser.
+	go test -race         always, in CI. See drill 11.
+	go test -bench -benchmem   see go-lang drill 07.
+	testify/require       widely used; the standard library plus a helper or two is usually
+	                      enough, and the Go community leans hard the other way. Know both
+	                      exist and pick per team, not per opinion.
+*/

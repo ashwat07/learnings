@@ -1,0 +1,167 @@
+// Drill 11 — reference. (Rename to reference.go to compile it.)
+
+package drill11
+
+import (
+	"sync"
+	"sync/atomic"
+)
+
+// ---------------------------------------------------------------------------
+// 1. sync.Once.
+
+type Conn struct{ ID int }
+
+var (
+	connOnce  sync.Once
+	conn      *Conn
+	connCount int
+)
+
+// sync.Once is not "a bool with a mutex". Its guarantee is stronger and it is exactly the one you
+// need: the return of Do(f) happens after f returns, FOR EVERY CALLER. So every goroutine that
+// gets past Do is guaranteed to see everything f wrote — not just that f ran.
+//
+// That second half is what double-checked locking gets wrong. `if conn == nil { lock; if conn ==
+// nil { conn = open() } }` publishes the POINTER, and nothing orders the writes inside the struct
+// against it, so another goroutine can legally see a non-nil pointer to a zeroed Conn.
+//
+// It also handles the case people forget: if f panics, Once considers itself done and every later
+// caller returns without running f. If you need retry-on-failure, you need your own type.
+func Connect(open func() *Conn) *Conn {
+	connOnce.Do(func() {
+		conn = open()
+		connCount++
+	})
+	return conn
+}
+
+func ConnCount() int { return connCount }
+
+// ---------------------------------------------------------------------------
+// 2. atomic.Pointer — lock-free reads on the hot path.
+
+type Config struct {
+	Timeout int
+	Retries int
+	Tag     string
+}
+
+var current atomic.Pointer[Config]
+
+// The trick is IMMUTABILITY plus a single pointer swap. Never mutate a published Config; build a
+// whole new one and swap the pointer. A reader either sees the old pointer or the new one, and
+// both point at a fully-constructed value — so "torn" reads are impossible by construction rather
+// than by locking.
+//
+// atomic.Pointer[T] (Go 1.19+) is the typed version of atomic.Value, and better: no interface
+// boxing, no allocation on Load, and a compile error instead of a panic if you ever store the
+// wrong type.
+//
+// Cost: an atomic load is a plain load plus a compiler barrier on x86 and arm64. It is
+// essentially free, and it is why this pattern beats an RWMutex for a read-mostly single value —
+// an RWMutex's read lock is an atomic increment AND decrement, plus cache-line contention between
+// readers on different cores.
+func GetConfig() *Config { return current.Load() }
+
+func SetConfig(c *Config) { current.Store(c) }
+
+// ---------------------------------------------------------------------------
+// 3. RWMutex.
+
+type Registry struct {
+	mu    sync.RWMutex
+	items map[string]int
+}
+
+func NewRegistry() *Registry { return &Registry{items: map[string]int{}} }
+
+// RLock lets any number of readers hold the lock at once; Lock excludes everybody. For a
+// read-heavy map that turns a serialisation point into a genuinely concurrent one.
+//
+// When it is NOT worth it: an RWMutex is more expensive to acquire than a Mutex, so if the
+// critical section is a few nanoseconds (one map lookup and nothing else) a plain Mutex often
+// wins. The crossover is roughly "is there real work inside the lock?" Measure with
+// `go test -bench` before assuming.
+//
+// Note also that Go's RWMutex blocks new readers once a writer is waiting. That prevents writer
+// starvation and means a stream of readers cannot lock out a write forever.
+func (r *Registry) Lookup(key string) (int, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	v, ok := r.items[key]
+	return v, ok
+}
+
+func (r *Registry) Store(key string, v int) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.items[key] = v
+}
+
+// ---------------------------------------------------------------------------
+// 4. A closed channel is a broadcast.
+
+type Signal struct {
+	once sync.Once
+	ch   chan struct{}
+}
+
+func NewSignal() *Signal { return &Signal{ch: make(chan struct{})} }
+
+// Closing a channel wakes EVERY receiver, now and forever after: a receive on a closed channel
+// returns immediately with the zero value. That is a one-shot broadcast in one line, and it is
+// how context.Done(), errgroup and every "shutdown" signal in Go are built.
+//
+// sync.Once because closing an already-closed channel PANICS, and Done() being called twice is
+// not a programmer error worth crashing over.
+//
+// The alternatives and when they are right:
+//
+//	sync.WaitGroup   "wait for N things to finish" — counting, not broadcasting
+//	sync.Cond        "wake waiters when a condition changes, repeatedly" — the only one of these
+//	                 you should hesitate over; it is easy to get wrong and a channel is usually
+//	                 clearer. Go's own authors have said as much.
+//	atomic.Bool      "has this happened?" when you want to POLL, not block
+func (s *Signal) Done() { s.once.Do(func() { close(s.ch) }) }
+
+func (s *Signal) Wait() { <-s.ch }
+
+// Chan exposes the channel so callers can select on it alongside a context — which is the whole
+// reason to model a signal as a channel rather than as a method.
+func (s *Signal) Chan() <-chan struct{} { return s.ch }
+
+/*
+THE RULE, AND IT IS THE ONLY ONE
+
+If two goroutines access the same memory and at least one of them writes, you must synchronise.
+There is no "it is just a bool", no "it is only ever set once", no "the write is atomic on x86".
+The Go memory model does not promise you a machine; it promises you the list at the top of
+solution.go, and nothing else.
+
+WHY A RACY BOOL CAN LOOP FOREVER
+`for !s.done {}` with a plain bool is not merely "might read a stale value once". The compiler is
+entitled to hoist the read out of the loop entirely — nothing in the program says it can change —
+and compile it to `if !done { for {} }`. This is not hypothetical; it happens with optimisations
+on. The race detector calls it a race; the optimiser calls it dead code.
+
+WHAT -race DOES AND DOES NOT DO
+It instruments every memory access and maintains a happens-before graph at runtime, so it reports
+a race only when it actually OBSERVES two conflicting accesses. It has no false positives — a
+reported race is always a real one — and plenty of false negatives: code paths you did not
+exercise are not checked.
+
+  · run your whole test suite with -race in CI, always
+  · run a canary in production with -race if you can afford it: ~5-10x memory and ~2-20x CPU
+  · a passing -race run is evidence, not proof
+
+CHOOSING A PRIMITIVE, IN ORDER OF PREFERENCE
+  1. don't share. Give each goroutine its own data and communicate results over a channel.
+  2. sync.Mutex around a small critical section. Boring, correct, fast.
+  3. sync.RWMutex when reads dominate AND the critical section is non-trivial.
+  4. atomic.Pointer/Int64 for a single value on a hot path, with immutable payloads.
+  5. sync.Map only for its two specific shapes: an append-mostly cache, or disjoint key sets per
+     goroutine. For anything else it is slower than a map with a mutex, and its API is worse.
+  6. lock-free algorithms of your own design: almost never. If you are reasoning about memory
+     ordering by hand in Go, the answer is usually a mutex.
+*/

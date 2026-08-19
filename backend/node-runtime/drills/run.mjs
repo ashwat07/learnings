@@ -19,6 +19,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rule, good, bad, note, table } from '../../lib/console.mjs';
 
+// Several drills measure memory, and a memory measurement without a forced GC is a measurement
+// of when the collector last felt like running. If we were not started with --expose-gc, start
+// again with it — so `node node-runtime/drills/run.mjs` does the right thing with no ceremony.
+if (typeof globalThis.gc !== 'function') {
+  const { spawnSync } = await import('node:child_process');
+  const r = spawnSync(process.execPath, ['--expose-gc', fileURLToPath(import.meta.url), ...process.argv.slice(2)],
+    { stdio: 'inherit' });
+  process.exit(r.status ?? 0);
+}
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const filter = process.argv.find((a) => /^\d+$/.test(a));
 const showSolution = process.argv.includes('--solution');

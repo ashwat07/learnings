@@ -1,0 +1,222 @@
+// Drill 10 — reference. (Rename to reference.go to compile it.)
+
+package drill10
+
+import (
+	"container/list"
+	"context"
+	"fmt"
+	"sync"
+)
+
+type Group struct {
+	wg      sync.WaitGroup
+	cancel  context.CancelCauseFunc
+	once    sync.Once     // records only the FIRST error
+	err     error
+	sem     chan struct{} // nil until SetLimit; a buffered channel IS a counting semaphore
+}
+
+func NewGroup(ctx context.Context) (*Group, context.Context) {
+	// WithCancelCause rather than WithCancel: the siblings can then ask WHY they were cancelled
+	// with context.Cause(ctx), which is the difference between "context canceled" and "the
+	// inventory lookup failed" in a log.
+	ctx, cancel := context.WithCancelCause(ctx)
+	return &Group{cancel: cancel}, ctx
+}
+
+// A buffered channel of capacity n is a counting semaphore: send to take a slot, receive to
+// return one, and the channel blocks for you. No mutex, no condition variable.
+func (g *Group) SetLimit(n int) {
+	if n <= 0 {
+		g.sem = nil
+		return
+	}
+	g.sem = make(chan struct{}, n)
+}
+
+func (g *Group) Go(fn func() error) {
+	// Take the slot in the CALLER's goroutine, before spawning. Taking it inside the new
+	// goroutine would still bound the concurrent WORK, but it would let Go() spawn a million
+	// goroutines that all sit blocked — the memory you were trying to bound.
+	if g.sem != nil {
+		g.sem <- struct{}{}
+	}
+	g.wg.Add(1)
+
+	go func() {
+		defer func() {
+			// A panic in a goroutine takes down the PROCESS. There is no outer recover: the
+			// runtime unwinds this goroutine's stack and calls exit. So a helper that runs
+			// caller-supplied functions must recover at the top of every goroutine it starts, or
+			// one malformed row kills the service.
+			if r := recover(); r != nil {
+				g.fail(fmt.Errorf("panic in group task: %v", r))
+			}
+			if g.sem != nil {
+				<-g.sem
+			}
+			g.wg.Done()
+		}()
+
+		if err := fn(); err != nil {
+			g.fail(err)
+		}
+	}()
+}
+
+// sync.Once gives both halves at once: only the first error is kept, and the write is safely
+// published to whoever reads g.err after Wait(). A bare `if g.err == nil { g.err = err }` from
+// several goroutines is a data race, and `go test -race` will say so.
+func (g *Group) fail(err error) {
+	g.once.Do(func() {
+		g.err = err
+		// Cancel the shared context so the siblings stop. This is the entire reason errgroup
+		// exists rather than a WaitGroup and a slice of errors: FAILING FAST costs nothing and
+		// not failing fast means a request that has already failed keeps burning your database.
+		if g.cancel != nil {
+			g.cancel(err)
+		}
+	})
+}
+
+func (g *Group) Wait() error {
+	g.wg.Wait()
+	// Always cancel, even on success — otherwise the derived context leaks its timer and its
+	// parent's reference to it until the parent is cancelled. `go vet`'s lostcancel check exists
+	// for exactly this.
+	if g.cancel != nil {
+		g.cancel(g.err)
+	}
+	return g.err
+}
+
+// ---------------------------------------------------------------------------
+
+type waiter struct {
+	n     int64
+	ready chan struct{}
+}
+
+type Semaphore struct {
+	mu      sync.Mutex
+	free    int64
+	waiters list.List // of *waiter, in arrival order
+}
+
+func NewSemaphore(n int64) *Semaphore { return &Semaphore{free: n} }
+
+func (s *Semaphore) Acquire(ctx context.Context, n int64) error {
+	s.mu.Lock()
+	// The fast path, and the FIFO rule in one condition: take it immediately only if there is
+	// room AND nobody is already queued. Without `waiters.Len() == 0`, a stream of small
+	// requests jumps the queue forever and a large one never runs — a starvation bug that only
+	// shows up under sustained load, which is to say in production.
+	if s.free >= n && s.waiters.Len() == 0 {
+		s.free -= n
+		s.mu.Unlock()
+		return nil
+	}
+
+	// Check the context BEFORE queueing, so an already-cancelled caller does not join the line.
+	if err := ctx.Err(); err != nil {
+		s.mu.Unlock()
+		return err
+	}
+
+	w := &waiter{n: n, ready: make(chan struct{})}
+	elem := s.waiters.PushBack(w)
+	s.mu.Unlock()
+
+	select {
+	case <-w.ready:
+		return nil
+	case <-ctx.Done():
+		s.mu.Lock()
+		select {
+		case <-w.ready:
+			// We were granted the units in the moment we gave up. Do not drop them on the floor:
+			// hand them back, or the semaphore quietly shrinks by n forever. This branch is the
+			// one everybody forgets, and it turns a timeout into a permanent capacity loss.
+			s.mu.Unlock()
+			s.Release(n)
+		default:
+			s.waiters.Remove(elem)
+			s.mu.Unlock()
+		}
+		return ctx.Err()
+	}
+}
+
+func (s *Semaphore) TryAcquire(n int64) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.free < n || s.waiters.Len() > 0 {
+		return false
+	}
+	s.free -= n
+	return true
+}
+
+func (s *Semaphore) Release(n int64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.free += n
+	s.notify()
+}
+
+// Wake waiters from the FRONT, and STOP at the first one that does not fit. Skipping over it to
+// serve a smaller one behind is exactly the starvation this design is avoiding.
+func (s *Semaphore) notify() {
+	for s.waiters.Len() > 0 {
+		elem := s.waiters.Front()
+		w := elem.Value.(*waiter)
+		if s.free < w.n {
+			return
+		}
+		s.free -= w.n
+		s.waiters.Remove(elem)
+		close(w.ready)
+	}
+}
+
+/*
+WHAT TO USE IN REAL CODE
+
+	golang.org/x/sync/errgroup      this Group, minus the panic recovery
+	golang.org/x/sync/semaphore     this Semaphore, essentially line for line
+	golang.org/x/sync/singleflight  the third one, and the one people miss: it collapses
+	                                concurrent identical calls into one. That is cache stampede
+	                                protection in four lines (caching-and-queues lab 02).
+
+errgroup does NOT recover from panics. That is a deliberate choice — a panic means a bug, and the
+Go position is that a buggy program should stop. It is the right default for a library and often
+the wrong one for a request handler, where the blast radius should be one request. If you wrap
+it, log the panic WITH ITS STACK (`debug.Stack()` inside the recover, not afterwards — the stack
+is gone by then).
+
+THE FOUR THINGS A BARE WaitGroup DOES NOT DO, WHICH IS WHY THIS TYPE EXISTS
+  1. collect an error at all
+  2. cancel the siblings when one fails
+  3. bound concurrency — 10,000 ids means 10,000 goroutines and 10,000 database connections
+  4. survive a panic in one task
+
+WEIGHT IS THE POINT OF A SEMAPHORE
+A plain "max 8 concurrent" models the CALLER. Weight models the RESOURCE: memory, bytes in
+flight, estimated cost. `sem.Acquire(ctx, fileSize)` against a budget of 500MB lets one big job
+or fifty small ones run, which is the behaviour you actually wanted when you wrote "max 8" and
+then discovered that eight big ones is an OOM.
+
+AND THE PATTERN THAT COMBINES THEM
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(runtime.GOMAXPROCS(0))
+	for _, item := range items {
+	    item := item                    // not needed since Go 1.22, essential before it
+	    g.Go(func() error { return process(ctx, item) })
+	}
+	if err := g.Wait(); err != nil { ... }
+
+Compare with node-runtime drill 08: the same problem, the same answer, and Go makes the
+cancellation explicit where JavaScript makes it invisible.
+*/

@@ -6,7 +6,8 @@ your program is correct before any goroutine starts.
 
 ```bash
 cd backend/go-lang
-go test ./...                        # all eight, all red
+go test -race ./...                  # all twelve, all red
+go run ./labs/01-profiling           # measured GC, GOGC, sync.Pool, escape analysis, pprof
 go test ./01-slices-and-aliasing/    # one
 go test -bench . -benchmem ./07-allocations/
 go build -gcflags='-m' ./07-allocations/ 2>&1 | grep escapes
@@ -26,6 +27,10 @@ compile it — after you have tried.
 | **06** | encoding/json & time | ten defaults that are wrong for an API contract |
 | **07** | Allocations | 14 allocations where 1 will do — measured, not guessed |
 | **08** | net/http & context | a string context key, middleware in the wrong order |
+| **09** | Constants & iota | an enum whose zero value is a real status, and flags that are not powers of two |
+| **10** | errgroup & semaphore | a **data race** on the error, no cancellation, no limit, no panic recovery |
+| **11** | The memory model | double-checked locking, a torn config, a spin loop on a plain `bool` |
+| **12** | Fuzzing | a truncation that panics and splits UTF-8 — fuzzing finds it in 0.02s |
 
 ## What each one is really about
 
@@ -66,6 +71,37 @@ it — which is the real lesson.
 build. Middleware wrapped forwards runs backwards, putting your recover *inside* what it protects.
 `http.ResponseWriter` does not expose the status code. And `context.WithTimeout` per call, so one
 slow shard costs its own budget rather than the whole request's.
+
+**09 — Constants & iota.** Go has no enum keyword, so an enum is a set of conventions. The zero
+value must mean "nobody set this" — otherwise an empty struct is silently `pending`. Flags must be
+`1 << iota` or `Read|Write == Execute`. And marshalling the *number* couples your wire format to
+declaration order, so inserting a constant rewrites history.
+
+**10 — errgroup & semaphore.** A `WaitGroup` counts. It does not collect errors, cancel the
+siblings, bound concurrency, or survive a panic — and a panic in a goroutine kills the *process*,
+which no outer `recover` can stop. The weighted semaphore adds the two bits people get wrong: FIFO
+fairness (or a big waiter starves behind small ones forever) and giving units back when a
+cancelled `Acquire` wins the race it was abandoning.
+
+**11 — The memory model.** Go promises you a list of happens-before edges and nothing else. `for
+!done {}` on a plain `bool` is not "might read a stale value" — the compiler may hoist the read
+out of the loop entirely, and the loop never terminates. Fixed with `sync.Once`,
+`atomic.Pointer`, `RWMutex` and a closed channel as a broadcast.
+
+**12 — Fuzzing.** A fuzz test cannot know the right answer for a generated input, so it asserts
+*properties*: no panic, still valid UTF-8, `len <= n`, still a prefix. The reference survives 1.1
+million executions; the starting code fails in 0.02 seconds. Also the rest of the testing
+vocabulary — table tests, `t.Helper`, `t.Cleanup`, `-cover`, `-race`.
+
+## Lab
+
+[`labs/01-profiling`](labs/01-profiling/) — six measured demonstrations: `MemStats`, **GOGC 50 vs
+100 vs 400 vs off** (309 GC cycles vs 26; and "off" turns out to be the *slowest*), `GOMEMLIMIT`,
+`sync.Pool` (**781MB and 262 collections → 0 and 0**), escape analysis read out of the compiler,
+and a real CPU profile with the commands to read it.
+
+Plus [SHIPPING.md](SHIPPING.md) — project layout, tooling, `database/sql`/pgx/sqlc, `log/slog`,
+distroless Docker, and gRPC.
 
 ## Related
 

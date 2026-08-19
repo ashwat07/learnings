@@ -214,26 +214,28 @@ conversation. These want a **framework + worked reference designs + a rubric**.*
 
 ## 8.2 API styles & protocols
 
-| Item | Status |
-|---|---|
-| GraphQL schema & resolvers, context, error masking | ⬜ |
-| **GraphQL N+1 & DataLoader** | ⬜ |
-| GraphQL at scale — Relay cursors, depth/complexity limits, persisted queries | ⬜ |
-| Federation & subscriptions | ⬜ |
-| Apollo/Yoga (Node) & gqlgen (Go) | ⬜ |
-| gRPC & Protobuf — unary vs streaming, deadlines | ⬜ |
-| tRPC — end-to-end typesafe | ⬜ |
-| REST vs GraphQL vs gRPC vs tRPC — choose and defend | ⬜ |
+| Item | Status | Where |
+|---|---|---|
+| GraphQL schema & resolvers, context, error masking | ✅ | [api-styles 01](backend/api-styles/drills/01-resolvers-and-errors/) |
+| **GraphQL N+1 & DataLoader** | ✅ | [api-styles 02](backend/api-styles/drills/02-dataloader/) — 81 queries → 3 |
+| GraphQL at scale — Relay cursors, depth/complexity limits, persisted queries | ✅ | [api-styles 03](backend/api-styles/drills/03-pagination-and-limits/) |
+| Federation & subscriptions | ⬜ | subscriptions overlap [realtime](backend/realtime/); federation not built |
+| Apollo/Yoga (Node) & gqlgen (Go) | 🟡 | the schema+resolvers+execute core is built on `graphql-js` directly; no server framework |
+| gRPC & Protobuf — the wire format, evolution, deadlines | ✅ | [api-styles 04](backend/api-styles/drills/04-protobuf-wire/) + [go-lang 08](backend/go-lang/08-http-and-context/) |
+| tRPC — end-to-end typesafe | 🟡 | compared in [the lab](backend/api-styles/labs/01-choosing/); no drill (it is a TypeScript trick, and tier 0 covers the types) |
+| REST vs GraphQL vs gRPC vs tRPC — choose and defend | ✅ | [api-styles lab 01](backend/api-styles/labs/01-choosing/) — measured, not argued |
 
 ## 8.3 Real-time, webhooks & streaming
 
-| Item | Status |
-|---|---|
-| WebSocket server — lifecycle, auth on connect, rooms, Redis pub/sub scaling | ⬜ |
-| SSE & long-polling, reconnection, last-event-id | 🟡 *(client side in [realtime-ui](realtime-ui/); server side ⬜)* |
-| **Webhooks — HMAC signing/verification, retries, idempotent delivery, replay protection** | ⬜ |
-| Pub/sub & presence, fan-out across instances | ⬜ |
-| Streaming responses — chunked HTTP, LLM token streaming | ⬜ |
+| Item | Status | Where |
+|---|---|---|
+| WebSocket protocol — framing, masking, fragmentation, control frames | ✅ | [realtime 01](backend/realtime/drills/01-websocket-frames/) — RFC 6455 vectors |
+| WebSocket server — lifecycle, auth on connect, rooms, heartbeat, backpressure | ✅ | [realtime 02](backend/realtime/drills/02-rooms-and-fanout/) |
+| SSE & reconnection, last-event-id resume | ✅ | [realtime 05](backend/realtime/drills/05-sse-and-resume/) + client side in [realtime-ui](realtime-ui/) |
+| **Webhooks — HMAC signing/verification, replay protection** | ✅ | [realtime 03](backend/realtime/drills/03-webhook-signing/) — the runner is the attacker |
+| **Webhook delivery — retries, backoff, DLQ, permanent vs transient** | ✅ | [realtime 04](backend/realtime/drills/04-webhook-delivery/) |
+| Pub/sub & presence, fan-out across instances | ✅ | [realtime 02](backend/realtime/drills/02-rooms-and-fanout/) — three instances, exactly-once |
+| Streaming responses — chunked HTTP, LLM token streaming | ✅ | [node-runtime 11](backend/node-runtime/drills/11-streaming-http/) + [realtime 05](backend/realtime/drills/05-sse-and-resume/) |
 
 ## 8.4 Data layer & Postgres depth
 
@@ -345,19 +347,20 @@ Jepsen-style checks, property-based tests)
 | **Structured logging, RED metrics, tracing** | ✅ | [reliability](backend/reliability/) (26 tests) |
 | **Callbacks → promises → async/await** — promisify, sequential vs parallel | ✅ | [javascript 05](javascript/labs/05-promises-from-scratch/) + [drill 08](backend/node-runtime/drills/08-concurrency-limit/) |
 | **fs, path, os & timers** — sync vs async, cross-platform paths | 🟡 | timer drift + sync-vs-async lag measured in [lab 01 §5,6](backend/node-runtime/labs/01-runtime-and-loop/); path/os ⬜ |
+| **Request context** — `AsyncLocalStorage`, ambient trace/request ids | ✅ | [drill 10](backend/node-runtime/drills/10-async-context/) (597 cross-request leaks measured) |
 | **HTTP module & frameworks** — raw `http`, then Express/Fastify/Nest | 🟡 | raw `http` in [drill 07](backend/node-runtime/drills/07-graceful-shutdown/); Fastify in [api-craft](backend/api-craft/); Nest ⬜ |
-| **Streaming responses & uploads** — multipart, streamed bodies | ⬜ | — |
-| **Performance & memory** — GC, heap snapshots, `--inspect`, clinic.js, autocannon | ⬜ | browser-side equivalent in [spa-memory-leaks](spa-memory-leaks/) |
-| **Clustering & scaling** — `cluster`, PM2, sticky sessions | ⬜ | — |
-| **Caching & pooling** — in-process vs Redis; DB connection pooling | 🟡 | Redis in [caching-and-queues](backend/caching-and-queues/); pooling ⬜ |
-| **TypeScript with Node** — tsx, tsconfig, build & run in prod | ⬜ | types themselves in [typescript](typescript/) |
-| **Packages & npm/pnpm** — semver, monorepos, publishing | ⬜ | — |
-| **Testing** — supertest, mocking, integration tests | 🟡 | `node --test` suites in [api-craft](backend/api-craft/) + [reliability](backend/reliability/); mocking/testcontainers ⬜ |
-| **Native addons & N-API** | ⬜ | — |
-| **Diagnostics deep** — `async_hooks`, `diagnostics_channel`, flame graphs | ⬜ | — |
+| **Streaming responses & uploads** — multipart, streamed bodies | ✅ | [drill 11](backend/node-runtime/drills/11-streaming-http/) (405MB → flat; early 413) |
+| **Performance & memory** — GC, heap snapshots, `--inspect`, load testing | ✅ | [lab 03](backend/node-runtime/labs/03-diagnostics/) + [drill 13](backend/node-runtime/drills/13-find-the-leak/) |
+| **Clustering & scaling** — `cluster`, PM2, sticky sessions | ✅ | [lab 04](backend/node-runtime/labs/04-cluster-and-reloads/) |
+| **Caching & pooling** — in-process vs Redis; DB connection pooling | ✅ | [drill 12](backend/node-runtime/drills/12-connection-pool/) + [caching-and-queues](backend/caching-and-queues/) |
+| **TypeScript with Node** — tsx, tsconfig, build & run in prod | 🟡 | [SHIPPING.md](backend/node-runtime/SHIPPING.md) (reference); types themselves in [typescript](typescript/) |
+| **Packages & npm/pnpm** — semver, monorepos, publishing | 🟡 | [SHIPPING.md](backend/node-runtime/SHIPPING.md) (reference) |
+| **Testing** — supertest, mocking, integration tests | 🟡 | `node --test` suites in [api-craft](backend/api-craft/) + [reliability](backend/reliability/); strategy in [SHIPPING.md](backend/node-runtime/SHIPPING.md); testcontainers ⬜ |
+| **Native addons & N-API** | 🟡 | [SHIPPING.md](backend/node-runtime/SHIPPING.md) (reference); no lab — needs a toolchain |
+| **Diagnostics deep** — `async_hooks`, `diagnostics_channel`, flame graphs | ✅ | [lab 03](backend/node-runtime/labs/03-diagnostics/) |
 | **V8 performance internals** — hidden classes, ICs, deopts | ✅ | [javascript 08](javascript/labs/08-engine-intuition/) |
 | **True parallelism** — worker pools, `SharedArrayBuffer` + Atomics | 🟡 | pool ✅ [drill 09](backend/node-runtime/drills/09-worker-threads/); SAB/Atomics ⬜ |
-| **Zero-downtime reloads** — shared sockets, connection draining, handoff | 🟡 | draining ✅ [drill 07](backend/node-runtime/drills/07-graceful-shutdown/); cluster handoff ⬜ |
+| **Zero-downtime reloads** — shared sockets, connection draining, handoff | ✅ | [lab 04](backend/node-runtime/labs/04-cluster-and-reloads/) — 6 dropped vs 0 |
 
 ## 8.11 Go, the language
 
@@ -382,22 +385,22 @@ Jepsen-style checks, property-based tests)
 | **`encoding/json` & time** — struct tags, custom marshalling, monotonic clocks | ✅ | [go-lang 06](backend/go-lang/06-json-and-time/) |
 | **Modules & testing** — table-driven tests, benchmarks | ✅ | every drill; benchmarks in [go-lang 07](backend/go-lang/07-allocations/) |
 | **Memory model** — stack vs heap, escape analysis, GC basics | ✅ | [go-lang 07](backend/go-lang/07-allocations/) |
-| **Performance** — `pprof`, benchmarking, cutting allocations | 🟡 | `AllocsPerRun` + `-benchmem` + `-gcflags=-m` ✅ [go-lang 07](backend/go-lang/07-allocations/); pprof ⬜ |
+| **Performance** — `pprof`, benchmarking, cutting allocations | ✅ | [go-lang 07](backend/go-lang/07-allocations/) + [go lab 01](backend/go-lang/labs/01-profiling/) |
 | **Escape analysis & allocations** — reading `-gcflags=-m` | ✅ | [go-lang 07](backend/go-lang/07-allocations/) |
 | **Composition & embedding** — method promotion, no inheritance | ✅ | [go-lang 08](backend/go-lang/08-http-and-context/) (the `Recorder`) |
 | **Type assertions & type switches** | ✅ | [go-lang 02](backend/go-lang/02-errors/) + [04](backend/go-lang/04-defer-panic-recover/) |
-| **Constants & `iota`** | 🟡 | used in [go-lang 08](backend/go-lang/08-http-and-context/); no dedicated drill |
+| **Constants & `iota`** — typed vs untyped, enums, bit flags, Stringer | ✅ | [go-lang 09](backend/go-lang/09-constants-and-iota/) |
 | **Reflection basics** — when to avoid it | 🟡 | used in [go-lang 03](backend/go-lang/03-nil-interface/); no dedicated drill |
-| **`database/sql`, pgx & sqlc** — query, scan, transactions; codegen vs ORM | ⬜ | the SQL itself in [postgres](backend/postgres/) |
-| **Tooling** — `gofmt`, `vet`, staticcheck, cross-compile | 🟡 | `vet` + `-race` in CI-shaped commands; staticcheck ⬜ |
-| **Fuzzing & coverage** | ⬜ | — |
-| **Idiomatic Go** — project layout, error idioms, naming | 🟡 | idioms throughout the references; no layout lab |
+| **`database/sql`, pgx & sqlc** — query, scan, transactions; codegen vs ORM | 🟡 | [SHIPPING.md](backend/go-lang/SHIPPING.md) (reference); the SQL and the pool semantics in [postgres](backend/postgres/) + [node drill 12](backend/node-runtime/drills/12-connection-pool/) |
+| **Tooling** — `gofmt`, `vet`, staticcheck, cross-compile | ✅ | [SHIPPING.md](backend/go-lang/SHIPPING.md) + `vet`/`-race` on every drill |
+| **Fuzzing & coverage** | ✅ | [go-lang 12](backend/go-lang/12-fuzzing/) — properties, seed corpus, `testdata/fuzz` |
+| **Idiomatic Go** — project layout, error idioms, naming | ✅ | [SHIPPING.md](backend/go-lang/SHIPPING.md) + the reference notes on every drill |
 | **gRPC & services** — protobuf, streaming, interceptors, deadlines | ⬜ | tier 8.2 |
-| **Production** — `slog`, graceful shutdown, distroless Docker | 🟡 | shutdown discussed in [go-lang 08](backend/go-lang/08-http-and-context/); `slog`/Docker ⬜ |
-| **Runtime & scheduler (GMP)** — work-stealing, `GOMAXPROCS` | ⬜ | — |
-| **Memory model & happens-before** — correct lock-free atomics | 🟡 | atomics ✅ [go-concurrency 01](backend/go-concurrency/01-data-race/); the model itself ⬜ |
-| **Advanced concurrency** — `errgroup`, weighted semaphores | ⬜ | the hand-rolled equivalents in [go-concurrency 02](backend/go-concurrency/02-worker-pool/) |
-| **Profiling & GC tuning** — pprof CPU/heap/block/mutex, trace viewer, `GOGC` | ⬜ | — |
+| **Production** — `slog`, graceful shutdown, distroless Docker | ✅ | [SHIPPING.md](backend/go-lang/SHIPPING.md) + [go-lang 08](backend/go-lang/08-http-and-context/) |
+| **Runtime & scheduler (GMP)** — work-stealing, `GOMAXPROCS` | 🟡 | `GOMAXPROCS` in containers measured in [go lab 01](backend/go-lang/labs/01-profiling/); GMP internals ⬜ |
+| **Memory model & happens-before** — correct lock-free atomics | ✅ | [go-lang 11](backend/go-lang/11-memory-model/) |
+| **Advanced concurrency** — `errgroup`, weighted semaphores, pipelines | ✅ | [go-lang 10](backend/go-lang/10-errgroup-and-semaphore/) — both built from scratch |
+| **Profiling & GC tuning** — pprof CPU/heap/block/mutex, trace viewer, `GOGC` | ✅ | [go lab 01](backend/go-lang/labs/01-profiling/) — GOGC 50/100/400/off measured |
 
 ---
 
@@ -420,13 +423,20 @@ The point of these is that they're **not** exercises. Each is a repo you'd show 
 | | Built | Notes |
 |---|---|---|
 | **Frontend** | 29 courses, 144 runnable labs | tiers 0–5 essentially complete |
-| **Backend** | 7 labs, **43 drills**, 51 tests | tier 8: 8.5, 8.8, 8.10, 8.11 substantially done; 8.2, 8.3, 8.7 not started |
+| **Backend** | 11 labs, **60 drills**, 51 tests | tier 8: 8.2, 8.3, 8.5, 8.8, 8.10, 8.11 essentially complete; 8.7 not started |
 | **Applied / system design / portfolio** | nothing | tiers 6, 7, 9 |
 
-**By item: 130 ✅ · 21 🟡 · 49 ⬜** across 200 items.
+**By item: 158 ✅ · 20 🟡 · 38 ⬜** across 216 items.
 
-**Overall: roughly 70% of this roadmap exists.** The frontend is close to done; the backend, applied
-design, and portfolio tiers are where the remaining work is.
+**Overall: roughly 78% of this roadmap exists.** What is left, in the order I would build it:
+
+1. **8.4 Postgres, the second half** — schema design & zero-downtime migrations, JSONB/FTS, partitioning, replicas
+2. **Tier 6 applied components** — six failing specs; the biggest frontend gap
+3. **8.6 auth, the second half** — OAuth2/OIDC/PKCE, RBAC/ABAC, secrets & PII
+4. **8.7 common subsystems** — media, search, payments, notifications, geospatial
+5. **8.8 remainder** — testcontainers, OTel SDK, containers/CI, k6, bulkheads
+6. **Tier 7 system design** — a framework, worked designs and a rubric, not labs
+7. **Tier 9 portfolio** — five repos you would show someone
 
 ## The order I'd actually do it in
 

@@ -14,13 +14,17 @@
     "drills:cache": "node caching-and-queues/drills/run.mjs",
     "drills:sec": "node auth-and-security/drills/run.mjs",
     "drills:jobs": "node jobs-and-messaging/drills/run.mjs",
+    "drills:api": "node api-styles/drills/run.mjs",
+    "drills:rt": "node realtime/drills/run.mjs",
     "drills:node": "node node-runtime/drills/run.mjs",
     "drills:go": "cd go-concurrency && go test -race ./...",
-    "drills:golang": "cd go-lang && go test ./...",
-    "test:reliability": "node --test reliability/test/"
+    "drills:golang": "cd go-lang && go test -race ./...",
+    "test:reliability": "node --test reliability/test/",
+    "lab:go-profiling": "cd go-lang && go run ./labs/01-profiling"
   },
   "dependencies": {
     "fastify": "^5.12.1",
+    "graphql": "^16.14.2",
     "ioredis": "^6.0.0",
     "postgres": "^3.4.5",
     "zod": "^4.4.3"
