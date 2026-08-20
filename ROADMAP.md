@@ -248,9 +248,9 @@ conversation. These want a **framework + worked reference designs + a rubric**.*
 | Schema design & **zero-downtime migrations** — expand/contract, batched backfills, `CONCURRENTLY`, `lock_timeout` | ✅ | [pg drill 11](backend/postgres/drills/11-zero-downtime-migration/) — 1,310ms of blocked writes → 80ms |
 | Advanced SQL — CTEs, window functions, `LATERAL`, upserts, `DISTINCT ON`, `FILTER`, recursive | ✅ | [pg drill 14](backend/postgres/drills/14-advanced-sql/) |
 | JSONB & full-text search, GIN/trigram | ✅ | [pg drill 12](backend/postgres/drills/12-jsonb-at-speed/) (26,748 → 19 buffers) + [13](backend/postgres/drills/13-search-that-scales/) (17,740 → 102) |
-| Partitioning, matviews, LISTEN/NOTIFY | ⬜ | — |
+| Partitioning, matviews, LISTEN/NOTIFY | ✅ | [pg lab 10](backend/postgres/labs/10-partitioning-and-notify/) — 8.4x pruning, DELETE vs DETACH, a read blocked 98ms by REFRESH |
 | ORMs & query builders — tradeoffs and escape hatches | 🟡 | covered as traps in lab 08 |
-| Connection pooling, PgBouncer, read replicas & lag | ⬜ | — |
+| Connection pooling, PgBouncer, read replicas & lag | ✅ | [pg lab 09](backend/postgres/labs/09-pooling-and-replicas/) — the knee, 838ms of queue time, idle-in-transaction, PgBouncer modes |
 
 ## 8.5 Messaging, jobs & data flow
 
@@ -309,7 +309,7 @@ hygiene (timeouts, jitter, circuit breakers, sandbox vs prod)
 | Containers & orchestration | ⬜ | — |
 | CI/CD & **expand/contract migrations** | ⬜ | — |
 | Performance, load & cost (k6, pprof) | ⬜ | — |
-| Bulkheads | ⬜ | — |
+| **Bulkheads** | ✅ | [reliability lab 01](backend/reliability/labs/01-bulkheads/) — 39 healthy requests vs 3,727, same capacity |
 
 > The *frontend* equivalents are built: [quality-and-delivery](quality-and-delivery/) and
 > [resilience](resilience/). The backend versions share the ideas and none of the tooling.
@@ -320,9 +320,35 @@ hygiene (timeouts, jitter, circuit breakers, sandbox vs prod)
 · **Exactly-once, proven** ✅ ([caching drill 03](backend/caching-and-queues/drills/03-idempotent-consumer/)
 + [drill 04](backend/caching-and-queues/drills/04-the-outbox/))
 
-Still ⬜: Consensus in practice (Raft) · Event sourcing & CQRS end to end · Zero-downtime migrations
-(expand/contract, backfills, dual writes) · Chaos & correctness testing (fault injection,
-Jepsen-style checks, property-based tests)
+**Deadline propagation & retry budgets** ✅ ([distributed drill 01](backend/distributed/drills/01-deadlines-and-retry-budgets/))
+— 9 leaf calls per request and 9s of work past a 500ms deadline, down to 1 and 0.
+**Zero-downtime migrations** ✅ ([pg drill 11](backend/postgres/drills/11-zero-downtime-migration/)).
+
+Still ⬜: Consensus in practice (Raft) · Event sourcing & CQRS end to end · Chaos & correctness
+testing (a seeded fault-injection harness — partition, duplicate, reorder, restart mid-transaction
+— with invariant checks; the world in [backend/distributed/world.mjs](backend/distributed/world.mjs)
+is the start of it)
+
+---
+
+## The structural gap, named
+
+All 68 drills except one teach **a single primitive in a controlled world**, and each is passable
+with that primitive alone. That is the right way to learn a primitive and it cannot produce the
+failures that take services down, because those are EMERGENT: every component is individually
+correct and reviewable, and the system is broken anyway.
+
+[`backend/distributed/`](backend/distributed/) is the course for those. The three that belong there
+next, in order:
+
+1. ~~A complete auth flow~~ ✅ [`backend/auth-flow/`](backend/auth-flow/) — 2 drills, 29 checks.
+2. **Deterministic fault injection** — a seeded harness that partitions the network, duplicates and
+   reorders messages, and restarts a service mid-transaction, with invariants checked after every
+   run: no money created or destroyed, no order shipped twice, every saga either completes or fully
+   compensates. This is what teaches that exactly-once does not exist.
+3. **Cross-service tracing and causality** — one trace across three hops, and the two things nobody
+   builds: clock skew making timestamps lie, and out-of-order arrival breaking a state machine that
+   assumed ordering.
 
 ## 8.10 The Node runtime
 

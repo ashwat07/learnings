@@ -58,7 +58,7 @@ you which if you ask it properly:
 | one query is slow | a missing or unusable index — [lab 03](labs/03-indexing/) |
 | the app is slow but every query is fast | **N+1** — [lab 08](labs/08-n-plus-1-and-orms/) |
 | it is fast in dev and slow in prod | different statistics, different data volume, a cold cache |
-| it is fast alone and slow under load | locking or pool exhaustion — labs [06](labs/06-transactions-and-locking/) and 09 *(planned)* |
+| it is fast alone and slow under load | locking or pool exhaustion — labs [06](labs/06-transactions-and-locking/) and [09](labs/09-pooling-and-replicas/) |
 
 ## Curriculum
 
@@ -70,9 +70,9 @@ you which if you ask it properly:
 | 04 | Advanced SQL — **[drill 14](drills/14-advanced-sql/)** | CTEs, window functions, lateral joins, upserts | ⭐⭐⭐⭐⭐ |
 | 05 | JSONB & search — **[drill 12](drills/12-jsonb-at-speed/)** + **[13](drills/13-search-that-scales/)** | Do I need Elasticsearch? | ⭐⭐⭐⭐ |
 | 06 | [Transactions & locking](labs/06-transactions-and-locking/) | Isolation levels, deadlocks, and the lost update | ⭐⭐⭐⭐⭐⭐ |
-| 07 | Partitioning & LISTEN/NOTIFY *(planned)* | Big tables, and push instead of poll | ⭐⭐⭐⭐ |
+| 07 | [Partitioning, matviews & NOTIFY](labs/10-partitioning-and-notify/) | Big tables, and push instead of poll | ⭐⭐⭐⭐ |
 | 08 | [N+1 & ORM traps](labs/08-n-plus-1-and-orms/) | Why 500 fast queries beat one slow one — and lose | ⭐⭐⭐⭐⭐⭐ |
-| 09 | Pooling & read replicas *(planned)* | Why 100 connections is slower than 20 | ⭐⭐⭐⭐⭐ |
+| 09 | [Pooling & read replicas](labs/09-pooling-and-replicas/) | Why 95 connections is slower than 4 | ⭐⭐⭐⭐⭐ |
 
 ## The dataset
 

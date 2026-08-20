@@ -68,6 +68,8 @@ other isn't a queue.
 | **[Go concurrency](go-concurrency/)** | drills, run under **`-race`** | **3 drills** — data races, worker pools, context cancellation |
 | **[Go, as a service](go-service/)** | drills, **`-race` required** | **3 drills** — cache stampede & singleflight, worker pool & DLQ, per-key rate limiter |
 | **[Go, the language](go-lang/)** | drills + lab | 1 lab, **12 drills** — slices, errors, the nil interface, defer, generics, JSON & time, allocations, net/http, iota, errgroup, the memory model, fuzzing |
+| **[The auth flow, end to end](auth-flow/)** | drills, **emergent failures** | **2 drills** — the session lifecycle (logout that actually logs out), OAuth2 + PKCE with the runner as attacker |
+| **[Distributed challenges](distributed/)** | drills, **emergent failures** | **1 drill** — deadline propagation & shared retry budgets: where every component is correct and the system is not |
 | **[Reliability & observability](reliability/)** | **failing test suite** | **26 tests** — timeouts, retries, breakers, structured logs, RED metrics, tracing |
 | **[API styles & protocols](api-styles/)** | labs + drills, **no Docker** | 1 lab, **4 drills** — GraphQL resolvers & error masking, DataLoader, cursor pagination & cost limits, the protobuf wire format |
 | **[Real-time & webhooks](realtime/)** | drills, **no Docker** | **5 drills** — WebSocket framing, rooms & fan-out, webhook signing, webhook delivery, SSE resume |
@@ -85,9 +87,11 @@ Two shapes, chosen per topic:
 npm run drills:pg        # 10 Postgres drills
 npm run drills:cache     # 4 caching/queue drills
 npm run drills:sec       # 5 security drills — the runner plays the attacker
+npm run drills:authflow  # the auth flow as a system: session lifecycle, OAuth2 + PKCE
 npm run drills:jobs      # 4 jobs/broker/backpressure drills
 npm run drills:api       # 4 API-style drills — GraphQL, DataLoader, cursors, protobuf
 npm run drills:rt        # 5 real-time & webhook drills
+npm run drills:dist      # emergent failures: deadlines, retry budgets, cancellation
 npm run drills:node      # 13 Node runtime drills — needs no containers at all
 npm run drills:go        # 3 Go concurrency drills, under the race detector
 npm run drills:golang    # 12 Go language drills, under the race detector

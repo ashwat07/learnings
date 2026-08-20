@@ -63,3 +63,24 @@ testing with k6 or pprof profiling.
 The frontend counterparts are built:
 [quality-and-delivery](../../quality-and-delivery/) and [resilience](../../resilience/) — same ideas,
 none of the same tooling.
+
+## The lab
+
+[`labs/01-bulkheads`](labs/01-bulkheads/) — the same traffic and the same total capacity through
+four isolation strategies, against a dependency that has stopped answering:
+
+| | healthy requests served | healthy p99 |
+|---|---|---|
+| one shared pool, no timeout | **39** | **9,009ms** |
+| one shared pool, 400ms timeout | 111 | 1,211ms |
+| separate pools (8 + 2) | 3,675 | 23ms |
+| bulkhead + circuit breaker | **3,727** | **23ms** |
+
+**96× more healthy requests, with nothing about the broken dependency fixed.** The lab also gets
+the composition order right — `breaker( bulkhead( timeout( retry( call ) ) ) )`, with retry
+*innermost*, because a retry outside the breaker amplifies load on a dependency that is already
+failing.
+
+```sh
+node reliability/labs/01-bulkheads/lab.mjs
+```
