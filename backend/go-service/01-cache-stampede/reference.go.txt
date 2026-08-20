@@ -1,0 +1,246 @@
+// Drill 01 — reference. (Rename to reference.go to compile it.)
+
+package drill01
+
+import (
+	"container/list"
+	"context"
+	"sync"
+	"time"
+)
+
+type Stats struct {
+	Hits   int64
+	Misses int64
+	Loads  int64
+}
+
+type entry struct {
+	key       string
+	value     string
+	expiresAt time.Time
+	elem      *list.Element // this entry's position in the LRU list
+}
+
+// A single in-flight load, shared by everyone who wanted the same key.
+type call struct {
+	done  chan struct{} // closed when val/err are set — a one-shot broadcast (go-lang drill 11)
+	value string
+	err   error
+}
+
+type Cache struct {
+	mu       sync.RWMutex
+	items    map[string]*entry
+	lru      *list.List // front = most recently used
+	inFlight map[string]*call
+	capacity int
+	ttl      time.Duration
+	load     func(ctx context.Context, key string) (string, error)
+
+	statsMu             sync.Mutex
+	hits, misses, loads int64
+}
+
+func New(capacity int, ttl time.Duration, load func(ctx context.Context, key string) (string, error)) *Cache {
+	if capacity < 1 {
+		capacity = 1
+	}
+	return &Cache{
+		items:    make(map[string]*entry, capacity),
+		lru:      list.New(),
+		inFlight: make(map[string]*call),
+		capacity: capacity,
+		ttl:      ttl,
+		load:     load,
+	}
+}
+
+func (c *Cache) Get(ctx context.Context, key string) (string, error) {
+	// 1. THE READ PATH, under a read lock only. This is the 99% case and it must not exclude
+	//    other readers. RWMutex is worth it here precisely because there is real work inside
+	//    (a map lookup plus a time comparison) and the read:write ratio is enormous.
+	c.mu.RLock()
+	e, ok := c.items[key]
+	fresh := ok && time.Now().Before(e.expiresAt)
+	value := ""
+	if fresh {
+		value = e.value
+	}
+	c.mu.RUnlock()
+
+	if fresh {
+		// The LRU touch needs a WRITE lock, which is the one real cost of LRU: every read is a
+		// write to the recency list. If that contention ever shows up in a profile, the usual
+		// answers are a sharded cache (N independent caches, key hashed to one) or an
+		// approximate policy like TinyLFU, which is what Ristretto and Caffeine do.
+		c.mu.Lock()
+		if e2, still := c.items[key]; still {
+			c.lru.MoveToFront(e2.elem)
+		}
+		c.mu.Unlock()
+		c.bump(&c.hits)
+		return value, nil
+	}
+
+	c.bump(&c.misses)
+	return c.loadOnce(ctx, key)
+}
+
+// The singleflight. This is the whole drill.
+func (c *Cache) loadOnce(ctx context.Context, key string) (string, error) {
+	c.mu.Lock()
+
+	// Re-check under the write lock. Between the RUnlock above and this Lock, another goroutine
+	// may have finished loading — the classic double-checked pattern, and here it is genuinely
+	// correct because both checks are inside a lock.
+	if e, ok := c.items[key]; ok && time.Now().Before(e.expiresAt) {
+		c.lru.MoveToFront(e.elem)
+		v := e.value
+		c.mu.Unlock()
+		return v, nil
+	}
+
+	// Is somebody already fetching this key? Join them.
+	if existing, ok := c.inFlight[key]; ok {
+		c.mu.Unlock()
+		return c.wait(ctx, existing)
+	}
+
+	// No: become the loader.
+	fl := &call{done: make(chan struct{})}
+	c.inFlight[key] = fl
+	c.mu.Unlock()
+
+	// Run the load in its OWN goroutine so that every caller — including this one — can wait on
+	// `ctx.Done()` instead of on the load itself. Without this, the first caller's context
+	// governs everyone: it gives up and the load dies with it, taking the other 499 waiters down.
+	//
+	// context.WithoutCancel (Go 1.21+) keeps the values (trace ids, request metadata) and drops
+	// the cancellation, which is exactly the semantics a shared load needs. Give it a deadline of
+	// its own — a shared load with no deadline at all is a goroutine that can hang forever.
+	go func() {
+		loadCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+		defer cancel()
+
+		c.bump(&c.loads)
+		v, err := c.load(loadCtx, key)
+
+		c.mu.Lock()
+		delete(c.inFlight, key)
+		if err == nil {
+			c.insert(key, v)
+		}
+		// An ERROR IS NOT CACHED. Caching a failure means one blip locks the key out for the whole
+		// TTL — and if you cache the rejected promise/err, forever. (If a hot key failing hard is
+		// hammering your origin, cache the failure for a SHORT, separate negative TTL — seconds,
+		// not minutes — rather than the normal one.)
+		c.mu.Unlock()
+
+		fl.value, fl.err = v, err
+		close(fl.done) // wakes every waiter at once
+	}()
+
+	return c.wait(ctx, fl)
+}
+
+func (c *Cache) wait(ctx context.Context, fl *call) (string, error) {
+	select {
+	case <-fl.done:
+		return fl.value, fl.err
+	case <-ctx.Done():
+		// This caller gives up. The load continues for everyone else.
+		return "", ctx.Err()
+	}
+}
+
+// insert must be called with the write lock held.
+func (c *Cache) insert(key, value string) {
+	if e, ok := c.items[key]; ok {
+		e.value = value
+		e.expiresAt = time.Now().Add(c.ttl)
+		c.lru.MoveToFront(e.elem)
+		return
+	}
+	e := &entry{key: key, value: value, expiresAt: time.Now().Add(c.ttl)}
+	e.elem = c.lru.PushFront(e)
+	c.items[key] = e
+
+	// Evict from the BACK — the least recently used. Evicting the oldest INSERTED entry instead
+	// (which is what a plain map plus insertion order gives you) throws away your hottest key the
+	// moment it happens to be the oldest, and the hit rate quietly collapses.
+	for c.lru.Len() > c.capacity {
+		oldest := c.lru.Back()
+		if oldest == nil {
+			break
+		}
+		victim := oldest.Value.(*entry)
+		c.lru.Remove(oldest)
+		delete(c.items, victim.key)
+	}
+}
+
+func (c *Cache) bump(counter *int64) {
+	c.statsMu.Lock()
+	*counter++
+	c.statsMu.Unlock()
+}
+
+func (c *Cache) Len() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return len(c.items)
+}
+
+func (c *Cache) Stats() Stats {
+	c.statsMu.Lock()
+	defer c.statsMu.Unlock()
+	return Stats{Hits: c.hits, Misses: c.misses, Loads: c.loads}
+}
+
+/*
+WHAT THE NAIVE VERSION GETS RIGHT, AND WHY THAT MAKES IT DANGEROUS
+
+`mu.Lock(); defer mu.Unlock()` around the whole of Get IS race-free, and it DOES collapse the
+stampede — the first goroutine loads, the other 499 find the value already there. Both of the
+things you were worried about are handled. That is precisely why it survives review.
+
+What it does instead is serialise every miss in the process. Eight different cold keys taking
+50ms each become 400ms, and one genuinely slow key makes the entire cache — including every hot
+key, because Get takes the same lock — as slow as that key. The failure is not a wrong answer,
+it is that your cache becomes a global bottleneck under exactly the load it was added to survive.
+
+The rule underneath: NEVER HOLD A LOCK ACROSS I/O. Take the lock to inspect and update state, let
+it go, do the slow thing, take it again to store. That is the shape of loadOnce above, and it is
+the same shape as a correct connection pool (node-runtime drill 12) and a correct rate limiter.
+
+USE THE STANDARD ONE
+
+	golang.org/x/sync/singleflight
+
+	var g singleflight.Group
+	v, err, shared := g.Do(key, func() (any, error) { return load(key) })
+
+Thirty lines, in x/sync, and it does not do the ctx-per-waiter part above — `Do` blocks until the
+shared call finishes, so a caller cannot give up early. `DoChan` returns a channel you can select
+on, which is how you get the cancellation semantics in this drill. Reach for `DoChan`.
+
+Note `shared`: it tells you whether your result came from someone else's call. That is the metric
+worth exporting — "share of loads that were collapsed" tells you how much stampede protection is
+actually earning you, and whether your TTLs are creating synchronised expiry.
+
+THE THREE STAMPEDE DEFENCES, AND WHEN EACH IS THE RIGHT ONE
+  1. SINGLEFLIGHT (this drill) — per process. Free, simple, and only collapses within one pod.
+     Eight pods means up to eight origin calls, which is usually fine.
+  2. A DISTRIBUTED LOCK / LEASE in Redis — collapses across pods. Costs a round trip on every
+     miss and needs a lease timeout, or one crashed holder blocks the key. See
+     caching-and-queues drill 01.
+  3. STALE-WHILE-REVALIDATE — serve the expired value immediately and refresh in the background.
+     The only one of the three that has no latency cliff at all, and it means accepting staleness
+     you have to be able to name. Usually the best answer for read-heavy data.
+
+And the fourth thing, which is not a defence but prevents the problem: JITTER YOUR TTLs. A
+thousand keys written in the same second and given exactly 300 seconds all expire in the same
+second, forever after. `ttl + rand(ttl/10)` costs nothing and removes a whole class of periodic
+origin spikes.
+*/

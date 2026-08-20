@@ -1,0 +1,201 @@
+// Drill 02 — reference. (Rename to reference.go to compile it.)
+
+package drill02
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"math/rand"
+	"runtime/debug"
+	"sync"
+	"time"
+)
+
+type Job struct {
+	ID   int
+	Kind string
+}
+
+type Dead struct {
+	Job      Job
+	Attempts int
+	Err      error
+}
+
+type Handler func(ctx context.Context, j Job) error
+
+type Stats struct {
+	mu       sync.Mutex
+	Done     int
+	Attempts int
+	Peak     int
+	live     int
+}
+
+func (s *Stats) enter() {
+	s.mu.Lock()
+	s.live++
+	s.Attempts++
+	if s.live > s.Peak {
+		s.Peak = s.live
+	}
+	s.mu.Unlock()
+}
+func (s *Stats) exit(done bool) {
+	s.mu.Lock()
+	s.live--
+	if done {
+		s.Done++
+	}
+	s.mu.Unlock()
+}
+func (s *Stats) Snapshot() Stats {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return Stats{Done: s.Done, Attempts: s.Attempts, Peak: s.Peak}
+}
+
+func Process(ctx context.Context, in <-chan Job, dead chan<- Dead, workers, maxAttempts int, handle Handler, stats *Stats) error {
+	if workers < 1 {
+		workers = 1
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		// N goroutines RANGING OVER ONE CHANNEL. That is the whole worker pool: the channel is
+		// the queue, the receive is the "claim", and the runtime does the scheduling. There is no
+		// dispatcher to write and no work-stealing to get wrong (go-concurrency drill 02).
+		go func(worker int) {
+			defer wg.Done()
+			for {
+				select {
+				case <-ctx.Done():
+					// Shutdown: stop TAKING work. Whatever this worker is already holding has
+					// already returned, because we only reach the select between jobs.
+					return
+				case job, ok := <-in:
+					if !ok {
+						return // the producer is finished and the queue is drained
+					}
+					runJob(ctx, job, dead, maxAttempts, handle, stats)
+				}
+			}
+		}(i)
+	}
+
+	// Wait for the workers, then return. Returning before they finish is the goroutine leak the
+	// test checks for — and worse, it lets the caller exit while jobs are still half-done.
+	wg.Wait()
+	return nil
+}
+
+func runJob(ctx context.Context, job Job, dead chan<- Dead, maxAttempts int, handle Handler, stats *Stats) {
+	var lastErr error
+
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		stats.enter()
+		err := safely(ctx, handle, job)
+		stats.exit(err == nil)
+
+		if err == nil {
+			return
+		}
+		lastErr = err
+
+		// A failure caused by OUR OWN shutdown is not the job's fault. Do not retry it and do not
+		// dead-letter it: leave it for whoever redelivers (the broker's visibility timeout, the
+		// row still marked queued). Dead-lettering work that failed because you were restarting
+		// is how a rolling deploy fills your DLQ with healthy jobs.
+		if ctx.Err() != nil {
+			return
+		}
+
+		if attempt == maxAttempts {
+			break
+		}
+
+		// Exponential backoff with FULL JITTER, and interruptible. `time.Sleep` here would ignore
+		// the shutdown signal and hold the worker for the whole delay, which on the last attempt
+		// of a long backoff is most of your grace period.
+		delay := time.Duration(rand.Int63n(int64(min(2*time.Second, time.Duration(5<<attempt)*time.Millisecond)) + 1))
+		select {
+		case <-time.After(delay):
+		case <-ctx.Done():
+			return
+		}
+	}
+
+	// Dead-letter it, and record WHY. A DLQ row without the error is a row nobody can act on.
+	//
+	// The select is not decoration: `dead <- ...` on a channel nobody is reading blocks this
+	// worker forever, and with enough poison jobs that is every worker — a deadlock whose cause
+	// looks nothing like its symptom. Either the consumer keeps up, or shutdown frees us.
+	select {
+	case dead <- Dead{Job: job, Attempts: maxAttempts, Err: lastErr}:
+	case <-ctx.Done():
+	}
+}
+
+// The recover boundary. A panic in a goroutine unwinds that goroutine and then kills the WHOLE
+// PROCESS — there is no outer handler, no supervisor, and no recover anywhere else that can stop
+// it. So any goroutine running code you did not write needs its own recover, at its own top.
+//
+// Capture debug.Stack() INSIDE the recover. By the time you return from the deferred function the
+// stack is gone, and "panic: interface conversion" with no stack is not a bug report.
+func safely(ctx context.Context, handle Handler, job Job) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic in handler for job %d: %v\n%s", job.ID, r, debug.Stack())
+		}
+	}()
+	return handle(ctx, job)
+}
+
+func min(a, b time.Duration) time.Duration {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+var _ = errors.Is
+
+/*
+WHAT GO ADDS TO THIS PROBLEM
+
+The JavaScript version of this drill (jobs-and-messaging drill 01) tests the same policy —
+retries, backoff, a dead-letter queue, not blocking the queue behind a poison job. Four things
+here cannot exist there, and they are the reason this drill is worth doing twice:
+
+  1. THE COUNTERS ARE A DATA RACE. `stats.Done++` from eight workers is undefined behaviour, and
+     `go test -race` says so. In JavaScript the same code is correct by construction, because
+     there is only one thread. This is the single biggest difference in how it FEELS to write
+     concurrent Go: correctness now needs a mutex or an atomic on anything shared, every time.
+
+  2. A PANIC KILLS THE PROCESS. An unhandled rejection in Node logs a warning by default; a panic
+     in a Go goroutine terminates everything, including the 200 healthy jobs in flight. `safely`
+     above is not defensive programming, it is the difference between one bad row and an outage.
+
+  3. GOROUTINE LEAKS ARE REAL AND SILENT. `Process` returning before `wg.Wait()` leaves workers
+     running against a channel nobody will close. Each one holds its stack and whatever it
+     captured, forever, and nothing tells you. `runtime.NumGoroutine()` before and after is the
+     cheapest leak test you will ever write; put one in your suite.
+
+  4. SHUTDOWN IS EXPLICIT. There is no event loop to drain — you propagate a context and every
+     blocking operation selects on it. Which means every `time.Sleep` in a retry path, every
+     channel send, and every downstream call is a place you can accidentally ignore SIGTERM.
+
+WHAT IT DOES NOT ADD: the policy. Retry transient, never retry permanent, cap the attempts, jitter
+the backoff, record the reason. That reasoning is identical in every language, which is why the
+JavaScript drill is not redundant — it teaches the decision table, and this one teaches what the
+runtime does to you while you implement it.
+
+THE NEXT STEP UP
+Retrying INSIDE the worker holds that worker for the whole backoff. Fine for four attempts over a
+few hundred milliseconds; wrong for a 30-minute backoff, where the right answer is to put the job
+BACK on the queue with a `not_before` timestamp and let any worker pick it up later — which is
+`FOR UPDATE SKIP LOCKED` over a jobs table (postgres drill 09) or a broker's delayed-delivery
+feature. The rule: in-worker retry for seconds, requeue for minutes.
+*/

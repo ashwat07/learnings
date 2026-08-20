@@ -19,6 +19,7 @@
     "drills:node": "node node-runtime/drills/run.mjs",
     "drills:go": "cd go-concurrency && go test -race ./...",
     "drills:golang": "cd go-lang && go test -race ./...",
+    "drills:goservice": "cd go-service && go test -race ./...",
     "test:reliability": "node --test reliability/test/",
     "lab:go-profiling": "cd go-lang && go run ./labs/01-profiling"
   },

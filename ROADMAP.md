@@ -258,8 +258,8 @@ conversation. These want a **framework + worked reference designs + a rubric**.*
 |---|---|---|
 | **Delivery guarantees** — at-least-once + idempotent consumer | ✅ | [drill 03](backend/caching-and-queues/drills/03-idempotent-consumer/) |
 | **Outbox pattern** | ✅ | [drill 04](backend/caching-and-queues/drills/04-the-outbox/) |
-| **Caching with Redis** — cache-aside, TTLs, invalidation, **stampede protection** | ✅ | [lab 02](backend/caching-and-queues/labs/02-stampede/) + [drill 01](backend/caching-and-queues/drills/01-stop-the-stampede/) |
-| **Background jobs & queues** — retries, backoff, **DLQ** | ✅ | [jobs drill 01](backend/jobs-and-messaging/drills/01-retries-and-dlq/) |
+| **Caching with Redis** — cache-aside, TTLs, invalidation, **stampede protection** | ✅ | [lab 02](backend/caching-and-queues/labs/02-stampede/) + [drill 01](backend/caching-and-queues/drills/01-stop-the-stampede/) + [Go: singleflight & LRU](backend/go-service/01-cache-stampede/) |
+| **Background jobs & queues** — retries, backoff, **DLQ** | ✅ | [jobs drill 01](backend/jobs-and-messaging/drills/01-retries-and-dlq/) + [Go: pool, drain, panic recovery](backend/go-service/02-worker-pool-and-dlq/) |
 | **Consumer groups, acks & claim-after-timeout** | ✅ | [jobs drill 02](backend/jobs-and-messaging/drills/02-consumer-groups/) |
 | **Node async & backpressure** — cursors, bounded pools, event-loop lag | ✅ | [jobs drill 03](backend/jobs-and-messaging/drills/03-node-backpressure/) |
 | **Sagas & compensation** | ✅ | [jobs drill 04](backend/jobs-and-messaging/drills/04-saga-compensation/) |
@@ -430,10 +430,11 @@ The point of these is that they're **not** exercises. Each is a repo you'd show 
 
 **Overall: roughly 79% of this roadmap exists.**
 
-**A gap worth naming: every backend SERVICE course is Node.** Go has 15 language drills and one
-profiling lab, and nothing on Postgres, caching, jobs, auth, webhooks or reliability. The fix is
-not to duplicate 60 drills — it is one **Go service course** (`net/http` + pgx + `slog` + graceful
-shutdown + testcontainers) that carries the same lessons in the other language.
+**On Go/Node parity:** [`backend/go-service/`](backend/go-service/) now covers the three concepts
+where Go's failure modes differ most — cache stampede & singleflight, worker pool & DLQ, per-key
+rate limiter — all under `-race`. Still Node-only: Postgres access (`database/sql` pool semantics,
+pgx), auth, webhook signing, graceful HTTP shutdown, streaming/backpressure. Those are the next
+Go drills; the Postgres *queries* need no Go version at all, since the SQL is the lesson.
 
 What is left, in the order I would build it:
 

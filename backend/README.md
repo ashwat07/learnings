@@ -66,6 +66,7 @@ other isn't a queue.
 | **[Jobs, brokers & backpressure](jobs-and-messaging/)** | drills | **4 drills** — retries & DLQ, consumer groups, Node backpressure, sagas |
 | **[The Node runtime](node-runtime/)** | labs + drills, **no Docker** | 4 labs, **13 drills** — the event loop, streams, framing, cancellation, shutdown, workers, request context, streaming HTTP, pooling, leaks |
 | **[Go concurrency](go-concurrency/)** | drills, run under **`-race`** | **3 drills** — data races, worker pools, context cancellation |
+| **[Go, as a service](go-service/)** | drills, **`-race` required** | **3 drills** — cache stampede & singleflight, worker pool & DLQ, per-key rate limiter |
 | **[Go, the language](go-lang/)** | drills + lab | 1 lab, **12 drills** — slices, errors, the nil interface, defer, generics, JSON & time, allocations, net/http, iota, errgroup, the memory model, fuzzing |
 | **[Reliability & observability](reliability/)** | **failing test suite** | **26 tests** — timeouts, retries, breakers, structured logs, RED metrics, tracing |
 | **[API styles & protocols](api-styles/)** | labs + drills, **no Docker** | 1 lab, **4 drills** — GraphQL resolvers & error masking, DataLoader, cursor pagination & cost limits, the protobuf wire format |
@@ -90,6 +91,7 @@ npm run drills:rt        # 5 real-time & webhook drills
 npm run drills:node      # 13 Node runtime drills — needs no containers at all
 npm run drills:go        # 3 Go concurrency drills, under the race detector
 npm run drills:golang    # 12 Go language drills, under the race detector
+npm run drills:goservice # 3 Go backend drills — the Node concepts, Go's failure modes
 npm run lab:go-profiling # measured GC, GOGC, sync.Pool, escape analysis, pprof
 npm run test:reliability # 26 reliability & observability tests
 npm run test:api         # 25 API contract tests

@@ -1,0 +1,204 @@
+// Drill 03 — reference. (Rename to reference.go to compile it.)
+
+package drill03
+
+import (
+	"context"
+	"sync"
+	"time"
+)
+
+type bucket struct {
+	tokens   float64
+	lastSeen time.Time
+}
+
+type Limiter struct {
+	mu      sync.Mutex
+	buckets map[string]*bucket
+	rate    float64
+	burst   int
+	idleTTL time.Duration
+	// Sweep lazily, on write, rather than from a background goroutine. A janitor goroutine per
+	// limiter is a goroutine you have to stop, and a limiter nobody is calling does not need one.
+	lastSweep time.Time
+}
+
+func NewLimiter(rate float64, burst int, idleTTL time.Duration) *Limiter {
+	return &Limiter{
+		buckets:   make(map[string]*bucket),
+		rate:      rate,
+		burst:     burst,
+		idleTTL:   idleTTL,
+		lastSweep: time.Now(),
+	}
+}
+
+func (l *Limiter) Allow(key string) bool { return l.AllowN(key, 1) }
+
+func (l *Limiter) AllowN(key string, n int) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	// EVERYTHING — refill, check, decrement — inside ONE critical section. Splitting the check
+	// from the decrement is the whole bug: two goroutines both read "1 token left", both decide
+	// yes, and both take it. Under -race that is a reported race; without -race it is a rate limit
+	// that leaks under exactly the load it exists for.
+	//
+	// This is the same requirement as the Redis version (caching-and-queues drill 02), where
+	// "one critical section" means one Lua script instead of GET-then-SET. Same reasoning, and
+	// the distributed case needs it MORE, because there the two racers are different processes.
+	// Sweep on EVERY call, not only when inserting a new key. The amortisation guard inside makes
+	// that cheap — but putting the call only on the insert path means a limiter whose traffic is
+	// all hot keys never sweeps at all, and the 20,000 buckets from this morning's scraper stay
+	// forever. That was a real bug in this reference, caught by the test.
+	l.sweepLocked()
+	b := l.bucketLocked(key)
+
+	now := time.Now()
+	elapsed := now.Sub(b.lastSeen).Seconds()
+	if elapsed > 0 {
+		b.tokens += elapsed * l.rate
+		if b.tokens > float64(l.burst) {
+			b.tokens = float64(l.burst) // the bucket does not overflow — that is what "burst" means
+		}
+	}
+	b.lastSeen = now
+
+	if b.tokens >= float64(n) {
+		b.tokens -= float64(n)
+		return true
+	}
+	// ALL OR NOTHING. A partial take is worse than a refusal: the caller is told no AND is charged.
+	return false
+}
+
+// bucketLocked must be called with l.mu held.
+func (l *Limiter) bucketLocked(key string) *bucket {
+	if b, ok := l.buckets[key]; ok {
+		return b
+	}
+	b := &bucket{tokens: float64(l.burst), lastSeen: time.Now()}
+	l.buckets[key] = b
+	return b
+}
+
+// A bucket at full tokens and untouched for idleTTL is indistinguishable from a bucket that does
+// not exist — so delete it. Without this, the map is keyed by client identity and grows forever:
+// every scraper, every health check, every one-request bot is a permanent entry. It is the exact
+// shape of node-runtime drill 13's first leak, and it is the one people ship.
+func (l *Limiter) sweepLocked() {
+	now := time.Now()
+	if now.Sub(l.lastSweep) < l.idleTTL/2 {
+		return // amortised: at most one full scan per half-TTL, whatever the request rate
+	}
+	l.lastSweep = now
+	for key, b := range l.buckets {
+		if now.Sub(b.lastSeen) > l.idleTTL {
+			delete(l.buckets, key)
+		}
+	}
+}
+
+func (l *Limiter) Wait(ctx context.Context, key string) error {
+	for {
+		// Check the context FIRST, so an already-cancelled caller does not consume a token on its
+		// way out — a token charged to a request that will never be served.
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if l.Allow(key) {
+			return nil
+		}
+
+		// Ask the bucket HOW LONG until a token exists, instead of polling. Polling every
+		// millisecond burns a core per waiter and still adds up to a millisecond of latency;
+		// sleeping the computed interval costs nothing and wakes at the right moment.
+		//
+		// Crucially, the lock is NOT held while we wait. Holding it would make one throttled key
+		// block every other key in the process — the same mistake as holding a cache lock across
+		// a load (drill 01), and the same fix.
+		delay := l.delayFor(key, 1)
+		if delay <= 0 {
+			delay = time.Millisecond
+		}
+		timer := time.NewTimer(delay)
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+			timer.Stop() // a timer you do not stop holds its channel and callback until it fires
+			return ctx.Err()
+		}
+	}
+}
+
+func (l *Limiter) delayFor(key string, n int) time.Duration {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	b, ok := l.buckets[key]
+	if !ok || l.rate <= 0 {
+		return time.Millisecond
+	}
+	missing := float64(n) - b.tokens
+	if missing <= 0 {
+		return 0
+	}
+	return time.Duration(missing / l.rate * float64(time.Second))
+}
+
+func (l *Limiter) Len() int {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return len(l.buckets)
+}
+
+/*
+USE THE STANDARD ONE
+
+	golang.org/x/time/rate
+
+	lim := rate.NewLimiter(rate.Limit(10), 20)     // 10/s, burst 20
+	if !lim.Allow() { return http.StatusTooManyRequests }
+	if err := lim.Wait(ctx); err != nil { ... }    // context-aware, no polling
+	r := lim.Reserve(); defer r.Cancel()           // reserve now, cancel if you do not use it
+
+It is a token bucket with the delay computed rather than polled, `Reserve` for "hold my place",
+and `SetLimit`/`SetBurst` for changing the rate at runtime. It is NOT per-key — that map, and its
+eviction, is yours to write, which is exactly the half of this drill that leaks.
+
+TOKEN BUCKET VERSUS THE ALTERNATIVES
+
+  TOKEN BUCKET (this)     allows a burst up to the bucket size, then a steady rate. What you want
+                          for an API: real traffic is bursty, and refusing a legitimate burst is
+                          worse than absorbing it.
+  FIXED WINDOW            "100 per minute", counted per clock minute. Simple, and allows 200 in
+                          two seconds across a window boundary. Almost never what you meant.
+  SLIDING WINDOW LOG      exact, and stores a timestamp per request. Accurate and expensive.
+  SLIDING WINDOW COUNTER  two fixed windows, weighted by how far into the current one you are.
+                          The usual production compromise: nearly exact, O(1) memory.
+  LEAKY BUCKET            a queue that drains at a fixed rate. Shapes traffic instead of
+                          rejecting it — right for outbound calls, wrong for inbound requests you
+                          would rather refuse quickly than queue.
+
+WHAT MAKES THIS PER-PROCESS LIMITER WRONG IN PRODUCTION
+
+Eight pods, each allowing 100/s, is a limit of 800/s. That is the single most common rate-limiting
+bug and it is not subtle once you see it — it is the same class as an in-process cache or an
+in-process WebSocket room (realtime drill 02): STATE THAT MUST BE SHARED, KEPT LOCALLY.
+
+The fix is Redis, and then the atomicity problem comes back harder, because now the racers are
+separate processes and there is no mutex that spans them. One Lua script, or `INCR` plus `EXPIRE`
+carefully ordered — caching-and-queues drill 02 measures what happens without it.
+
+An in-process limiter is still worth having IN FRONT of the distributed one: it costs nanoseconds,
+it needs no network, and it protects you when Redis is the thing that is down. Layer them, and
+decide explicitly whether a Redis outage means fail-open (serve everything) or fail-closed (refuse
+everything). Both are defensible; not choosing is not.
+
+WHAT TO RETURN, WHEN YOU REFUSE
+  429 Too Many Requests
+  Retry-After: <seconds>            — delayFor() above is exactly this number
+  RateLimit-Limit / -Remaining / -Reset   (RFC 9239 draft, and what GitHub and Stripe send)
+A 429 with no Retry-After tells a client to retry immediately, which is how a rate limit becomes
+a retry storm.
+*/
